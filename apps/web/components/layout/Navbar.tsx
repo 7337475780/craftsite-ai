@@ -3,97 +3,102 @@
 import Link from "next/link";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { cn } from "@/lib/utils";
+import { CraftSiteLogo } from "@/components/CraftSiteLogo";
 
 const navItems = [
-  {
-    label: "Product",
-    href: "#features",
-    hasDropdown: true,
-  },
-  {
-    label: "Templates",
-    href: "#templates",
-  },
-  {
-    label: "Pricing",
-    href: "#pricing",
-  },
-  {
-    label: "Resources",
-    href: "#resources",
-    hasDropdown: true,
-  },
-  {
-    label: "Company",
-    href: "#company",
-    hasDropdown: true,
-  },
+  { label: "Product", targetId: "features", hasDropdown: true },
+  { label: "Templates", targetId: "templates" },
+  { label: "Pricing", targetId: "pricing" },
+  { label: "Resources", targetId: "footer", hasDropdown: true },
 ];
 
 export function Navbar() {
+  const scrollToSection = (targetId: string) => {
+    const section = document.getElementById(targetId);
+
+    if (!section) return;
+
+    section.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    window.history.replaceState(null, "", window.location.pathname);
+  };
+
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 border-b border-black/10 bg-white/70 backdrop-blur-2xl dark:border-white/5 dark:bg-black/35">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 md:px-8">
-        {/* Logo */}
-        <Link href="/" className="group flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 via-blue-500 to-cyan-400 shadow-[0_0_28px_rgba(124,58,237,0.45)] transition group-hover:scale-105">
-            <span className="text-xl font-black text-white">C</span>
-            <div className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-fuchsia-400 shadow-[0_0_14px_rgba(217,70,239,0.9)]" />
+    <header className="fixed left-0 right-0 top-4 z-50 px-4">
+      <div className="relative mx-auto max-w-7xl">
+        {/* Soft realistic outer glow */}
+        <div className="absolute -inset-px rounded-4xl bg-linear-to-r from-white/30 via-violet-400/20 to-cyan-300/20 opacity-50 blur-2xl dark:from-cyan-400/10 dark:via-violet-500/20 dark:to-fuchsia-500/10 dark:opacity-60" />
+
+        {/* Liquid glass navbar */}
+        <div className="liquid-glass relative flex h-16 items-center justify-between overflow-hidden rounded-4xl px-4 md:px-6">
+          {/* Moving glass shine */}
+          <div className="pointer-events-none absolute inset-0 opacity-70">
+            <div className="absolute -left-28 top-0 h-full w-44 rotate-12 bg-linear-to-r from-transparent via-white/24 to-transparent blur-2xl dark:via-white/8" />
           </div>
 
-          <div className="leading-none">
-            <p className="text-xl font-bold tracking-tight text-slate-950 dark:text-white">
-              CraftSite
-            </p>
-            <p className="mt-1 hidden text-xs text-slate-500 dark:text-white/45 sm:block">
-              AI Website Builder
-            </p>
-          </div>
-        </Link>
+          {/* Top reflection */}
+          <div className="pointer-events-none absolute inset-x-4 top-1 h-px bg-linear-to-r from-transparent via-white/70 to-transparent dark:via-white/25" />
 
-        {/* Desktop Nav */}
-        <nav className="hidden items-center gap-1 rounded-2xl border border-black/10 bg-white/50 p-1 text-sm text-slate-700 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.035] dark:text-white/70 lg:flex">
-          {navItems.map((item) => (
+          {/* Bottom light edge */}
+          <div className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-linear-to-r from-transparent via-violet-500/30 to-transparent" />
+
+          {/* Logo */}
+          <Link href="/" className="relative z-10">
+            <CraftSiteLogo />
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="relative z-10 hidden items-center gap-1 rounded-2xl border border-black/10 bg-white/35 p-1 text-sm text-slate-700 shadow-inner backdrop-blur-2xl dark:border-white/10 dark:bg-white/4.5 dark:text-white/70 lg:flex">
+            {navItems.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => scrollToSection(item.targetId)}
+                className="group relative flex items-center gap-1 overflow-hidden rounded-xl px-4 py-2 transition hover:text-slate-950 dark:hover:text-white"
+              >
+                <span className="absolute inset-0 rounded-xl bg-linear-to-r from-violet-500/0 via-violet-500/10 to-cyan-400/0 opacity-0 transition group-hover:opacity-100" />
+
+                <span className="relative z-10">{item.label}</span>
+
+                {item.hasDropdown && (
+                  <ChevronDown
+                    size={14}
+                    className="relative z-10 opacity-60 transition group-hover:rotate-180"
+                  />
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right Actions */}
+          <div className="relative z-10 flex items-center gap-3">
+            <ThemeToggle />
+
             <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                "group flex items-center gap-1 rounded-xl px-4 py-2 transition",
-                "hover:bg-black/5 hover:text-slate-950",
-                "dark:hover:bg-white/10 dark:hover:text-white"
-              )}
+              href="/sign-in"
+              className="hidden rounded-xl border border-black/10 bg-white/45 px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-xl transition hover:bg-white/80 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:block"
             >
-              {item.label}
-              {item.hasDropdown && (
-                <ChevronDown
-                  size={14}
-                  className="opacity-60 transition group-hover:rotate-180"
-                />
-              )}
+              Sign in
             </Link>
-          ))}
-        </nav>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
+            <Link
+              href="/generate"
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-linear-to-r from-violet-600 via-purple-600 to-blue-500 px-5 py-2.5 text-sm font-bold text-white shadow-[0_0_35px_rgba(124,58,237,0.45)] transition hover:-translate-y-0.5 hover:scale-[1.02]"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-linear-to-r from-white/0 via-white/25 to-white/0 opacity-0 transition duration-700 group-hover:translate-x-full group-hover:opacity-100" />
 
-          <Link
-            href="/sign-in"
-            className="hidden rounded-xl border border-black/10 bg-white/60 px-4 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:hover:bg-white/10 sm:block"
-          >
-            Sign in
-          </Link>
+              <Sparkles size={16} className="relative z-10" />
 
-          <Link
-            href="/generate"
-            className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(124,58,237,0.45)] transition hover:scale-[1.03]"
-          >
-            <Sparkles size={16} />
-            <span className="hidden sm:inline">Start Building</span>
-            <span className="sm:hidden">Start</span>
-          </Link>
+              <span className="relative z-10 hidden sm:inline">
+                Start Building
+              </span>
+
+              <span className="relative z-10 sm:hidden">Start</span>
+            </Link>
+          </div>
         </div>
       </div>
     </header>
