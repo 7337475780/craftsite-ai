@@ -2,7 +2,7 @@
 
 import { AppShell } from "@/components/app/AppShell";
 import { LivePreview } from "@/components/generate/LivePreview";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Code2,
   Loader2,
@@ -11,6 +11,7 @@ import {
   Palette,
   Sparkles,
   Wand2,
+  Cpu,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -33,13 +34,16 @@ export default function GeneratePage() {
   const initialPrompt = searchParams.get("prompt") || "";
 
   const [prompt, setPrompt] = useState(initialPrompt);
-  const [style, setStyle] = useState("futuristic");
-  const [websiteType, setWebsiteType] = useState("saas");
+  const [style, setStyle] = useState("modern");
+  const [websiteType, setWebsiteType] = useState("responsive");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
-  const [providerInfo, setProviderInfo] = useState<{ provider: string; isFallback: boolean } | null>(null);
+  const [providerInfo, setProviderInfo] = useState<{
+    provider: string;
+    isFallback: boolean;
+  } | null>(null);
 
   const handleGenerate = async () => {
     try {
@@ -95,209 +99,229 @@ export default function GeneratePage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex flex-col gap-6 pb-10">
+        {/* TOP SECTION: Massive Input Area */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55 }}
-          className="mb-8"
+          transition={{ duration: 0.5 }}
+          className="flex-none rounded-[2rem] border border-black/10 bg-white/60 p-2 shadow-xl shadow-slate-900/5 backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.02]"
         >
-          <p className="text-sm font-bold uppercase tracking-[0.25em] text-violet-700 dark:text-cyan-300">
-            AI Generator
-          </p>
+          <div className="relative rounded-[1.5rem] bg-white/50 p-6 dark:bg-black/20">
+            {/* Provider / Error Banner Area */}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-violet-500" />
+                <span className="text-sm font-bold text-slate-700 dark:text-white/70">
+                  CraftSite Generation Engine
+                </span>
+              </div>
 
-          <h2 className="mt-3 text-4xl font-black text-slate-950 dark:text-white md:text-6xl">
-            Generate, edit and <span className="gradient-text">preview</span>
-          </h2>
+              {providerInfo && !isGenerating && (
+                <div className="flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-600 dark:text-green-400">
+                  <Cpu size={12} />
+                  {providerInfo.provider === "openrouter"
+                    ? "OpenRouter"
+                    : providerInfo.provider === "gemini"
+                      ? "Gemini"
+                      : "Mock Fallback"}
+                </div>
+              )}
+            </div>
 
-          <p className="mt-4 max-w-2xl text-slate-600 dark:text-white/60">
-            Describe your website idea. CraftSite will generate React + Tailwind
-            code and render it instantly in a live preview.
-          </p>
-        </motion.div>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-300"
+              >
+                {error}
+              </motion.div>
+            )}
 
-        <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.1 }}
-            className="h-fit rounded-[2rem] border border-black/10 bg-white/75 p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035]"
-          >
-            <label className="text-sm font-bold text-slate-950 dark:text-white">
-              Website prompt
-            </label>
+            {providerInfo?.isFallback && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="mb-4 rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-600 dark:text-orange-300"
+              >
+                AI providers are currently rate-limited. Showing a safe fallback preview layout.
+              </motion.div>
+            )}
 
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Example: Build a futuristic SaaS landing page for an AI resume tool with pricing, testimonials, FAQ and CTA."
-              className="mt-4 min-h-56 w-full resize-none rounded-3xl border border-black/10 bg-white/80 p-5 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-500 dark:border-white/10 dark:bg-black/30 dark:text-white dark:placeholder:text-white/35"
+              placeholder="Describe the website, dashboard, or tool you want to build..."
+              className="w-full resize-none bg-transparent text-lg text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-white/30 md:text-xl lg:text-2xl"
+              rows={2}
+              disabled={isGenerating}
             />
 
-            <div className="mt-5 grid gap-3">
-              <button
-                onClick={() => setStyle("modern")}
-                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold transition ${
-                  style === "modern"
-                    ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:text-cyan-300"
-                    : "border-black/10 bg-white/70 text-slate-700 hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Wand2 size={17} />
-                  Modern
-                </span>
-              </button>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-black/5 pt-4 dark:border-white/5">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setStyle(style === "modern" ? "premium" : "modern")}
+                  disabled={isGenerating}
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition ${
+                    style === "modern"
+                      ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300"
+                      : "border-black/10 bg-white/50 text-slate-500 hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
+                  }`}
+                >
+                  <Palette size={14} />
+                  {style === "modern" ? "Modern UI" : "Premium UI"}
+                </button>
+
+                <button
+                  onClick={() => setWebsiteType(websiteType === "responsive" ? "saas" : "responsive")}
+                  disabled={isGenerating}
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition ${
+                    websiteType === "responsive"
+                      ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300"
+                      : "border-black/10 bg-white/50 text-slate-500 hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
+                  }`}
+                >
+                  <MonitorSmartphone size={14} />
+                  {websiteType === "responsive" ? "Responsive" : "SaaS Focus"}
+                </button>
+              </div>
 
               <button
-                onClick={() => setWebsiteType("responsive")}
-                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold transition ${
-                  websiteType === "responsive"
-                    ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:text-cyan-300"
-                    : "border-black/10 bg-white/70 text-slate-700 hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
-                }`}
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white transition hover:scale-[1.02] disabled:opacity-70 dark:bg-white dark:text-slate-950"
               >
-                <span className="flex items-center gap-2">
-                  <MonitorSmartphone size={17} />
-                  Responsive
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStyle("premium")}
-                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold transition ${
-                  style === "premium"
-                    ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:text-cyan-300"
-                    : "border-black/10 bg-white/70 text-slate-700 hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Palette size={17} />
-                  Premium UI
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-cyan-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <span className="relative z-10 flex items-center gap-2">
+                  {isGenerating ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 size={16} />
+                      Generate Now
+                    </>
+                  )}
                 </span>
               </button>
             </div>
+          </div>
+        </motion.div>
 
-            {error && (
-              <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-300">
-                {error}
+        {/* BOTTOM SECTION: Full Width Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex h-[800px] flex-col rounded-[2rem] border border-black/10 bg-white/60 p-2 shadow-xl backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.02] xl:h-[1000px]"
+        >
+          {/* Preview Controls Navbar */}
+          <div className="mb-2 flex items-center justify-between px-4 py-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-cyan-400 text-white shadow-inner">
+                <Monitor size={14} />
               </div>
-            )}
+              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                Live Output Workspace
+              </span>
+            </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-6 py-4 text-sm font-black text-white shadow-[0_0_35px_rgba(124,58,237,0.35)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
-            >
+            <div className="flex rounded-full border border-black/10 bg-white/50 p-1 dark:border-white/10 dark:bg-black/30">
+              <button
+                onClick={() => setViewMode("preview")}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
+                  viewMode === "preview"
+                    ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-md"
+                    : "text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white"
+                }`}
+              >
+                Preview
+              </button>
+              <button
+                onClick={() => setViewMode("code")}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
+                  viewMode === "code"
+                    ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-md"
+                    : "text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white"
+                }`}
+              >
+                Code
+              </button>
+            </div>
+          </div>
+
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-[1.5rem]">
+            <AnimatePresence mode="wait">
               {isGenerating ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles size={18} />
-                  Generate Website
-                </>
-              )}
-            </button>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.18 }}
-          >
-            <div className="mb-4 flex flex-col justify-between gap-4 rounded-[1.5rem] border border-black/10 bg-white/75 p-3 shadow-[0_16px_50px_rgba(15,23,42,0.07)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3 px-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-cyan-400 text-white">
-                  <Monitor size={18} />
-                </div>
-                <div>
-                  <p className="font-black text-slate-950 dark:text-white">
-                    Live Workspace
-                  </p>
-                  <p className="text-sm text-slate-500 dark:text-white/45">
-                    Preview and edit generated code
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex rounded-2xl border border-black/10 bg-white/70 p-1 dark:border-white/10 dark:bg-black/30">
-                <button
-                  onClick={() => setViewMode("preview")}
-                  className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
-                    viewMode === "preview"
-                      ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
-                      : "text-slate-600 dark:text-white/50"
-                  }`}
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 text-white"
                 >
-                  Preview
-                </button>
-                <button
-                  onClick={() => setViewMode("code")}
-                  className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
-                    viewMode === "code"
-                      ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
-                      : "text-slate-600 dark:text-white/50"
-                  }`}
-                >
-                  Code
-                </button>
-              </div>
-            </div>
-
-            {providerInfo?.isFallback && (
-              <div className="mb-4 rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-600 dark:text-orange-300">
-                AI providers are busy. Showing safe fallback preview.
-              </div>
-            )}
-
-            {providerInfo && !isGenerating && viewMode === "preview" && (
-              <div className="mb-4 flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-white/50">
-                <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
-                Generated by {providerInfo.provider === "openrouter" ? "OpenRouter" : providerInfo.provider === "gemini" ? "Gemini" : "Mock Fallback"}
-              </div>
-            )}
-
-            {isGenerating ? (
-              <div className="flex min-h-[620px] items-center justify-center rounded-[2rem] border border-black/10 bg-slate-950 p-8 text-white dark:border-white/10">
-                <div className="text-center">
-                  <Loader2 className="mx-auto h-10 w-10 animate-spin text-cyan-300" />
-                  <p className="mt-4 font-bold">CraftSite is generating...</p>
-                  <p className="mt-2 text-sm text-white/45">
-                    Creating your website and preparing live preview
-                  </p>
-                </div>
-              </div>
-            ) : viewMode === "preview" ? (
-              <LivePreview code={generatedCode} />
-            ) : (
-              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-white">
-                <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <Code2 size={18} />
-                    <p className="text-sm font-bold">GeneratedWebsite.tsx</p>
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 animate-pulse rounded-full bg-cyan-400/30 blur-xl" />
+                    <Loader2 className="relative h-12 w-12 animate-spin text-cyan-400" />
                   </div>
+                  <p className="text-lg font-black tracking-tight">
+                    Crafting your design...
+                  </p>
+                  <p className="mt-2 text-sm text-white/50">
+                    Writing clean React components and setting up live preview
+                  </p>
+                </motion.div>
+              ) : viewMode === "preview" ? (
+                <motion.div
+                  key="preview"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0"
+                >
+                  <LivePreview code={generatedCode} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="code"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex flex-col bg-slate-950"
+                >
+                  <div className="flex flex-none items-center justify-between border-b border-white/10 px-6 py-4">
+                    <div className="flex items-center gap-3 text-white">
+                      <Code2 size={16} className="text-cyan-400" />
+                      <span className="text-sm font-bold tracking-wide">
+                        GeneratedWebsite.tsx
+                      </span>
+                    </div>
 
-                  <button
-                    onClick={() => navigator.clipboard.writeText(generatedCode)}
-                    className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-slate-950"
-                  >
-                    Copy Code
-                  </button>
-                </div>
-
-                <pre className="max-h-[620px] overflow-auto p-5 text-sm leading-7 text-cyan-100">
-                  <code>
-                    {generatedCode ||
-                      "Generate a website to see React + Tailwind code here."}
-                  </code>
-                </pre>
-              </div>
-            )}
-          </motion.div>
-        </div>
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(generatedCode)
+                      }
+                      className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/20"
+                    >
+                      Copy to Clipboard
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-auto p-6">
+                    <pre className="text-sm leading-relaxed text-cyan-100/90">
+                      <code>
+                        {generatedCode ||
+                          "// Generate a website to see the React + Tailwind code here."}
+                      </code>
+                    </pre>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
       </div>
     </AppShell>
   );

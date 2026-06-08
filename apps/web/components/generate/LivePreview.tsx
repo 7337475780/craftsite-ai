@@ -78,16 +78,13 @@ function removeMarkdown(code: string) {
 }
 
 function extractComponentCode(code: string) {
-  const lucideMatch = code.match(/import\s+{[^}]+}\s+from\s+['"]lucide-react['"];?/g);
-  const lucideImports = lucideMatch ? lucideMatch.join("\n") + "\n\n" : "";
-
   const exportIndex = code.indexOf("export default function");
 
   if (exportIndex === -1) {
     return code;
   }
 
-  return lucideImports + code.slice(exportIndex).trim();
+  return code.slice(exportIndex).trim();
 }
 
 function normalizeNewLinesInsideStrings(code: string) {
@@ -161,8 +158,10 @@ function hasBasicComponentShape(code: string) {
   return (
     code.includes("export default function GeneratedWebsite") &&
     code.includes("return") &&
+    code.includes("<main") &&
+    code.includes("</main>") &&
     code.includes(");") &&
-    code.trim().endsWith("}")
+    code.includes("}")
   );
 }
 
@@ -225,7 +224,7 @@ ${safeCode}
 
   if (!mounted) {
     return (
-      <div className="flex h-[620px] items-center justify-center rounded-[2rem] border border-black/10 bg-white/75 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035]">
+      <div className="flex h-full items-center justify-center rounded-[2rem] border border-black/10 bg-white/75 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035]">
         <p className="text-sm font-semibold text-slate-500 dark:text-white/50">
           Loading live preview...
         </p>
@@ -234,7 +233,7 @@ ${safeCode}
   }
 
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-black/10 bg-white/75 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] dark:shadow-[0_24px_90px_rgba(0,0,0,0.38)]">
+    <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-black/10 bg-white/75 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] dark:shadow-[0_24px_90px_rgba(0,0,0,0.38)]">
       {isInvalid && (
         <div className="border-b border-red-500/20 bg-red-500/10 px-5 py-3 text-sm font-semibold text-red-700 dark:text-red-300">
           The generated code looked incomplete, so CraftSite protected the live
@@ -275,7 +274,6 @@ button {
           dependencies: {
             react: "latest",
             "react-dom": "latest",
-            "lucide-react": "latest",
           },
         }}
         options={{
@@ -284,8 +282,8 @@ button {
           recompileDelay: 600,
         }}
       >
-        <SandpackLayout>
-          <div className="hidden border-r border-black/10 dark:border-white/10 xl:block">
+        <SandpackLayout style={{ height: "100%" }} className="flex-1 min-h-0 border-none">
+          <div className="hidden h-full border-r border-black/10 dark:border-white/10 xl:block">
             <SandpackFileExplorer />
           </div>
 
@@ -295,7 +293,7 @@ button {
             wrapContent
             closableTabs={false}
             style={{
-              height: 620,
+              height: "100%",
               minWidth: 0,
               flex: 1,
             }}
@@ -305,7 +303,7 @@ button {
             showOpenInCodeSandbox={false}
             showRefreshButton
             style={{
-              height: 620,
+              height: "100%",
               minWidth: 0,
               flex: 1,
             }}
