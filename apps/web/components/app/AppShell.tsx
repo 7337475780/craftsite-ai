@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -23,6 +24,8 @@ const sidebarItems = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth();
+
   return (
     <main className="craftsite-bg min-h-screen">
       <aside className="fixed left-5 top-5 z-50 hidden h-[calc(100vh-2.5rem)] w-72 rounded-[2rem] border border-black/10 bg-white/70 p-4 shadow-[0_24px_80px_rgba(15,23,42,0.1)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_24px_90px_rgba(0,0,0,0.45)] lg:block">
@@ -63,7 +66,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          <button className="mt-3 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-500 transition hover:bg-red-500/10 hover:text-red-600 dark:text-white/45 dark:hover:text-red-300">
+          <button
+            onClick={() => logout()}
+            className="mt-3 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-500 transition hover:bg-red-500/10 hover:text-red-600 dark:text-white/45 dark:hover:text-red-300 cursor-pointer"
+          >
             <LogOut size={18} />
             Logout
           </button>
@@ -83,9 +89,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-blue-500 text-sm font-black text-white">
-              T
-            </div>
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={user.name || "Avatar"}
+                className="h-8 w-8 rounded-full object-cover border border-violet-500/20"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600/10 text-violet-700 dark:bg-cyan-400/10 dark:text-cyan-300 text-sm font-bold border border-violet-500/20">
+                {user?.email?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
           </div>
         </header>
 

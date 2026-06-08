@@ -22,6 +22,9 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState, useCallback, Suspense } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { apiPost } from "@/lib/api-client";
 import {
   saveProject,
   generateProjectTitle,
@@ -75,6 +78,8 @@ function GeneratePageContent() {
   const [loadingStep, setLoadingStep] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { user } = useAuth();
 
   // When code is generated, the input area becomes compact
   const isCompact = generatedCode.length > 0 || isGenerating;
@@ -85,25 +90,54 @@ function GeneratePageContent() {
     setTimeout(() => setCopied(false), 2000);
   }, [generatedCode]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!generatedCode || !providerInfo) return;
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-    saveProject({
-      id,
-      title: generateProjectTitle(prompt),
-      prompt,
-      generatedCode,
-      provider: providerInfo.provider,
-      isFallback: providerInfo.isFallback,
-      style,
-      websiteType,
-      createdAt: now,
-      updatedAt: now,
-    });
-    setIsSaved(true);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setIsSaving(true);
+    setError("");
+    const title = generateProjectTitle(prompt);
+
+    try {
+      const result = await apiPost("/api/projects", {
+        title,
+        prompt,
+        generatedCode,
+        provider: providerInfo.provider,
+        isFallback: providerInfo.isFallback,
+      });
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to save project to cloud.");
+      }
+
+      setIsSaved(true);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.warn("Cloud save failed, falling back to localStorage", err);
+      try {
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
+        saveProject({
+          id,
+          title,
+          prompt,
+          generatedCode,
+          provider: providerInfo.provider,
+          isFallback: providerInfo.isFallback,
+          style,
+          websiteType,
+          createdAt: now,
+          updatedAt: now,
+        });
+        setIsSaved(true);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } catch (localErr) {
+        setError(err instanceof Error ? err.message : "Failed to save project.");
+      }
+    } finally {
+      setIsSaving(false);
+    }
   }, [generatedCode, prompt, providerInfo, style, websiteType]);
 
   const handleGenerate = async () => {
@@ -125,19 +159,11 @@ function GeneratePageContent() {
         setLoadingStep((prev) => Math.min(prev + 1, STEPS.length - 1));
       }, 1400);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      const response = await fetch(`${apiUrl}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, style, websiteType }),
-      });
+      const result = (await apiPost("/api/generate", { prompt, style, websiteType })) as GenerateResponse;
 
       clearInterval(stepInterval);
 
-      const result = (await response.json()) as GenerateResponse;
-
-      if (!response.ok || !result.success) {
+      if (!result.success) {
         throw new Error(result.message || "Failed to generate website.");
       }
 
@@ -243,7 +269,7 @@ function GeneratePageContent() {
                   exit={{ opacity: 0, scale: 0.85 }}
                   transition={{ duration: 0.25 }}
                   onClick={handleSave}
-                  disabled={isSaved}
+                  disabled={isSaved || isSaving}
                   className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all sm:flex ${
                     saveSuccess
                       ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
@@ -256,6 +282,11 @@ function GeneratePageContent() {
                     <>
                       <CheckCheck size={12} className="text-emerald-500" />
                       Saved!
+                    </>
+                  ) : isSaving ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin text-violet-600 dark:text-cyan-400" />
+                      Saving...
                     </>
                   ) : isSaved ? (
                     <>
@@ -546,15 +577,21 @@ function GeneratePageContent() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 6 }}
                 onClick={handleSave}
-                disabled={isSaved}
+                disabled={isSaved || isSaving}
                 className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition-all sm:hidden ${
                   isSaved
                     ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                     : "border-violet-400/30 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
                 }`}
               >
-                {isSaved ? <CheckCheck size={14} /> : <Save size={14} />}
-                {isSaved ? "Project Saved" : "Save Project"}
+                {isSaving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : isSaved ? (
+                  <CheckCheck size={14} />
+                ) : (
+                  <Save size={14} />
+                )}
+                {isSaving ? "Saving..." : isSaved ? "Project Saved" : "Save Project"}
               </motion.button>
             )}
           </AnimatePresence>
@@ -766,12 +803,14 @@ function GeneratePageContent() {
 
 export default function GeneratePage() {
   return (
-    <Suspense fallback={
-      <main className="flex h-screen flex-col items-center justify-center craftsite-bg">
-        <Loader2 size={36} className="animate-spin text-violet-600 dark:text-cyan-400" />
-      </main>
-    }>
-      <GeneratePageContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={
+        <main className="flex h-screen flex-col items-center justify-center craftsite-bg">
+          <Loader2 size={36} className="animate-spin text-violet-600 dark:text-cyan-400" />
+        </main>
+      }>
+        <GeneratePageContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

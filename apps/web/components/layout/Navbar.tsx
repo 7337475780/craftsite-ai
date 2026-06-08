@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const navItems = [
   { label: "Product", targetId: "features" },
@@ -16,6 +17,7 @@ const navItems = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -90,19 +92,36 @@ export function Navbar() {
           <div className="relative z-10 flex items-center gap-3">
             <ThemeToggle />
 
-            <motion.div
-              whileHover={{ scale: 1.05, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 18 }}
-              className="hidden sm:block"
-            >
-              <Link
-                href="/sign-in"
-                className="flex items-center justify-center rounded-full border border-black/8 bg-white/50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.04)] backdrop-blur-md transition-colors duration-200 cursor-pointer hover:border-violet-500/40 hover:bg-white hover:text-violet-700 dark:border-white/8 dark:bg-white/[0.04] dark:text-white/70 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/dashboard"
+                  className="hidden md:flex items-center justify-center rounded-full border border-black/8 bg-white/50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.04)] backdrop-blur-md transition-colors duration-200 cursor-pointer hover:border-violet-500/40 hover:bg-white hover:text-violet-700 dark:border-white/8 dark:bg-white/[0.04] dark:text-white/70 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="flex items-center justify-center rounded-full border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-600 shadow-sm backdrop-blur-md transition-colors duration-200 cursor-pointer hover:bg-red-500 hover:text-white dark:border-red-400/30"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <motion.div
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                className="hidden sm:block"
               >
-                Sign in
-              </Link>
-            </motion.div>
+                <Link
+                  href="/sign-in"
+                  className="flex items-center justify-center rounded-full border border-black/8 bg-white/50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.04)] backdrop-blur-md transition-colors duration-200 cursor-pointer hover:border-violet-500/40 hover:bg-white hover:text-violet-700 dark:border-white/8 dark:bg-white/[0.04] dark:text-white/70 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
+                >
+                  Sign in
+                </Link>
+              </motion.div>
+            )}
 
             <motion.div
               whileHover={{ scale: 1.05, y: -1 }}

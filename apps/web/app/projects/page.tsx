@@ -2,10 +2,14 @@
 
 import { AppShell } from "@/components/app/AppShell";
 import { getSavedProjects, deleteProject } from "@/lib/projects-storage";
+import { MigrationBanner } from "@/components/generate/MigrationBanner";
 import type { SavedProject } from "@/types/project";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { apiGet, apiDelete } from "@/lib/api-client";
 import {
   FolderOpen,
   Trash2,
@@ -61,22 +65,50 @@ export default function ProjectsPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setProjects(getSavedProjects());
-    setIsLoaded(true);
-  }, []);
+  const { user } = useAuth();
 
-  const handleDelete = useCallback((id: string) => {
+  useEffect(() => {
+    async function load() {
+      try {
+        const result = await apiGet("/api/projects");
+        if (result.success) {
+          setProjects(result.data);
+        } else {
+          setProjects(getSavedProjects());
+        }
+      } catch (err) {
+        console.warn("Cloud projects load failed, falling back to localStorage", err);
+        setProjects(getSavedProjects());
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+    if (user) {
+      load();
+    }
+  }, [user]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!confirm("Are you sure you want to delete this project?")) return;
     setDeletingId(id);
-    setTimeout(() => {
+    try {
+      const result = await apiDelete(`/api/projects/${id}`);
+      if (!result.success) {
+        throw new Error(result.message || "Failed to delete project");
+      }
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.warn("Cloud delete failed, attempting local delete", err);
       deleteProject(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
+    } finally {
       setDeletingId(null);
-    }, 300);
+    }
   }, []);
 
   return (
-    <AppShell>
+    <ProtectedRoute>
+      <AppShell>
       <div className="mx-auto max-w-7xl">
 
         {/* Page header */}
@@ -106,6 +138,10 @@ export default function ProjectsPage() {
             New Generation
           </Link>
         </div>
+
+        <MigrationBanner onMigrated={() => {
+          window.location.reload();
+        }} />
 
         {/* Empty state */}
         <AnimatePresence>
@@ -220,5 +256,6 @@ export default function ProjectsPage() {
         )}
       </div>
     </AppShell>
+    </ProtectedRoute>
   );
 }

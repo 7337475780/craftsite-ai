@@ -1,9 +1,12 @@
 "use client";
 
 import { AppShell } from "@/components/app/AppShell";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { getSavedProjects } from "@/lib/projects-storage";
 import type { SavedProject } from "@/types/project";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { apiGet } from "@/lib/api-client";
 import Link from "next/link";
 import {
   FolderOpen,
@@ -30,11 +33,28 @@ function formatDate(iso: string | undefined): string {
 export default function DashboardPage() {
   const [projects, setProjects] = useState<SavedProject[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    setProjects(getSavedProjects());
-    setIsLoaded(true);
-  }, []);
+    async function load() {
+      try {
+        const result = await apiGet("/api/projects");
+        if (result.success) {
+          setProjects(result.data);
+        } else {
+          setProjects(getSavedProjects());
+        }
+      } catch (err) {
+        console.warn("Cloud dashboard load failed, falling back to localStorage", err);
+        setProjects(getSavedProjects());
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+    if (user) {
+      load();
+    }
+  }, [user]);
 
   const totalProjects = projects.length;
   const fallbackProjects = projects.filter((p) => p.isFallback).length;
@@ -50,7 +70,8 @@ export default function DashboardPage() {
   const recentProjects = projects.slice(0, 3);
 
   return (
-    <AppShell>
+    <ProtectedRoute>
+      <AppShell>
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
@@ -196,5 +217,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </AppShell>
+    </ProtectedRoute>
   );
 }

@@ -7,6 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-client";
 import {
   ArrowLeft,
   Code2,
@@ -57,6 +60,7 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
+  const { user } = useAuth();
 
   const [project, setProject] = useState<SavedProject | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
@@ -76,29 +80,61 @@ export default function ProjectDetailPage() {
   const [loadingStep, setLoadingStep] = useState(0);
   const [isSaved, setIsSaved] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load project from localStorage on mount
+  // Load project from API on mount
   useEffect(() => {
-    if (!id) return;
-    const found = getProjectById(id);
-    if (found) {
-      setProject(found);
-      setPrompt(found.prompt);
-      setStyle(found.style);
-      setWebsiteType(found.websiteType);
-      setGeneratedCode(found.generatedCode);
-      setProviderInfo({
-        provider: found.provider,
-        isFallback: found.isFallback,
-      });
-      setIsSaved(true);
-    } else {
-      setIsNotFound(true);
+    if (!id || !user) return;
+    async function load() {
+      try {
+        const result = await apiGet(`/api/projects/${id}`);
+        if (result.success) {
+          const found = result.data;
+          setProject(found);
+          setPrompt(found.prompt);
+          setGeneratedCode(found.generatedCode);
+          setProviderInfo({
+            provider: found.provider,
+            isFallback: found.isFallback,
+          });
+          setIsSaved(true);
+        } else {
+          // Fallback to local
+          const local = getProjectById(id);
+          if (local) {
+            setProject(local);
+            setPrompt(local.prompt);
+            setGeneratedCode(local.generatedCode);
+            setProviderInfo({
+              provider: local.provider,
+              isFallback: local.isFallback,
+            });
+            setIsSaved(true);
+          } else {
+            setIsNotFound(true);
+          }
+        }
+      } catch (err) {
+        console.warn("Cloud project load failed, falling back to localStorage", err);
+        const local = getProjectById(id);
+        if (local) {
+          setProject(local);
+          setPrompt(local.prompt);
+          setGeneratedCode(local.generatedCode);
+          setProviderInfo({
+            provider: local.provider,
+            isFallback: local.isFallback,
+          });
+          setIsSaved(true);
+        } else {
+          setIsNotFound(true);
+        }
+      }
     }
-  }, [id]);
+    load();
+  }, [id, user]);
 
-  // If code is generated or we are in generating state, input is compact
   const isCompact = generatedCode.length > 0 || isGenerating;
 
   const handleCopy = useCallback(async () => {
@@ -107,48 +143,82 @@ export default function ProjectDetailPage() {
     setTimeout(() => setCopied(false), 2000);
   }, [generatedCode]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!id || !generatedCode || !providerInfo) return;
+    setIsSaving(true);
+    setError("");
     const title = generateProjectTitle(prompt);
-    const success = updateProject(id, {
-      title,
-      prompt,
-      generatedCode,
-      provider: providerInfo.provider,
-      isFallback: providerInfo.isFallback,
-      style,
-      websiteType,
-    });
 
-    if (success) {
+    try {
+      const result = await apiPatch(`/api/projects/${id}`, {
+        title,
+        prompt,
+        generatedCode,
+        provider: providerInfo.provider,
+        isFallback: providerInfo.isFallback,
+      });
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to update project on cloud.");
+      }
+
       setIsSaved(true);
       setSaveSuccess(true);
-      // Update local project metadata
-      setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              title,
-              prompt,
-              generatedCode,
-              provider: providerInfo.provider,
-              isFallback: providerInfo.isFallback,
-              style,
-              websiteType,
-              updatedAt: new Date().toISOString(),
-            }
-          : null
-      );
+      setProject(result.data);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } else {
-      setError("Failed to save changes.");
+    } catch (err) {
+      console.warn("Cloud save failed, falling back to localStorage", err);
+      const success = updateProject(id, {
+        title,
+        prompt,
+        generatedCode,
+        provider: providerInfo.provider,
+        isFallback: providerInfo.isFallback,
+        style,
+        websiteType,
+      });
+
+      if (success) {
+        setIsSaved(true);
+        setSaveSuccess(true);
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                title,
+                prompt,
+                generatedCode,
+                provider: providerInfo.provider,
+                isFallback: providerInfo.isFallback,
+                style,
+                websiteType,
+                updatedAt: new Date().toISOString(),
+              }
+            : null
+        );
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        setError("Failed to save changes.");
+      }
+    } finally {
+      setIsSaving(false);
     }
   }, [id, generatedCode, prompt, providerInfo, style, websiteType]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (!id) return;
-    if (confirm("Are you sure you want to delete this project?")) {
-      setIsDeleting(true);
+    if (!confirm("Are you sure you want to delete this project?")) return;
+    setIsDeleting(true);
+    try {
+      const result = await apiDelete(`/api/projects/${id}`);
+      if (!result.success) {
+        throw new Error(result.message || "Failed to delete project");
+      }
+      setTimeout(() => {
+        router.push("/projects");
+      }, 500);
+    } catch (err) {
+      console.warn("Cloud delete failed, attempting local delete", err);
       deleteProject(id);
       setTimeout(() => {
         router.push("/projects");
@@ -170,24 +240,15 @@ export default function ProjectDetailPage() {
 
       setIsGenerating(true);
 
-      // Cycle through loading steps
       const stepInterval = setInterval(() => {
         setLoadingStep((prev) => Math.min(prev + 1, STEPS.length - 1));
       }, 1400);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      const response = await fetch(`${apiUrl}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, style, websiteType }),
-      });
+      const result = (await apiPost("/api/generate", { prompt, style, websiteType })) as GenerateResponse;
 
       clearInterval(stepInterval);
 
-      const result = (await response.json()) as GenerateResponse;
-
-      if (!response.ok || !result.success) {
+      if (!result.success) {
         throw new Error(result.message || "Failed to generate website.");
       }
 
@@ -231,7 +292,7 @@ export default function ProjectDetailPage() {
         </p>
         <Link
           href="/projects"
-          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02]"
+          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
         >
           <FolderOpen size={14} />
           Back to Projects
@@ -249,7 +310,8 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <main className="flex h-[100dvh] flex-col overflow-hidden craftsite-bg">
+    <ProtectedRoute>
+      <main className="flex h-[100dvh] flex-col overflow-hidden craftsite-bg">
       {/* ── Premium Workspace Navbar ── */}
       <motion.header
         initial={{ opacity: 0, y: -12 }}
@@ -265,7 +327,7 @@ export default function ProjectDetailPage() {
           <div className="flex items-center gap-5">
             <Link
               href="/projects"
-              className="group flex items-center gap-1.5 rounded-full border border-black/10 bg-white/60 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-violet-400/60 hover:bg-white hover:text-violet-700 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
+              className="group flex items-center gap-1.5 rounded-full border border-black/10 bg-white/60 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-violet-400/60 hover:bg-white hover:text-violet-700 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white cursor-pointer"
             >
               <ArrowLeft size={13} className="transition-transform group-hover:-translate-x-0.5" />
               Projects
@@ -317,8 +379,8 @@ export default function ProjectDetailPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.85 }}
                   onClick={handleSave}
-                  disabled={isSaved}
-                  className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all sm:flex ${
+                  disabled={isSaved || isSaving}
+                  className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all sm:flex cursor-pointer ${
                     saveSuccess
                       ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                       : isSaved
@@ -330,6 +392,11 @@ export default function ProjectDetailPage() {
                     <>
                       <CheckCheck size={12} className="text-emerald-500" />
                       Saved!
+                    </>
+                  ) : isSaving ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin text-violet-600 dark:text-cyan-400" />
+                      Saving...
                     </>
                   ) : isSaved ? (
                     <>
@@ -350,7 +417,7 @@ export default function ProjectDetailPage() {
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="hidden items-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-red-600 shadow-sm transition hover:bg-red-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-red-400 dark:hover:bg-red-500/10 sm:flex"
+              className="hidden items-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-red-600 shadow-sm transition hover:bg-red-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-red-400 dark:hover:bg-red-500/10 sm:flex cursor-pointer"
             >
               <Trash2 size={12} />
               Delete
@@ -366,7 +433,7 @@ export default function ProjectDetailPage() {
                   exit={{ opacity: 0, scale: 0.85 }}
                   transition={{ duration: 0.25 }}
                   onClick={handleCopy}
-                  className="hidden items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-3.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-sm transition-all hover:border-violet-400/40 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:text-white/70 dark:hover:bg-white/10 sm:flex"
+                  className="hidden items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-3.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-sm transition-all hover:border-violet-400/40 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:text-white/70 dark:hover:bg-white/10 sm:flex cursor-pointer"
                 >
                   {copied ? (
                     <>
@@ -505,7 +572,7 @@ export default function ProjectDetailPage() {
                       setIsSaved(false);
                     }}
                     disabled={isGenerating}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                       style === "modern"
                         ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
                         : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
@@ -521,7 +588,7 @@ export default function ProjectDetailPage() {
                       setIsSaved(false);
                     }}
                     disabled={isGenerating}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                       websiteType === "responsive"
                         ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
                         : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
@@ -536,7 +603,7 @@ export default function ProjectDetailPage() {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || prompt.trim().length < 5}
-                  className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.03] hover:shadow-xl disabled:hover:scale-100 ${
+                  className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.03] hover:shadow-xl disabled:hover:scale-100 cursor-pointer ${
                     isGenerating
                       ? "cursor-wait bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 opacity-80 shadow-[0_0_25px_rgba(124,58,237,0.4)]"
                       : "bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 shadow-[0_0_20px_rgba(124,58,237,0.35)] hover:shadow-[0_0_35px_rgba(124,58,237,0.55)] disabled:opacity-50"
@@ -571,15 +638,34 @@ export default function ProjectDetailPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
                   onClick={handleSave}
-                  disabled={isSaved}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition-all ${
+                  disabled={isSaved || isSaving}
+                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition-all cursor-pointer ${
                     isSaved
                       ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                       : "border-violet-400/30 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
                   }`}
                 >
-                  {isSaved ? <CheckCheck size={14} /> : <Save size={14} />}
-                  {isSaved ? "Saved" : "Save Changes"}
+                  {saveSuccess ? (
+                    <>
+                      <CheckCheck size={14} />
+                      Saved!
+                    </>
+                  ) : isSaving ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : isSaved ? (
+                    <>
+                      <CheckCheck size={14} />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      Save Changes
+                    </>
+                  )}
                 </motion.button>
 
                 <motion.button
@@ -587,7 +673,8 @@ export default function ProjectDetailPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
                   onClick={handleDelete}
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400"
+                  disabled={isDeleting}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 cursor-pointer"
                 >
                   <Trash2 size={14} />
                   Delete Project
@@ -636,7 +723,7 @@ export default function ProjectDetailPage() {
                       <button
                         key={mode}
                         onClick={() => setViewMode(mode)}
-                        className={`relative rounded-full px-4 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${
+                        className={`relative rounded-full px-4 py-1.5 text-xs font-bold capitalize transition-all duration-200 cursor-pointer ${
                           viewMode === mode
                             ? "bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md dark:from-white dark:to-white dark:text-slate-950"
                             : "text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white"
@@ -661,7 +748,7 @@ export default function ProjectDetailPage() {
                   {viewMode === "code" && generatedCode && (
                     <button
                       onClick={handleCopy}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white/80 text-slate-600 transition-all hover:bg-white hover:shadow-sm dark:border-white/10 dark:bg-white/[0.05] dark:text-white/60 dark:hover:bg-white/10"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white/80 text-slate-600 transition-all hover:bg-white hover:shadow-sm dark:border-white/10 dark:bg-white/[0.05] dark:text-white/60 dark:hover:bg-white/10 cursor-pointer"
                     >
                       {copied ? (
                         <CheckCheck size={13} className="text-emerald-500" />
@@ -771,5 +858,6 @@ export default function ProjectDetailPage() {
         </AnimatePresence>
       </div>
     </main>
+    </ProtectedRoute>
   );
 }
