@@ -26,11 +26,19 @@ app.get("/", (_req, res) => {
   res.json({
     message: "CraftSite AI API is running",
     status: "success",
+    routes: ["/api/health", "/api/generate"],
   });
 });
 
 app.use("/api/health", healthRouter);
 app.use("/api/generate", generateRouter);
+
+app.use((_req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`CraftSite API running on http://localhost:${PORT}`);

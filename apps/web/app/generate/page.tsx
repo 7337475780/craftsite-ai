@@ -1,10 +1,12 @@
 "use client";
 
 import { AppShell } from "@/components/app/AppShell";
+import { LivePreview } from "@/components/generate/LivePreview";
 import { motion } from "framer-motion";
 import {
   Code2,
   Loader2,
+  Monitor,
   MonitorSmartphone,
   Palette,
   Sparkles,
@@ -21,6 +23,8 @@ type GenerateResponse = {
     style: string;
     websiteType: string;
     generatedCode: string;
+    provider: "openrouter" | "gemini" | "mock";
+    isFallback: boolean;
   };
 };
 
@@ -34,11 +38,14 @@ export default function GeneratePage() {
   const [generatedCode, setGeneratedCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
+  const [providerInfo, setProviderInfo] = useState<{ provider: string; isFallback: boolean } | null>(null);
 
   const handleGenerate = async () => {
     try {
       setError("");
       setGeneratedCode("");
+      setProviderInfo(null);
 
       if (prompt.trim().length < 10) {
         setError("Please enter at least 10 characters.");
@@ -68,6 +75,13 @@ export default function GeneratePage() {
       }
 
       setGeneratedCode(result.data?.generatedCode || "");
+      if (result.data) {
+        setProviderInfo({
+          provider: result.data.provider,
+          isFallback: result.data.isFallback,
+        });
+      }
+      setViewMode("preview");
     } catch (err) {
       setError(
         err instanceof Error
@@ -93,21 +107,21 @@ export default function GeneratePage() {
           </p>
 
           <h2 className="mt-3 text-4xl font-black text-slate-950 dark:text-white md:text-6xl">
-            What do you want to <span className="gradient-text">build?</span>
+            Generate, edit and <span className="gradient-text">preview</span>
           </h2>
 
           <p className="mt-4 max-w-2xl text-slate-600 dark:text-white/60">
-            Describe your website idea. CraftSite will generate a clean,
-            responsive layout with sections, copy, and visual structure.
+            Describe your website idea. CraftSite will generate React + Tailwind
+            code and render it instantly in a live preview.
           </p>
         </motion.div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_500px]">
+        <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.1 }}
-            className="rounded-[2rem] border border-black/10 bg-white/75 p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035]"
+            className="h-fit rounded-[2rem] border border-black/10 bg-white/75 p-6 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035]"
           >
             <label className="text-sm font-bold text-slate-950 dark:text-white">
               Website prompt
@@ -117,32 +131,50 @@ export default function GeneratePage() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Example: Build a futuristic SaaS landing page for an AI resume tool with pricing, testimonials, FAQ and CTA."
-              className="mt-4 min-h-64 w-full resize-none rounded-3xl border border-black/10 bg-white/80 p-5 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-500 dark:border-white/10 dark:bg-black/30 dark:text-white dark:placeholder:text-white/35"
+              className="mt-4 min-h-56 w-full resize-none rounded-3xl border border-black/10 bg-white/80 p-5 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-violet-500 dark:border-white/10 dark:bg-black/30 dark:text-white dark:placeholder:text-white/35"
             />
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="mt-5 grid gap-3">
               <button
                 onClick={() => setStyle("modern")}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
+                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                  style === "modern"
+                    ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:text-cyan-300"
+                    : "border-black/10 bg-white/70 text-slate-700 hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
+                }`}
               >
-                <Wand2 size={17} />
-                Modern
+                <span className="flex items-center gap-2">
+                  <Wand2 size={17} />
+                  Modern
+                </span>
               </button>
 
               <button
                 onClick={() => setWebsiteType("responsive")}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
+                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                  websiteType === "responsive"
+                    ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:text-cyan-300"
+                    : "border-black/10 bg-white/70 text-slate-700 hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
+                }`}
               >
-                <MonitorSmartphone size={17} />
-                Responsive
+                <span className="flex items-center gap-2">
+                  <MonitorSmartphone size={17} />
+                  Responsive
+                </span>
               </button>
 
               <button
                 onClick={() => setStyle("premium")}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
+                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                  style === "premium"
+                    ? "border-violet-500 bg-violet-500/10 text-violet-700 dark:text-cyan-300"
+                    : "border-black/10 bg-white/70 text-slate-700 hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
+                }`}
               >
-                <Palette size={17} />
-                Premium UI
+                <span className="flex items-center gap-2">
+                  <Palette size={17} />
+                  Premium UI
+                </span>
               </button>
             </div>
 
@@ -175,66 +207,78 @@ export default function GeneratePage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.18 }}
-            className="rounded-[2rem] border border-black/10 bg-slate-950 p-6 text-white shadow-[0_22px_70px_rgba(15,23,42,0.18)] dark:border-white/10"
           >
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-cyan-400">
-                <Code2 size={20} />
+            <div className="mb-4 flex flex-col justify-between gap-4 rounded-[1.5rem] border border-black/10 bg-white/75 p-3 shadow-[0_16px_50px_rgba(15,23,42,0.07)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] sm:flex-row sm:items-center">
+              <div className="flex items-center gap-3 px-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-cyan-400 text-white">
+                  <Monitor size={18} />
+                </div>
+                <div>
+                  <p className="font-black text-slate-950 dark:text-white">
+                    Live Workspace
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-white/45">
+                    Preview and edit generated code
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <p className="font-black">Generated Code</p>
-                <p className="text-sm text-white/45">
-                  Response from CraftSite API
-                </p>
+              <div className="flex rounded-2xl border border-black/10 bg-white/70 p-1 dark:border-white/10 dark:bg-black/30">
+                <button
+                  onClick={() => setViewMode("preview")}
+                  className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                    viewMode === "preview"
+                      ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
+                      : "text-slate-600 dark:text-white/50"
+                  }`}
+                >
+                  Preview
+                </button>
+                <button
+                  onClick={() => setViewMode("code")}
+                  className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                    viewMode === "code"
+                      ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
+                      : "text-slate-600 dark:text-white/50"
+                  }`}
+                >
+                  Code
+                </button>
               </div>
             </div>
 
-            {!generatedCode && !isGenerating && (
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6">
-                <p className="text-sm leading-7 text-white/55">
-                  Your generated website code will appear here after you click
-                  Generate Website.
-                </p>
-
-                <div className="mt-6 space-y-4">
-                  {[
-                    "Understand business type",
-                    "Create page structure",
-                    "Generate visual direction",
-                    "Build responsive sections",
-                    "Prepare export-ready code",
-                  ].map((step, index) => (
-                    <div
-                      key={step}
-                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4"
-                    >
-                      <span className="text-sm text-white/70">{step}</span>
-                      <span className="text-xs text-white/35">
-                        0{index + 1}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+            {providerInfo?.isFallback && (
+              <div className="mb-4 rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-600 dark:text-orange-300">
+                AI providers are busy. Showing safe fallback preview.
               </div>
             )}
 
-            {isGenerating && (
-              <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-white/10 bg-white/[0.04]">
+            {providerInfo && !isGenerating && viewMode === "preview" && (
+              <div className="mb-4 flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-white/50">
+                <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
+                Generated by {providerInfo.provider === "openrouter" ? "OpenRouter" : providerInfo.provider === "gemini" ? "Gemini" : "Mock Fallback"}
+              </div>
+            )}
+
+            {isGenerating ? (
+              <div className="flex min-h-[620px] items-center justify-center rounded-[2rem] border border-black/10 bg-slate-950 p-8 text-white dark:border-white/10">
                 <div className="text-center">
                   <Loader2 className="mx-auto h-10 w-10 animate-spin text-cyan-300" />
                   <p className="mt-4 font-bold">CraftSite is generating...</p>
                   <p className="mt-2 text-sm text-white/45">
-                    Creating your website structure
+                    Creating your website and preparing live preview
                   </p>
                 </div>
               </div>
-            )}
-
-            {generatedCode && (
-              <div className="overflow-hidden rounded-3xl border border-white/10 bg-black/40">
+            ) : viewMode === "preview" ? (
+              <LivePreview code={generatedCode} />
+            ) : (
+              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-white">
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                  <p className="text-sm font-bold">GeneratedWebsite.tsx</p>
+                  <div className="flex items-center gap-3">
+                    <Code2 size={18} />
+                    <p className="text-sm font-bold">GeneratedWebsite.tsx</p>
+                  </div>
 
                   <button
                     onClick={() => navigator.clipboard.writeText(generatedCode)}
@@ -244,8 +288,11 @@ export default function GeneratePage() {
                   </button>
                 </div>
 
-                <pre className="max-h-[520px] overflow-auto p-5 text-sm leading-7 text-cyan-100">
-                  <code>{generatedCode}</code>
+                <pre className="max-h-[620px] overflow-auto p-5 text-sm leading-7 text-cyan-100">
+                  <code>
+                    {generatedCode ||
+                      "Generate a website to see React + Tailwind code here."}
+                  </code>
                 </pre>
               </div>
             )}
