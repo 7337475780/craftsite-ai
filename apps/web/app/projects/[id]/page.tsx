@@ -5,6 +5,8 @@ import { CraftSiteLogo } from "@/components/CraftSiteLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
   Code2,
@@ -19,14 +21,16 @@ import {
   Zap,
   Save,
   FolderOpen,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useState, useCallback, Suspense } from "react";
 import {
-  saveProject,
+  getProjectById,
+  updateProject,
+  deleteProject,
   generateProjectTitle,
 } from "@/lib/projects-storage";
-import type { AIProviderName } from "@/types/project";
+import type { AIProviderName, SavedProject } from "@/types/project";
 
 type GenerateResponse = {
   success: boolean;
@@ -41,13 +45,6 @@ type GenerateResponse = {
   };
 };
 
-const SUGGESTIONS = [
-  "AI SaaS landing page",
-  "Portfolio website",
-  "Startup homepage",
-  "Agency website",
-];
-
 const STEPS = [
   "Analyzing your prompt...",
   "Designing the layout...",
@@ -56,11 +53,15 @@ const STEPS = [
   "Spinning up the preview...",
 ];
 
-function GeneratePageContent() {
-  const searchParams = useSearchParams();
-  const initialPrompt = searchParams.get("prompt") || "";
+export default function ProjectDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
 
-  const [prompt, setPrompt] = useState(initialPrompt);
+  const [project, setProject] = useState<SavedProject | null>(null);
+  const [isNotFound, setIsNotFound] = useState(false);
+
+  const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("modern");
   const [websiteType, setWebsiteType] = useState("responsive");
   const [generatedCode, setGeneratedCode] = useState("");
@@ -73,10 +74,31 @@ function GeneratePageContent() {
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // When code is generated, the input area becomes compact
+  // Load project from localStorage on mount
+  useEffect(() => {
+    if (!id) return;
+    const found = getProjectById(id);
+    if (found) {
+      setProject(found);
+      setPrompt(found.prompt);
+      setStyle(found.style);
+      setWebsiteType(found.websiteType);
+      setGeneratedCode(found.generatedCode);
+      setProviderInfo({
+        provider: found.provider,
+        isFallback: found.isFallback,
+      });
+      setIsSaved(true);
+    } else {
+      setIsNotFound(true);
+    }
+  }, [id]);
+
+  // If code is generated or we are in generating state, input is compact
   const isCompact = generatedCode.length > 0 || isGenerating;
 
   const handleCopy = useCallback(async () => {
@@ -86,25 +108,53 @@ function GeneratePageContent() {
   }, [generatedCode]);
 
   const handleSave = useCallback(() => {
-    if (!generatedCode || !providerInfo) return;
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-    saveProject({
-      id,
-      title: generateProjectTitle(prompt),
+    if (!id || !generatedCode || !providerInfo) return;
+    const title = generateProjectTitle(prompt);
+    const success = updateProject(id, {
+      title,
       prompt,
       generatedCode,
       provider: providerInfo.provider,
       isFallback: providerInfo.isFallback,
       style,
       websiteType,
-      createdAt: now,
-      updatedAt: now,
     });
-    setIsSaved(true);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-  }, [generatedCode, prompt, providerInfo, style, websiteType]);
+
+    if (success) {
+      setIsSaved(true);
+      setSaveSuccess(true);
+      // Update local project metadata
+      setProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              title,
+              prompt,
+              generatedCode,
+              provider: providerInfo.provider,
+              isFallback: providerInfo.isFallback,
+              style,
+              websiteType,
+              updatedAt: new Date().toISOString(),
+            }
+          : null
+      );
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } else {
+      setError("Failed to save changes.");
+    }
+  }, [id, generatedCode, prompt, providerInfo, style, websiteType]);
+
+  const handleDelete = useCallback(() => {
+    if (!id) return;
+    if (confirm("Are you sure you want to delete this project?")) {
+      setIsDeleting(true);
+      deleteProject(id);
+      setTimeout(() => {
+        router.push("/projects");
+      }, 500);
+    }
+  }, [id, router]);
 
   const handleGenerate = async () => {
     try {
@@ -167,9 +217,39 @@ function GeneratePageContent() {
         ? "Gemini Flash"
         : "Safe Fallback";
 
+  if (isNotFound) {
+    return (
+      <main className="flex h-screen flex-col items-center justify-center craftsite-bg p-4 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-black/10 bg-white/80 shadow-sm dark:border-white/10 dark:bg-white/[0.04] mb-4">
+          <AlertTriangle size={24} className="text-red-500" />
+        </div>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
+          Project Not Found
+        </h1>
+        <p className="text-slate-500 dark:text-white/50 mb-6 max-w-sm">
+          The project you are trying to view does not exist or has been deleted.
+        </p>
+        <Link
+          href="/projects"
+          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02]"
+        >
+          <FolderOpen size={14} />
+          Back to Projects
+        </Link>
+      </main>
+    );
+  }
+
+  if (!project) {
+    return (
+      <main className="flex h-screen flex-col items-center justify-center craftsite-bg">
+        <Loader2 size={36} className="animate-spin text-violet-600 dark:text-cyan-400" />
+      </main>
+    );
+  }
+
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden craftsite-bg">
-
       {/* ── Premium Workspace Navbar ── */}
       <motion.header
         initial={{ opacity: 0, y: -12 }}
@@ -177,20 +257,18 @@ function GeneratePageContent() {
         transition={{ duration: 0.45, ease: "easeOut" }}
         className="workspace-navbar relative flex-none px-4 py-3 z-50"
       >
-        {/* Accent lines */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent dark:via-cyan-400/30" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-black/8 to-transparent dark:via-white/8" />
 
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between">
-
           {/* Left: Back + Logo */}
           <div className="flex items-center gap-5">
             <Link
-              href="/"
+              href="/projects"
               className="group flex items-center gap-1.5 rounded-full border border-black/10 bg-white/60 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-violet-400/60 hover:bg-white hover:text-violet-700 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
             >
               <ArrowLeft size={13} className="transition-transform group-hover:-translate-x-0.5" />
-              Exit
+              Projects
             </Link>
             <div className="h-5 w-px bg-gradient-to-b from-transparent via-black/15 to-transparent dark:via-white/15" />
             <CraftSiteLogo />
@@ -204,13 +282,11 @@ function GeneratePageContent() {
             </div>
             <span className="text-xs text-slate-400 dark:text-white/25">/</span>
             <span className="max-w-[200px] truncate rounded-full border border-violet-400/20 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300">
-              {prompt.trim().length > 0
-                ? prompt.slice(0, 32) + (prompt.length > 32 ? "…" : "")
-                : "New Generation"}
+              {project.title}
             </span>
           </div>
 
-          {/* Right: actions */}
+          {/* Right actions */}
           <div className="flex items-center gap-3">
             {/* Provider badge */}
             <AnimatePresence>
@@ -220,7 +296,6 @@ function GeneratePageContent() {
                   initial={{ opacity: 0, scale: 0.85, x: 12 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.85, x: 12 }}
-                  transition={{ duration: 0.3 }}
                   className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide sm:flex ${
                     providerInfo.isFallback
                       ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
@@ -241,7 +316,6 @@ function GeneratePageContent() {
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.85 }}
-                  transition={{ duration: 0.25 }}
                   onClick={handleSave}
                   disabled={isSaved}
                   className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all sm:flex ${
@@ -265,21 +339,22 @@ function GeneratePageContent() {
                   ) : (
                     <>
                       <Save size={12} />
-                      Save Project
+                      Save Changes
                     </>
                   )}
                 </motion.button>
               )}
             </AnimatePresence>
 
-            {/* Projects link */}
-            <Link
-              href="/projects"
-              className="hidden items-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:text-white/60 dark:hover:bg-white/10 sm:flex"
+            {/* Delete button */}
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="hidden items-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-red-600 shadow-sm transition hover:bg-red-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-red-400 dark:hover:bg-red-500/10 sm:flex"
             >
-              <FolderOpen size={12} />
-              Projects
-            </Link>
+              <Trash2 size={12} />
+              Delete
+            </button>
 
             {/* Copy code button */}
             <AnimatePresence>
@@ -308,15 +383,6 @@ function GeneratePageContent() {
               )}
             </AnimatePresence>
 
-            {/* System status */}
-            <div className="hidden items-center gap-2 rounded-full border border-black/8 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm dark:border-white/8 dark:bg-white/[0.04] dark:text-white/50 sm:flex">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              Online
-            </div>
-
             <ThemeToggle />
           </div>
         </div>
@@ -324,7 +390,6 @@ function GeneratePageContent() {
 
       {/* ── Main Workspace Body ── */}
       <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 overflow-hidden p-4 lg:flex-row lg:p-5">
-
         {/* Left Command Panel */}
         <motion.div
           layout
@@ -345,12 +410,10 @@ function GeneratePageContent() {
                 isCompact ? "text-xl" : "text-3xl"
               }`}
             >
-              {isCompact ? "Craft Again" : "AI Website Builder"}
+              Modify Project
             </motion.h1>
             <motion.p layout className="text-sm text-slate-500 dark:text-white/50">
-              {isCompact
-                ? "Edit your prompt or regenerate."
-                : "Describe your vision — CraftSite builds it."}
+              Refine your prompt or style preferences to update this site.
             </motion.p>
           </motion.div>
 
@@ -396,15 +459,8 @@ function GeneratePageContent() {
                   >
                     <span className="flex items-center gap-2">
                       <CheckCheck size={12} />
-                      Project saved successfully!
+                      Project updated!
                     </span>
-                    <Link
-                      href="/projects"
-                      className="flex items-center gap-1 font-bold underline underline-offset-2 hover:no-underline"
-                    >
-                      <FolderOpen size={11} />
-                      View Projects
-                    </Link>
                   </motion.div>
                 )}
 
@@ -424,12 +480,11 @@ function GeneratePageContent() {
               {/* Textarea */}
               <textarea
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={
-                  isCompact
-                    ? "Refine your prompt..."
-                    : "Build a sleek SaaS landing page with a hero, features, pricing..."
-                }
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  setIsSaved(false);
+                }}
+                placeholder="Refine your prompt..."
                 className={`w-full resize-none bg-transparent text-slate-900 outline-none placeholder:text-slate-400 transition-all duration-300 dark:text-white dark:placeholder:text-white/30 ${
                   isCompact ? "min-h-[90px] text-sm" : "min-h-[130px] text-lg"
                 }`}
@@ -441,36 +496,14 @@ function GeneratePageContent() {
                 }}
               />
 
-              {/* Quick suggestions */}
-              <AnimatePresence>
-                {!isCompact && !isGenerating && prompt.trim().length === 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 flex flex-wrap gap-2 overflow-hidden"
-                  >
-                    {SUGGESTIONS.map((sug, i) => (
-                      <motion.button
-                        key={sug}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        onClick={() => setPrompt(sug)}
-                        className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-all hover:border-violet-400/50 hover:bg-violet-50 hover:text-violet-700 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:text-white/55 dark:hover:border-cyan-400/40 dark:hover:bg-cyan-400/10 dark:hover:text-cyan-200"
-                      >
-                        {sug}
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Controls row */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/6 pt-4 dark:border-white/6">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => setStyle(style === "modern" ? "premium" : "modern")}
+                    onClick={() => {
+                      setStyle(style === "modern" ? "premium" : "modern");
+                      setIsSaved(false);
+                    }}
                     disabled={isGenerating}
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
                       style === "modern"
@@ -483,9 +516,10 @@ function GeneratePageContent() {
                   </button>
 
                   <button
-                    onClick={() =>
-                      setWebsiteType(websiteType === "responsive" ? "saas" : "responsive")
-                    }
+                    onClick={() => {
+                      setWebsiteType(websiteType === "responsive" ? "saas" : "responsive");
+                      setIsSaved(false);
+                    }}
                     disabled={isGenerating}
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
                       websiteType === "responsive"
@@ -518,7 +552,7 @@ function GeneratePageContent() {
                     ) : (
                       <>
                         <Wand2 size={13} />
-                        {isCompact ? "Regenerate" : "Generate"}
+                        Regenerate
                         <span className="hidden opacity-60 sm:inline">⌘↵</span>
                       </>
                     )}
@@ -528,34 +562,37 @@ function GeneratePageContent() {
             </div>
           </motion.div>
 
-          {/* Footer hint / Save button (mobile) */}
+          {/* Save & Delete (Mobile Only) */}
           <AnimatePresence>
-            {!isCompact && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center text-[11px] text-slate-400 dark:text-white/25"
-              >
-                Press <kbd className="rounded bg-black/8 px-1.5 py-0.5 font-mono text-[10px] dark:bg-white/10">⌘ Enter</kbd> to generate
-              </motion.p>
-            )}
             {isCompact && generatedCode && !isGenerating && (
-              <motion.button
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 6 }}
-                onClick={handleSave}
-                disabled={isSaved}
-                className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition-all sm:hidden ${
-                  isSaved
-                    ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                    : "border-violet-400/30 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
-                }`}
-              >
-                {isSaved ? <CheckCheck size={14} /> : <Save size={14} />}
-                {isSaved ? "Project Saved" : "Save Project"}
-              </motion.button>
+              <div className="flex flex-col gap-2 sm:hidden">
+                <motion.button
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  onClick={handleSave}
+                  disabled={isSaved}
+                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition-all ${
+                    isSaved
+                      ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
+                      : "border-violet-400/30 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
+                  }`}
+                >
+                  {isSaved ? <CheckCheck size={14} /> : <Save size={14} />}
+                  {isSaved ? "Saved" : "Save Changes"}
+                </motion.button>
+
+                <motion.button
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  onClick={handleDelete}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400"
+                >
+                  <Trash2 size={14} />
+                  Delete Project
+                </motion.button>
+              </div>
             )}
           </AnimatePresence>
         </motion.div>
@@ -732,46 +769,7 @@ function GeneratePageContent() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Empty state */}
-        <AnimatePresence>
-          {!isCompact && (
-            <motion.div
-              key="empty-hint"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="hidden items-center justify-center lg:flex lg:flex-1"
-            >
-              <div className="flex flex-col items-center gap-4 rounded-[2rem] border border-dashed border-black/10 p-16 text-center dark:border-white/10">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-black/10 bg-white/80 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-                  <Monitor size={24} className="text-slate-400 dark:text-white/30" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-600 dark:text-white/50">
-                    Your canvas is empty
-                  </p>
-                  <p className="mt-1 text-sm text-slate-400 dark:text-white/30">
-                    Generate a website to see it live here
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </main>
-  );
-}
-
-export default function GeneratePage() {
-  return (
-    <Suspense fallback={
-      <main className="flex h-screen flex-col items-center justify-center craftsite-bg">
-        <Loader2 size={36} className="animate-spin text-violet-600 dark:text-cyan-400" />
-      </main>
-    }>
-      <GeneratePageContent />
-    </Suspense>
   );
 }
