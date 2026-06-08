@@ -19,12 +19,14 @@ import {
   Zap,
   Save,
   FolderOpen,
+  Download,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useCallback, Suspense } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiPost } from "@/lib/api-client";
+import { exportProjectAsZip } from "@/lib/export-project";
 import {
   saveProject,
   generateProjectTitle,
@@ -60,6 +62,7 @@ const STEPS = [
 ];
 
 function GeneratePageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialPrompt = searchParams.get("prompt") || "";
 
@@ -79,7 +82,29 @@ function GeneratePageContent() {
   const [isSaved, setIsSaved] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
   const { user } = useAuth();
+
+  const handleExport = useCallback(async () => {
+    if (!generatedCode) return;
+    setIsExporting(true);
+    setError("");
+    try {
+      const title = generateProjectTitle(prompt) || "CraftSite Export";
+      await exportProjectAsZip({
+        title,
+        prompt,
+        generatedCode,
+      });
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err?.message || "Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [generatedCode, prompt]);
 
   // When code is generated, the input area becomes compact
   const isCompact = generatedCode.length > 0 || isGenerating;
@@ -91,6 +116,10 @@ function GeneratePageContent() {
   }, [generatedCode]);
 
   const handleSave = useCallback(async () => {
+    if (!user) {
+      router.push("/sign-in");
+      return;
+    }
     if (!generatedCode || !providerInfo) return;
     setIsSaving(true);
     setError("");
@@ -138,7 +167,7 @@ function GeneratePageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [generatedCode, prompt, providerInfo, style, websiteType]);
+  }, [generatedCode, prompt, providerInfo, style, websiteType, user, router]);
 
   const handleGenerate = async () => {
     try {
@@ -333,6 +362,39 @@ function GeneratePageContent() {
                     <>
                       <Copy size={12} />
                       Copy Code
+                    </>
+                  )}
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            {/* Export ZIP button */}
+            <AnimatePresence>
+              {generatedCode && !isGenerating && (
+                <motion.button
+                  key="export"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ duration: 0.25 }}
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  className="hidden items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-3.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-sm transition-all hover:border-violet-400/40 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:text-white/70 dark:hover:bg-white/10 sm:flex cursor-pointer disabled:opacity-50"
+                >
+                  {exportSuccess ? (
+                    <>
+                      <CheckCheck size={12} className="text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">Exported!</span>
+                    </>
+                  ) : isExporting ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin text-violet-600 dark:text-cyan-400" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={12} />
+                      Export ZIP
                     </>
                   )}
                 </motion.button>

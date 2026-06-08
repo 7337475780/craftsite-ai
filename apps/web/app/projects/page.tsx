@@ -19,7 +19,9 @@ import {
   Wand2,
   Plus,
   Clock,
+  Download,
 } from "lucide-react";
+import { exportProjectAsZip } from "@/lib/export-project";
 
 function ProviderBadge({ provider, isFallback }: { provider: string; isFallback: boolean }) {
   const label =
@@ -241,8 +243,19 @@ export default function ProjectsPage() {
                         Open
                       </Link>
                       <button
+                        onClick={() => exportProjectAsZip({
+                          title: project.title,
+                          prompt: project.prompt,
+                          generatedCode: project.generatedCode
+                        })}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-slate-50 text-slate-400 transition-all hover:border-violet-300/50 hover:bg-violet-50 hover:text-violet-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/30 dark:hover:border-violet-400/30 dark:hover:bg-violet-500/10 dark:hover:text-violet-400 cursor-pointer"
+                        aria-label="Export project as ZIP"
+                      >
+                        <Download size={14} />
+                      </button>
+                      <button
                         onClick={() => handleDelete(project.id)}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-slate-50 text-slate-400 transition-all hover:border-red-300/50 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/30 dark:hover:border-red-400/30 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-slate-50 text-slate-400 transition-all hover:border-red-300/50 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/30 dark:hover:border-red-400/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 cursor-pointer"
                         aria-label="Delete project"
                       >
                         <Trash2 size={14} />
