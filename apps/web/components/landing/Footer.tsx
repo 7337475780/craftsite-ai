@@ -62,7 +62,7 @@ export function Footer() {
                 websites from a single prompt.
               </p>
 
-              <button className="mt-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.2)] dark:border-white/10 dark:bg-white dark:text-slate-950">
+              <button className="mt-6 inline-flex items-center gap-2 overflow-hidden rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-[0_0_25px_rgba(124,58,237,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(124,58,237,0.5)] dark:border-white/10">
                 Start building
                 <ArrowUpRight size={16} />
               </button>

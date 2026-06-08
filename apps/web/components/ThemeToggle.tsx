@@ -3,6 +3,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -14,10 +15,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <button
-        aria-label="Loading theme"
-        className="h-10 w-10 rounded-xl border border-black/10 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
-      />
+      <div className="h-9 w-9 animate-pulse rounded-full border border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5" />
     );
   }
 
@@ -26,10 +24,22 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white/45 text-slate-900 shadow-sm backdrop-blur-xl transition hover:scale-105 hover:bg-white/80 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+      className="relative flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition-all duration-200 hover:border-violet-400/40 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:text-white/80 dark:hover:bg-white/10"
       aria-label="Toggle theme"
     >
-      {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={isDark ? "sun" : "moon"}
+          initial={{ opacity: 0, rotate: -30, scale: 0.6 }}
+          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+          exit={{ opacity: 0, rotate: 30, scale: 0.6 }}
+          transition={{ duration: 0.2 }}
+          className="absolute"
+        >
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
+        </motion.span>
+      </AnimatePresence>
     </button>
   );
 }
+

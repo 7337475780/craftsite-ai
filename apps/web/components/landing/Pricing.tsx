@@ -187,7 +187,7 @@ export function Pricing() {
                     className={`mt-8 w-full rounded-2xl px-5 py-3.5 text-sm font-bold transition hover:-translate-y-0.5 ${
                       plan.popular
                         ? "bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 text-white shadow-[0_0_35px_rgba(124,58,237,0.45)] hover:shadow-[0_0_45px_rgba(124,58,237,0.6)]"
-                        : "border border-black/10 bg-slate-950 text-white hover:shadow-[0_18px_40px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white dark:hover:text-slate-950"
+                        : "border border-violet-500/30 bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md hover:shadow-[0_12px_30px_rgba(124,58,237,0.35)] dark:border-white/10 dark:from-white/10 dark:to-white/10 dark:hover:from-white dark:hover:to-white dark:hover:text-slate-950"
                     }`}
                   >
                     {plan.cta}

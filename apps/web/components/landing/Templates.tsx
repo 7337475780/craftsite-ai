@@ -184,7 +184,7 @@ export function Templates() {
                   {template.description}
                 </p>
 
-                <button className="mt-6 w-full rounded-2xl border border-black/10 bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white dark:hover:text-slate-950">
+                <button className="mt-6 w-full rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-600 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(124,58,237,0.4)] dark:border-white/10 dark:from-white/10 dark:to-white/10 dark:hover:from-white dark:hover:to-white dark:hover:text-slate-950">
                   Use template
                 </button>
               </div>

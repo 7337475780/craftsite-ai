@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
+import { Reveal } from "@/components/animations/Reveal";
 
 const generationSteps = [
   "Understanding your idea",
@@ -27,7 +28,7 @@ export function Hero() {
 
       <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
         {/* Left Content */}
-        <div>
+        <Reveal duration={0.8} y={40}>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-4 py-2 text-sm text-slate-700 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70">
             <Sparkles size={16} className="text-violet-500 dark:text-cyan-300" />
             AI Website Builder for creators, startups & developers
@@ -91,10 +92,10 @@ export function Hero() {
               Responsive by default
             </div>
           </div>
-        </div>
+        </Reveal>
 
         {/* Right Product Preview */}
-        <div className="relative">
+        <Reveal delay={0.2} duration={0.8} y={40} className="relative">
           <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-violet-500/20 via-blue-500/10 to-cyan-400/20 blur-2xl" />
 
           <div className="glass-card neon-card relative rounded-[2rem] p-4">
@@ -225,7 +226,7 @@ export function Hero() {
           <div className="absolute -right-6 top-10 hidden rounded-2xl border border-black/10 bg-white/80 px-5 py-3 text-sm font-medium text-slate-700 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-black/60 dark:text-white/70 md:block">
             Clean React + Tailwind code
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

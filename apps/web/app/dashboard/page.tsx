@@ -69,7 +69,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  <button className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white dark:bg-white dark:text-slate-950">
+                  <button className="rounded-xl border border-violet-500/20 bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:shadow-[0_8px_20px_rgba(124,58,237,0.4)] dark:from-white/10 dark:to-white/10 dark:hover:from-white dark:hover:to-white dark:hover:text-slate-950">
                     Open
                   </button>
                 </div>
@@ -77,9 +77,12 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-black/10 bg-slate-950 p-6 text-white dark:border-white/10">
-            <h3 className="text-xl font-black">AI activity</h3>
-            <div className="mt-6 space-y-4">
+          <div className="relative overflow-hidden rounded-[2rem] border border-black/10 bg-gradient-to-br from-violet-600 via-purple-700 to-blue-600 p-6 text-white shadow-[0_0_60px_rgba(124,58,237,0.3)] dark:border-violet-400/20">
+            {/* Glow blobs */}
+            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-400/25 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-10 left-0 h-40 w-40 rounded-full bg-violet-800/40 blur-2xl" />
+            <h3 className="relative z-10 text-xl font-black">AI activity</h3>
+            <div className="relative z-10 mt-6 space-y-4">
               {[
                 "Generated hero section",
                 "Created pricing layout",
@@ -87,7 +90,7 @@ export default function DashboardPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/65"
+                  className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm text-white/80 backdrop-blur-sm"
                 >
                   {item}
                 </div>
