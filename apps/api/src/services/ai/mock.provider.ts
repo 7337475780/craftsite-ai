@@ -1,5 +1,6 @@
 import type {
   AIProvider,
+  EditWebsiteInput,
   GenerateWebsiteInput,
   GenerateWebsiteOutput,
 } from "./ai-provider.js";
@@ -99,6 +100,71 @@ export default function GeneratedWebsite() {
   );
 }
 `.trim();
+
+    return {
+      generatedCode,
+      provider: "mock",
+      isFallback: true,
+    };
+  }
+
+  async editWebsite(
+    input: EditWebsiteInput,
+  ): Promise<GenerateWebsiteOutput> {
+    // Escape backtick-sensitive content for template literal safety
+    const escapedInstruction = input.editInstruction.replace(/`/g, "'");
+
+    const generatedCode = `export default function GeneratedWebsite() {
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <h1 className="text-2xl font-black">CraftSite Preview</h1>
+
+        <div className="hidden items-center gap-6 text-sm text-white/60 md:flex">
+          <a href="#">Features</a>
+          <a href="#">Pricing</a>
+          <a href="#">Reviews</a>
+        </div>
+
+        <button className="rounded-full bg-white px-5 py-2 text-sm font-bold text-slate-950">
+          Get Started
+        </button>
+      </nav>
+
+      <section className="mx-auto max-w-7xl px-6 py-8 text-center">
+        <div className="mx-auto mb-6 inline-flex rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-2 text-sm text-violet-300">
+          ✦ Edited with CraftSite AI
+        </div>
+
+        <div className="mx-auto mb-4 max-w-lg rounded-2xl border border-violet-400/20 bg-violet-500/10 px-5 py-3 text-sm text-violet-200">
+          Edit instruction applied (fallback mode)
+        </div>
+
+        <h2 className="mx-auto max-w-5xl text-5xl font-black leading-tight md:text-7xl">
+          Your edited website is ready
+        </h2>
+
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/60">
+          AI providers are currently unavailable. This is a safe fallback edit preview.
+        </p>
+
+        <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+          <button className="rounded-2xl bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-4 text-sm font-bold text-white">
+            Start Building
+          </button>
+
+          <button className="rounded-2xl border border-white/10 px-6 py-4 text-sm font-bold text-white/80">
+            View Templates
+          </button>
+        </div>
+      </section>
+
+      <footer className="mx-auto max-w-7xl px-6 py-10 text-center text-sm text-white/40">
+        CraftSite AI — Fallback Edit Mode.
+      </footer>
+    </main>
+  );
+}`;
 
     return {
       generatedCode,

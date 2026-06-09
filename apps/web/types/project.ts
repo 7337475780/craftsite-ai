@@ -14,3 +14,14 @@ export type SavedProject = {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 };
+
+// A version snapshot of a project's generated code
+export type ProjectVersion = {
+  id: string;
+  projectId: string;
+  userId: string;
+  versionNumber: number;
+  title?: string;
+  editPrompt?: string;
+  createdAt: string; // ISO date string
+};

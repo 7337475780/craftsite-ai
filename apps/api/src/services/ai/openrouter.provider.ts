@@ -1,9 +1,11 @@
 import type {
   AIProvider,
+  EditWebsiteInput,
   GenerateWebsiteInput,
   GenerateWebsiteOutput,
 } from "./ai-provider.js";
 import { buildWebsiteGenerationPrompt } from "./prompts.js";
+import { buildWebsiteEditPrompt } from "./edit-prompts.js";
 
 type OpenRouterResponse = {
   choices?: Array<{
@@ -218,6 +220,94 @@ ${brokenCode}
     ]);
 
     return cleanGeneratedCode(data.choices?.[0]?.message?.content || "");
+  }
+
+  private async repairEditCode(brokenCode: string): Promise<string> {
+    const repairPrompt = `
+You are a TSX repair engine.
+
+The following edited React component is incomplete or invalid.
+
+Your job:
+- Fix it into complete valid JSX/TSX.
+- Return ONLY valid JSX/TSX code.
+- Do NOT include markdown.
+- Do NOT include explanations.
+- Only import from lucide-react if needed. No other imports.
+- Do NOT use SVG.
+- Do NOT use external libraries.
+- Do NOT use array.map().
+- Keep it compact.
+- Ensure every className string is on one line.
+- Ensure the component starts with:
+export default function GeneratedWebsite() {
+- Ensure the component ends with:
+}
+
+Broken code:
+${brokenCode}
+`.trim();
+
+    const data = await this.callOpenRouter([
+      {
+        role: "system",
+        content:
+          "You repair broken TSX. Return only complete valid JSX code. No markdown. No explanation.",
+      },
+      {
+        role: "user",
+        content: repairPrompt,
+      },
+    ]);
+
+    return cleanGeneratedCode(data.choices?.[0]?.message?.content || "");
+  }
+
+  async editWebsite(
+    input: EditWebsiteInput,
+  ): Promise<GenerateWebsiteOutput> {
+    const prompt = buildWebsiteEditPrompt(input);
+
+    const data = await this.callOpenRouter([
+      {
+        role: "system",
+        content:
+          "Return only the complete updated JSX code. No markdown. No explanation. The component must finish completely and end with a closing brace.",
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ]);
+
+    const rawCode = data.choices?.[0]?.message?.content || "";
+    const finishReason = data.choices?.[0]?.finish_reason;
+    const generatedCode = cleanGeneratedCode(rawCode);
+
+    if (finishReason !== "length" && isValidGeneratedCode(generatedCode)) {
+      return {
+        generatedCode,
+        provider: "openrouter",
+        isFallback: false,
+      };
+    }
+
+    console.warn(
+      "OpenRouter edit returned invalid/incomplete code. Trying repair...",
+    );
+
+    const repairedCode = await this.repairEditCode(generatedCode || rawCode);
+
+    if (isValidGeneratedCode(repairedCode)) {
+      console.warn("OpenRouter edit repair successful.");
+      return {
+        generatedCode: repairedCode,
+        provider: "openrouter",
+        isFallback: false,
+      };
+    }
+
+    throw new Error("OpenRouter edit returned invalid code and repair failed.");
   }
 
   async generateWebsite(

@@ -10,6 +10,13 @@ export type GenerateWebsiteOutput = {
   isFallback: boolean;
 };
 
+export type EditWebsiteInput = {
+  currentCode: string;
+  editInstruction: string;
+  originalPrompt?: string;
+};
+
 export interface AIProvider {
   generateWebsite(input: GenerateWebsiteInput): Promise<GenerateWebsiteOutput>;
+  editWebsite?(input: EditWebsiteInput): Promise<GenerateWebsiteOutput>;
 }

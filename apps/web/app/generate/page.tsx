@@ -20,9 +20,10 @@ import {
   Save,
   FolderOpen,
   Download,
+  Sparkles,
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useRef, Suspense } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiPost } from "@/lib/api-client";
@@ -85,6 +86,13 @@ function GeneratePageContent() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const { user } = useAuth();
+
+  // ── Refine (unsaved edit) State ──────────────────────────────────────────
+  const [refineInstruction, setRefineInstruction] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const [refineSuccess, setRefineSuccess] = useState(false);
+  const [refineError, setRefineError] = useState("");
+  const refineInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = useCallback(async () => {
     if (!generatedCode) return;
@@ -168,6 +176,44 @@ function GeneratePageContent() {
       setIsSaving(false);
     }
   }, [generatedCode, prompt, providerInfo, style, websiteType, user, router]);
+
+  // ── Refine Handler (unsaved edit on generate page) ─────────────────────
+  const handleRefine = useCallback(async () => {
+    if (!generatedCode) return;
+    if (refineInstruction.trim().length < 5) {
+      setRefineError("Please enter at least 5 characters.");
+      return;
+    }
+    setRefineError("");
+    setRefineSuccess(false);
+    setIsRefining(true);
+    try {
+      const result = await apiPost("/api/generate/edit", {
+        currentCode: generatedCode,
+        editInstruction: refineInstruction.trim(),
+        originalPrompt: prompt,
+      });
+      if (!result.success) {
+        throw new Error(result.message || "Refine failed.");
+      }
+      setGeneratedCode(result.data?.generatedCode || generatedCode);
+      if (result.data) {
+        setProviderInfo({
+          provider: result.data.provider,
+          isFallback: result.data.isFallback,
+        });
+      }
+      setRefineInstruction("");
+      setRefineSuccess(true);
+      setIsSaved(false);
+      setTimeout(() => setRefineSuccess(false), 3000);
+      setViewMode("preview");
+    } catch (err) {
+      setRefineError(err instanceof Error ? err.message : "Refine failed.");
+    } finally {
+      setIsRefining(false);
+    }
+  }, [generatedCode, refineInstruction, prompt, providerInfo]);
 
   const handleGenerate = async () => {
     try {
@@ -655,6 +701,69 @@ function GeneratePageContent() {
                 )}
                 {isSaving ? "Saving..." : isSaved ? "Project Saved" : "Save Project"}
               </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* ── Refine Panel (unsaved edit on generate page) ── */}
+          <AnimatePresence>
+            {isCompact && generatedCode && !isGenerating && !isRefining && (
+              <motion.div
+                key="refine-panel"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.25 }}
+                className="flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
+              >
+                <div className="px-5 py-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-blue-500">
+                      <Sparkles size={12} className="text-white" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-700 dark:text-white/70">Refine before saving</p>
+                    {refineSuccess && (
+                      <span className="ml-auto flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+                        <CheckCheck size={9} />
+                        Applied!
+                      </span>
+                    )}
+                  </div>
+
+                  {refineError && (
+                    <p className="mb-2 text-[11px] text-red-600 dark:text-red-400">{refineError}</p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <input
+                      ref={refineInputRef}
+                      type="text"
+                      value={refineInstruction}
+                      onChange={(e) => {
+                        setRefineInstruction(e.target.value);
+                        setRefineError("");
+                      }}
+                      placeholder="e.g. Add a dark theme toggle..."
+                      disabled={isRefining}
+                      className="flex-1 rounded-xl border border-black/10 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 transition-all focus:border-violet-400/50 focus:bg-white focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)] dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/30"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleRefine();
+                      }}
+                    />
+                    <button
+                      onClick={handleRefine}
+                      disabled={isRefining || refineInstruction.trim().length < 5}
+                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
+                    >
+                      {isRefining ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={12} />
+                      )}
+                      {isRefining ? "Refining..." : "Refine"}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </motion.div>

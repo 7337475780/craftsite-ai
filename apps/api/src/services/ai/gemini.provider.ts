@@ -1,9 +1,11 @@
 import type {
   AIProvider,
+  EditWebsiteInput,
   GenerateWebsiteInput,
   GenerateWebsiteOutput,
 } from "./ai-provider.js";
 import { buildWebsiteGenerationPrompt } from "./prompts.js";
+import { buildWebsiteEditPrompt } from "./edit-prompts.js";
 
 type GeminiResponse = {
   candidates?: Array<{
@@ -192,6 +194,88 @@ export class GeminiProvider implements AIProvider {
     if (!this.apiKey) {
       throw new Error("GEMINI_API_KEY is missing in .env");
     }
+  }
+
+  async editWebsite(
+    input: EditWebsiteInput,
+  ): Promise<GenerateWebsiteOutput> {
+    const prompt = buildWebsiteEditPrompt(input);
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": this.apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `${prompt}
+
+Extra Gemini-specific instruction:
+Return only code. Start with export default function GeneratedWebsite() and end with the final closing brace. No markdown.`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 4500,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      if (response.status === 429) {
+        throw new Error(`GEMINI_RATE_LIMIT:${errorText}`);
+      }
+
+      throw new Error(`Gemini edit request failed: ${response.status} ${errorText}`);
+    }
+
+    const data = (await response.json()) as GeminiResponse;
+
+    const rawCode =
+      data.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text || "")
+        .join("") || "";
+
+    const generatedCode = normalizeNewLinesInsideStrings(
+      cleanGeneratedCode(rawCode),
+    );
+
+    if (!isValidGeneratedCode(generatedCode)) {
+      console.warn("Gemini edit returned code that failed strict validation.");
+      console.warn("Raw Gemini edit output preview:", rawCode.slice(0, 800));
+
+      if (
+        generatedCode.includes("export default function GeneratedWebsite") &&
+        generatedCode.includes("return") &&
+        generatedCode.trim().endsWith("}")
+      ) {
+        console.warn("Gemini edit code passed basic validation. Returning it.");
+        return {
+          generatedCode,
+          provider: "gemini",
+          isFallback: false,
+        };
+      }
+
+      throw new Error("Gemini did not return valid edited TSX code.");
+    }
+
+    return {
+      generatedCode,
+      provider: "gemini",
+      isFallback: false,
+    };
   }
 
   async generateWebsite(
