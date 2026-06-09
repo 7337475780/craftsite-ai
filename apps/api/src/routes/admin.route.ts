@@ -27,6 +27,9 @@ router.get("/overview", async (req, res) => {
       totalUsageLogs,
       recentUsers,
       recentProjects,
+      totalRevenueData,
+      paidUsers,
+      recentPayments,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.project.count(),
@@ -71,11 +74,11 @@ router.get("/overview", async (req, res) => {
         totalExports,
         totalShareViews,
         totalUsageLogs,
-        totalRevenue: arguments[10]?._sum?.amount || 0,
-        paidUsers: arguments[11] || 0,
+        totalRevenue: totalRevenueData?._sum?.amount || 0,
+        paidUsers: paidUsers || 0,
         recentUsers,
         recentProjects,
-        recentPayments: arguments[12] || [],
+        recentPayments: recentPayments || [],
       },
     });
   } catch (err) {

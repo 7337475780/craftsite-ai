@@ -77,7 +77,7 @@ export const markPaymentSuccess = async (
   }
 
   // Use a transaction to ensure atomic updates
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: any) => {
     const payment = await tx.payment.findUnique({
       where: { razorpayOrderId: orderId },
     });

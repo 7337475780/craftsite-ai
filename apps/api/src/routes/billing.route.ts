@@ -71,7 +71,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response): P
   } catch (error: any) {
     console.error("Error creating order:", error);
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: "Invalid input data", errors: error.errors });
+      res.status(400).json({ success: false, message: "Invalid input data", errors: error.issues });
       return;
     }
     res.status(500).json({ success: false, message: error.message || "Failed to create order" });
@@ -106,7 +106,7 @@ router.post("/verify-payment", requireAuth, async (req: Request, res: Response):
   } catch (error: any) {
     console.error("Error verifying payment:", error);
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, message: "Invalid input data", errors: error.errors });
+      res.status(400).json({ success: false, message: "Invalid input data", errors: error.issues });
       return;
     }
     res.status(400).json({ success: false, message: error.message || "Failed to verify payment" });
