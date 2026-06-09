@@ -3,6 +3,7 @@
 import { LivePreview } from "@/components/generate/LivePreview";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UpgradeComingSoonModal } from "@/components/billing/UpgradeComingSoonModal";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -480,36 +481,7 @@ function GeneratePageContent() {
       {/* Upgrade Modal */}
       <AnimatePresence>
         {showUpgradeModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm overflow-hidden rounded-[2rem] border border-black/10 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900"
-            >
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300">
-                <Zap size={24} className="fill-current" />
-              </div>
-              <h2 className="text-center text-xl font-black text-slate-900 dark:text-white">Out of Credits</h2>
-              <p className="mt-2 text-center text-sm text-slate-500 dark:text-white/60">
-                You've used all your free credits. Upgrade to a Pro plan to unlock unlimited AI generations and edits.
-              </p>
-              <div className="mt-6 flex flex-col gap-2">
-                <button
-                  disabled
-                  className="rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-400 dark:bg-white/5 dark:text-white/30"
-                >
-                  Upgrade plans coming soon
-                </button>
-                <button
-                  onClick={() => setShowUpgradeModal(false)}
-                  className="rounded-xl border border-black/10 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </div>
+          <UpgradeComingSoonModal onClose={() => setShowUpgradeModal(false)} />
         )}
       </AnimatePresence>
 

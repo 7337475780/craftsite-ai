@@ -18,6 +18,8 @@ import {
   Cpu,
   Plus,
   Globe,
+  CreditCard,
+  Zap
 } from "lucide-react";
 
 function formatDate(iso: string | undefined): string {
@@ -201,25 +203,58 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* AI Activity Side Card */}
-          <div className="relative overflow-hidden rounded-[2rem] border border-black/10 bg-gradient-to-br from-violet-600 via-purple-700 to-blue-600 p-6 text-white shadow-[0_0_60px_rgba(124,58,237,0.3)] dark:border-violet-400/20">
+          {/* Plan & Usage Side Card */}
+          <div className="relative overflow-hidden rounded-[2rem] border border-black/10 bg-gradient-to-br from-violet-600 via-purple-700 to-blue-600 p-6 text-white shadow-[0_0_60px_rgba(124,58,237,0.3)] dark:border-violet-400/20 flex flex-col">
             {/* Glow blobs */}
             <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-400/25 blur-2xl" />
             <div className="pointer-events-none absolute -bottom-10 left-0 h-40 w-40 rounded-full bg-violet-800/40 blur-2xl" />
-            <h3 className="relative z-10 text-xl font-black">AI activity</h3>
-            <div className="relative z-10 mt-6 space-y-4">
-              {[
-                "Active model: Gemini 2.5 Flash / OpenRouter",
-                "Intelligent fallback routing configured",
-                "Sandpack Live Preview environment ready",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-white/15 bg-white/10 p-4 text-xs text-white/80 backdrop-blur-sm"
-                >
-                  {item}
+            
+            <div className="relative z-10 flex items-center justify-between">
+              <h3 className="text-xl font-black">Plan & Usage</h3>
+              <div className="flex h-8 items-center rounded-full bg-white/20 px-3 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
+                {user?.plan || "Free"}
+              </div>
+            </div>
+
+            <div className="relative z-10 mt-6 flex-1 space-y-4">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap size={16} className="text-cyan-300" />
+                  <span className="text-sm font-bold text-white/90">Credits Remaining</span>
                 </div>
-              ))}
+                <span className="text-lg font-black">{user?.credits ?? "..."}</span>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <p className="text-xs text-white/80 leading-relaxed">
+                  Generate beautiful websites and edit them using your AI credits. Upgrade to unlock more credits and premium features.
+                </p>
+              </div>
+            </div>
+
+            <div className="relative z-10 mt-6 grid grid-cols-2 gap-3">
+              {user?.plan === "free" ? (
+                <Link
+                  href="/pricing"
+                  className="flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-violet-700 transition hover:bg-violet-50 hover:shadow-lg"
+                >
+                  Upgrade
+                </Link>
+              ) : (
+                <Link
+                  href="/pricing"
+                  className="flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-violet-700 transition hover:bg-violet-50 hover:shadow-lg"
+                >
+                  View Plans
+                </Link>
+              )}
+              <Link
+                href="/billing"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20"
+              >
+                <CreditCard size={14} />
+                Billing
+              </Link>
             </div>
           </div>
         </div>

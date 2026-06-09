@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   Zap,
+  Receipt,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
@@ -20,7 +21,8 @@ const sidebarItems = [
   { label: "Generate", href: "/generate", icon: Sparkles },
   { label: "Projects", href: "/projects", icon: FolderOpen },
   { label: "Templates", href: "/templates", icon: GalleryVerticalEnd },
-  { label: "Pricing", href: "/pricing", icon: CreditCard },
+  { label: "Pricing", href: "/pricing", icon: Zap },
+  { label: "Billing", href: "/billing", icon: Receipt },
   { label: "Usage", href: "/usage", icon: Zap },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
