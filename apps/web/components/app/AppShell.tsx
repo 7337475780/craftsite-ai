@@ -11,6 +11,7 @@ import {
   LogOut,
   Zap,
   Receipt,
+  Activity,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
@@ -24,6 +25,7 @@ const sidebarItems = [
   { label: "Pricing", href: "/pricing", icon: Zap },
   { label: "Billing", href: "/billing", icon: Receipt },
   { label: "Usage", href: "/usage", icon: Zap },
+  { label: "Activity", href: "/activity", icon: Activity },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

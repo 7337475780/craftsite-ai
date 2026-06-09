@@ -8,6 +8,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { trackClientEvent } from "@/lib/analytics-client";
 
 const FAQ = [
   {
@@ -216,6 +217,7 @@ export function Pricing() {
                   ) : (
                     <Link
                       href={ctaHref}
+                      onClick={() => trackClientEvent("pricing_clicked", { plan: plan.id, target: ctaHref })}
                       className={`mt-8 flex w-full justify-center rounded-2xl px-5 py-3.5 text-sm font-bold transition hover:-translate-y-0.5 ${
                         user?.plan === plan.id
                           ? "border border-violet-400/30 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { generateWebsiteWithAI, editWebsiteWithAI } from "../services/ai/index.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { UsageService } from "../services/usage.service.js";
+import { AnalyticsService } from "../services/analytics.service.js";
+import { EVENTS } from "../lib/events.js";
 
 export const generateRouter = Router();
 
@@ -52,6 +54,18 @@ generateRouter.post("/", requireAuth, async (req, res, next) => {
       1,
       { prompt, provider: aiResult.provider, isFallback: aiResult.isFallback }
     );
+
+    AnalyticsService.trackEvent({
+      userId,
+      event: EVENTS.WEBSITE_GENERATED,
+      metadata: {
+        provider: aiResult.provider,
+        isFallback: aiResult.isFallback,
+        creditsUsed: 1,
+      },
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+      userAgent: req.headers["user-agent"] || undefined,
+    });
 
     return res.json({
       success: true,
@@ -120,6 +134,18 @@ generateRouter.post("/edit", requireAuth, async (req, res, next) => {
       1,
       { editInstruction, provider: aiResult.provider, isFallback: aiResult.isFallback }
     );
+
+    AnalyticsService.trackEvent({
+      userId,
+      event: EVENTS.WEBSITE_EDITED,
+      metadata: {
+        provider: aiResult.provider,
+        isFallback: aiResult.isFallback,
+        creditsUsed: 1,
+      },
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+      userAgent: req.headers["user-agent"] || undefined,
+    });
 
     return res.json({
       success: true,

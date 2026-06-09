@@ -10,6 +10,8 @@ import {
   clearAuthCookie,
   getSafeUser,
 } from "../lib/auth.js";
+import { AnalyticsService } from "../services/analytics.service.js";
+import { EVENTS } from "../lib/events.js";
 
 const router = Router();
 
@@ -72,6 +74,13 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
     const token = signAuthToken(user);
     setAuthCookie(res, token);
 
+    AnalyticsService.trackEvent({
+      userId: user.id,
+      event: EVENTS.USER_REGISTERED,
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+      userAgent: req.headers["user-agent"] || undefined,
+    });
+
     res.status(201).json({
       success: true,
       data: getSafeUser(user),
@@ -124,6 +133,13 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
     const token = signAuthToken(user);
     setAuthCookie(res, token);
 
+    AnalyticsService.trackEvent({
+      userId: user.id,
+      event: EVENTS.USER_LOGGED_IN,
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+      userAgent: req.headers["user-agent"] || undefined,
+    });
+
     res.json({
       success: true,
       data: getSafeUser(user),
@@ -134,7 +150,18 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
 });
 
 // POST /api/auth/logout
-router.post("/logout", (_req: Request, res: Response) => {
+router.post("/logout", (req: Request, res: Response) => {
+  const userId = (req as any).user?.id || undefined;
+  
+  if (userId) {
+    AnalyticsService.trackEvent({
+      userId,
+      event: EVENTS.USER_LOGGED_OUT,
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+      userAgent: req.headers["user-agent"] || undefined,
+    });
+  }
+
   clearAuthCookie(res);
   res.json({ success: true, message: "Logged out successfully" });
 });
@@ -293,6 +320,13 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     const token = signAuthToken(user);
     setAuthCookie(res, token);
 
+    AnalyticsService.trackEvent({
+      userId: user.id,
+      event: EVENTS.OAUTH_LOGIN_GOOGLE,
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+      userAgent: req.headers["user-agent"] || undefined,
+    });
+
     res.redirect(successRedirect);
   } catch (err) {
     console.error("Google OAuth Error:", err);
@@ -441,6 +475,13 @@ router.get("/github/callback", async (req: Request, res: Response) => {
     // Sign Token and set HttpOnly cookie
     const token = signAuthToken(user);
     setAuthCookie(res, token);
+
+    AnalyticsService.trackEvent({
+      userId: user.id,
+      event: EVENTS.OAUTH_LOGIN_GITHUB,
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+      userAgent: req.headers["user-agent"] || undefined,
+    });
 
     res.redirect(successRedirect);
   } catch (err) {

@@ -8,6 +8,7 @@ import { CreditCard, Zap, Check, ArrowRight, History, Crown } from "lucide-react
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api-client";
+import { trackClientEvent } from "@/lib/analytics-client";
 
 export default function BillingPage() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function BillingPage() {
         if (res.success) {
           setBillingInfo(res.data);
         }
+        trackClientEvent("billing_page_viewed");
       } catch (err) {
         console.error("Failed to load billing info", err);
       } finally {

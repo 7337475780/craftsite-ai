@@ -34,6 +34,7 @@ import {
   generateProjectTitle,
 } from "@/lib/projects-storage";
 import type { AIProviderName } from "@/types/project";
+import { trackClientEvent } from "@/lib/analytics-client";
 
 type GenerateResponse = {
   success: boolean;
@@ -98,6 +99,7 @@ function GeneratePageContent() {
 
   const handleExport = useCallback(async () => {
     if (!generatedCode) return;
+    trackClientEvent("export_zip_clicked");
     setIsExporting(true);
     setError("");
     try {
@@ -120,6 +122,7 @@ function GeneratePageContent() {
   const isCompact = generatedCode.length > 0 || isGenerating;
 
   const handleCopy = useCallback(async () => {
+    trackClientEvent("copy_code_clicked");
     await navigator.clipboard.writeText(generatedCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -131,6 +134,7 @@ function GeneratePageContent() {
       return;
     }
     if (!generatedCode || !providerInfo) return;
+    trackClientEvent("save_project_clicked");
     setIsSaving(true);
     setError("");
     const title = generateProjectTitle(prompt);
@@ -223,6 +227,7 @@ function GeneratePageContent() {
   }, [generatedCode, refineInstruction, prompt, providerInfo, refetchMe]);
 
   const handleGenerate = async () => {
+    trackClientEvent("generate_button_clicked", { style, websiteType });
     try {
       setError("");
       setProviderInfo(null);

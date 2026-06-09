@@ -1,5 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
+import { AnalyticsService } from "../services/analytics.service.js";
+import { EVENTS } from "../lib/events.js";
 
 const router = Router();
 
@@ -40,6 +42,16 @@ router.get(
           message: "Published project not found",
         });
       }
+
+      AnalyticsService.trackEvent({
+        event: EVENTS.PUBLIC_SHARE_VIEWED,
+        metadata: {
+          projectId: project.id,
+          shareSlug,
+        },
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+        userAgent: req.headers["user-agent"] || undefined,
+      });
 
       return res.json({
         success: true,

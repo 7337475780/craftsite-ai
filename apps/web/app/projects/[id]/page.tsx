@@ -49,6 +49,7 @@ import {
   generateProjectTitle,
 } from "@/lib/projects-storage";
 import type { AIProviderName, ProjectVersion, SavedProject } from "@/types/project";
+import { trackClientEvent } from "@/lib/analytics-client";
 
 type GenerateResponse = {
   success: boolean;
@@ -196,6 +197,7 @@ export default function ProjectDetailPage() {
           setIsPublished(found.isPublished ?? false);
           setShareSlug(found.shareSlug ?? null);
           setIsSaved(true);
+          trackClientEvent("project_opened", { projectId: found.id });
         } else {
           const local = getProjectById(id);
           if (local) {
@@ -207,6 +209,7 @@ export default function ProjectDetailPage() {
               isFallback: local.isFallback,
             });
             setIsSaved(true);
+            trackClientEvent("project_opened", { projectId: local.id, localOnly: true });
           } else {
             setIsNotFound(true);
           }
@@ -237,6 +240,7 @@ export default function ProjectDetailPage() {
   // ── Publish Handler ─────────────────────────────────────────────────────
   const handlePublish = useCallback(async () => {
     if (!id) return;
+    trackClientEvent("publish_clicked", { projectId: id });
     setIsPublishing(true);
     setPublishError("");
     try {
@@ -256,6 +260,7 @@ export default function ProjectDetailPage() {
   // ── Unpublish Handler ────────────────────────────────────────────────────
   const handleUnpublish = useCallback(async () => {
     if (!id) return;
+    trackClientEvent("unpublish_clicked", { projectId: id });
     setIsUnpublishing(true);
     setPublishError("");
     try {
@@ -458,6 +463,7 @@ export default function ProjectDetailPage() {
     setEditSuccess(false);
     setIsEditing(true);
     setEditLoadingStep(0);
+    trackClientEvent("ai_edit_clicked", { projectId: id });
 
     const stepInterval = setInterval(() => {
       setEditLoadingStep((prev) => Math.min(prev + 1, EDIT_STEPS.length - 1));
@@ -507,6 +513,7 @@ export default function ProjectDetailPage() {
   // ── Version Restore Handler ───────────────────────────────────────────────
   const handleRestore = useCallback(async (versionId: string) => {
     if (!id) return;
+    trackClientEvent("version_restore_clicked", { projectId: id, versionId });
     setRestoringVersionId(versionId);
     try {
       const result = await apiPost(`/api/projects/${id}/versions/${versionId}/restore`);

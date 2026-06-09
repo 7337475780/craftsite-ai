@@ -35,6 +35,7 @@ function formatDate(iso: string | undefined): string {
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<SavedProject[]>([]);
+  const [summary, setSummary] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useAuth();
 
@@ -46,6 +47,11 @@ export default function DashboardPage() {
           setProjects(result.data);
         } else {
           setProjects(getSavedProjects());
+        }
+        
+        const summaryResult = await apiGet("/api/analytics/summary");
+        if (summaryResult.success) {
+          setSummary(summaryResult.data);
         }
       } catch (err) {
         console.warn("Cloud dashboard load failed, falling back to localStorage", err);
@@ -60,15 +66,13 @@ export default function DashboardPage() {
   }, [user]);
 
   const totalProjects = projects.length;
-  const fallbackProjects = projects.filter((p) => p.isFallback).length;
-  const publishedProjects = projects.filter((p) => p.isPublished).length;
   const latestProject = projects[0];
 
   const stats = [
-    { label: "Saved Projects", value: isLoaded ? totalProjects : "...", icon: FolderOpen },
-    { label: "Published", value: isLoaded ? publishedProjects : "...", icon: Globe },
-    { label: "AI Generations", value: isLoaded ? totalProjects : "...", icon: Sparkles },
-    { label: "Latest Save", value: isLoaded ? (latestProject ? formatDate(latestProject.updatedAt) : "N/A") : "...", icon: Clock },
+    { label: "Generations", value: isLoaded ? (summary?.totalGenerations || 0) : "...", icon: Sparkles },
+    { label: "Published", value: isLoaded ? (summary?.totalPublished || 0) : "...", icon: Globe },
+    { label: "AI Edits", value: isLoaded ? (summary?.totalEdits || 0) : "...", icon: Wand2 },
+    { label: "Saved Projects", value: isLoaded ? (summary?.totalProjectsCreated || 0) : "...", icon: FolderOpen },
   ];
 
   const recentProjects = projects.slice(0, 3);

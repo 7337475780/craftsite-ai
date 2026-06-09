@@ -3,6 +3,7 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { trackClientEvent } from "@/lib/analytics-client";
 
 export function CTA() {
   return (
@@ -39,6 +40,7 @@ export function CTA() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/generate"
+              onClick={() => trackClientEvent("landing_cta_clicked", { target: "generate" })}
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-8 py-4 text-sm font-bold text-white shadow-[0_0_40px_rgba(124,58,237,0.45)] transition hover:scale-[1.03] hover:shadow-[0_0_55px_rgba(124,58,237,0.6)]"
             >
               <span>Start Building Now</span>
@@ -47,6 +49,7 @@ export function CTA() {
 
             <Link
               href="/#features"
+              onClick={() => trackClientEvent("landing_cta_clicked", { target: "features" })}
               className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/80 px-6 py-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70 dark:hover:bg-white/10"
             >
               See Features

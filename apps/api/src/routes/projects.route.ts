@@ -5,6 +5,8 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 import { editWebsiteWithAI } from "../services/ai/index.js";
 import { generateUniqueShareSlug } from "../lib/share.js";
 import { UsageService } from "../services/usage.service.js";
+import { AnalyticsService } from "../services/analytics.service.js";
+import { EVENTS } from "../lib/events.js";
 
 const router = Router();
 
@@ -86,6 +88,13 @@ router.post(
         },
       });
 
+      AnalyticsService.trackEvent({
+        userId,
+        event: EVENTS.PROJECT_CREATED,
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+        userAgent: req.headers["user-agent"] || undefined,
+      });
+
       res.status(201).json({ success: true, data: project });
     } catch (error) {
       next(error);
@@ -155,6 +164,13 @@ router.patch(
         data: { ...parsed.data },
       });
 
+      AnalyticsService.trackEvent({
+        userId,
+        event: EVENTS.PROJECT_UPDATED,
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+        userAgent: req.headers["user-agent"] || undefined,
+      });
+
       res.json({ success: true, data: updated });
     } catch (error) {
       next(error);
@@ -184,6 +200,13 @@ router.delete(
 
       await prisma.project.delete({
         where: { id },
+      });
+
+      AnalyticsService.trackEvent({
+        userId,
+        event: EVENTS.PROJECT_DELETED,
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+        userAgent: req.headers["user-agent"] || undefined,
       });
 
       res.json({ success: true, message: "Project deleted successfully" });
@@ -398,6 +421,13 @@ router.post(
         },
       });
 
+      AnalyticsService.trackEvent({
+        userId,
+        event: EVENTS.PROJECT_VERSION_RESTORED,
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+        userAgent: req.headers["user-agent"] || undefined,
+      });
+
       res.json({
         success: true,
         message: `Restored to version ${version.versionNumber}`,
@@ -496,6 +526,13 @@ router.post(
         },
       });
 
+      AnalyticsService.trackEvent({
+        userId,
+        event: EVENTS.PROJECT_PUBLISHED,
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+        userAgent: req.headers["user-agent"] || undefined,
+      });
+
       res.json({
         success: true,
         message: "Project published successfully",
@@ -530,6 +567,13 @@ router.post(
           shareSlug: null,
           publishedAt: null,
         },
+      });
+
+      AnalyticsService.trackEvent({
+        userId,
+        event: EVENTS.PROJECT_UNPUBLISHED,
+        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined,
+        userAgent: req.headers["user-agent"] || undefined,
       });
 
       res.json({

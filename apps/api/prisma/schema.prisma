@@ -22,6 +22,7 @@ model User {
   plan         String    @default("free")
   projects     Project[]
   usageLogs    UsageLog[]
+  analyticsEvents AnalyticsEvent[]
 }
 
 model Project {
@@ -72,5 +73,22 @@ model UsageLog {
 
   @@index([userId])
   @@index([action])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  event     String
+  metadata  Json?
+  path      String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
 }
 
