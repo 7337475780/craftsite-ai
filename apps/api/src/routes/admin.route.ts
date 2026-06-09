@@ -46,6 +46,18 @@ router.get("/overview", async (req, res) => {
         orderBy: { createdAt: "desc" },
         select: { id: true, title: true, provider: true, isPublished: true, createdAt: true, user: { select: { email: true } } },
       }),
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { status: "paid" },
+      }),
+      prisma.user.count({
+        where: { plan: { in: ["pro", "team"] } },
+      }),
+      prisma.payment.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { email: true } } },
+      }),
     ]);
 
     res.json({
@@ -59,8 +71,11 @@ router.get("/overview", async (req, res) => {
         totalExports,
         totalShareViews,
         totalUsageLogs,
+        totalRevenue: arguments[10]?._sum?.amount || 0,
+        paidUsers: arguments[11] || 0,
         recentUsers,
         recentProjects,
+        recentPayments: arguments[12] || [],
       },
     });
   } catch (err) {
@@ -106,7 +121,7 @@ router.get("/users", async (req, res) => {
     res.json({
       success: true,
       data: {
-        users: users.map(u => ({ ...getSafeUser(u), projectsCount: u._count.projects })),
+        users: users.map((u: any) => ({ ...getSafeUser(u), projectsCount: u._count.projects })),
         pagination: {
           total,
           page,
@@ -324,13 +339,54 @@ router.get("/analytics", async (req, res) => {
     res.json({
       success: true,
       data: {
-        activeUsers: activeUsers.map(u => ({ email: u.email, name: u.name, eventCount: u._count.analyticsEvents })),
+        activeUsers: activeUsers.map((u: any) => ({ email: u.email, name: u.name, eventCount: u._count.analyticsEvents })),
         events: eventGroups,
       },
     });
   } catch (err) {
     console.error("Admin analytics error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch analytics" });
+  }
+});
+
+/**
+ * GET /api/admin/payments
+ * List all payments
+ */
+router.get("/payments", async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 20));
+
+    const [total, payments] = await Promise.all([
+      prisma.payment.count(),
+      prisma.payment.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: { name: true, email: true },
+          },
+        },
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        payments,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (err) {
+    console.error("Admin list payments error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch payments" });
   }
 });
 

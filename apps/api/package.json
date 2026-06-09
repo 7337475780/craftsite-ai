@@ -19,6 +19,7 @@
     "helmet": "latest",
     "jsonwebtoken": "^9.0.3",
     "morgan": "latest",
+    "razorpay": "^2.9.6",
     "zod": "latest"
   },
   "devDependencies": {

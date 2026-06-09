@@ -57,7 +57,7 @@ export default function AdminOverviewPage() {
     { label: "AI Edits", value: data?.totalEdits, icon: Wand2, color: "text-purple-500", bg: "bg-purple-500/10" },
     { label: "ZIP Exports", value: data?.totalExports, icon: Download, color: "text-amber-500", bg: "bg-amber-500/10" },
     { label: "Share Views", value: data?.totalShareViews, icon: Eye, color: "text-pink-500", bg: "bg-pink-500/10" },
-    { label: "Total Usage Events", value: data?.totalUsageLogs, icon: Activity, color: "text-orange-500", bg: "bg-orange-500/10" },
+    { label: "Total Revenue (INR)", value: data?.totalRevenue ? `₹${(data.totalRevenue / 100).toFixed(2)}` : "₹0.00", icon: Activity, color: "text-emerald-500", bg: "bg-emerald-500/10" },
   ];
 
   return (
@@ -142,6 +142,34 @@ export default function AdminOverviewPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Recent Payments */}
+            <div className="rounded-[2rem] border border-black/10 bg-white/70 p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">Recent Payments</h3>
+                <Link href="/admin/payments" className="text-sm font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400">View All</Link>
+              </div>
+              <div className="space-y-4">
+                {data?.recentPayments?.length > 0 ? data.recentPayments.map((p: any) => (
+                  <div key={p.id} className="flex items-center justify-between rounded-xl border border-black/5 bg-white/50 p-4 dark:border-white/5 dark:bg-white/5">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white capitalize">{p.plan} Upgrade</p>
+                      <p className="text-xs text-slate-500 dark:text-white/50">{p.user?.email}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="font-black text-emerald-600 dark:text-emerald-400">
+                        ₹{(p.amount / 100).toFixed(2)}
+                      </span>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                        {p.status}
+                      </span>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="text-sm text-slate-500 dark:text-white/50 text-center py-4">No recent payments.</p>
+                )}
               </div>
             </div>
           </div>

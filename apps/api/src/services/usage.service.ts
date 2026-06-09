@@ -44,7 +44,7 @@ export class UsageService {
     metadata?: Record<string, any>
   ) {
     // We use a transaction to safely decrement the credits and log it atomically.
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: any) => {
       // Find the current credits first inside the transaction
       const user = await tx.user.findUnique({
         where: { id: userId },

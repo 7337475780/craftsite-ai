@@ -42,18 +42,16 @@ export function Navbar() {
       <div className="relative mx-auto max-w-7xl">
         {/* Soft outer glow — stronger when scrolled */}
         <div
-          className={`absolute -inset-px rounded-4xl bg-linear-to-r from-white/30 via-violet-400/20 to-cyan-300/20 blur-2xl transition-opacity duration-500 dark:from-cyan-400/10 dark:via-violet-500/20 dark:to-fuchsia-500/10 ${
-            scrolled ? "opacity-70 dark:opacity-80" : "opacity-40 dark:opacity-50"
-          }`}
+          className={`absolute -inset-px rounded-4xl bg-linear-to-r from-white/30 via-violet-400/20 to-cyan-300/20 blur-2xl transition-opacity duration-500 dark:from-cyan-400/10 dark:via-violet-500/20 dark:to-fuchsia-500/10 ${scrolled ? "opacity-70 dark:opacity-80" : "opacity-40 dark:opacity-50"
+            }`}
         />
 
         {/* Liquid glass navbar */}
         <div
-          className={`liquid-glass relative flex h-16 items-center justify-between overflow-hidden rounded-4xl px-4 transition-shadow duration-300 md:px-6 ${
-            scrolled
+          className={`liquid-glass relative flex h-16 items-center justify-between overflow-hidden rounded-4xl px-4 transition-shadow duration-300 md:px-6 ${scrolled
               ? "shadow-[0_12px_48px_rgba(15,23,42,0.15)] dark:shadow-[0_12px_48px_rgba(0,0,0,0.5)]"
               : ""
-          }`}
+            }`}
         >
           {/* Moving glass shine */}
           <div className="pointer-events-none absolute inset-0 opacity-70">
