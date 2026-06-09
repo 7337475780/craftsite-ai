@@ -17,6 +17,7 @@ import {
   Wand2,
   Cpu,
   Plus,
+  Globe,
 } from "lucide-react";
 
 function formatDate(iso: string | undefined): string {
@@ -58,12 +59,13 @@ export default function DashboardPage() {
 
   const totalProjects = projects.length;
   const fallbackProjects = projects.filter((p) => p.isFallback).length;
+  const publishedProjects = projects.filter((p) => p.isPublished).length;
   const latestProject = projects[0];
 
   const stats = [
     { label: "Saved Projects", value: isLoaded ? totalProjects : "...", icon: FolderOpen },
+    { label: "Published", value: isLoaded ? publishedProjects : "...", icon: Globe },
     { label: "AI Generations", value: isLoaded ? totalProjects : "...", icon: Sparkles },
-    { label: "Fallback Projects", value: isLoaded ? fallbackProjects : "...", icon: AlertTriangle },
     { label: "Latest Save", value: isLoaded ? (latestProject ? formatDate(latestProject.updatedAt) : "N/A") : "...", icon: Clock },
   ];
 
@@ -173,6 +175,12 @@ export default function DashboardPage() {
                           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold text-emerald-400 uppercase tracking-wide">
                             <Cpu size={8} />
                             {project.provider === "openrouter" ? "OpenRouter" : "Gemini"}
+                          </span>
+                        )}
+                        {project.isPublished && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-0.5 text-[9px] font-bold text-violet-400 uppercase tracking-wide">
+                            <Globe size={8} />
+                            Published
                           </span>
                         )}
                       </div>

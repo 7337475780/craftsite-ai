@@ -20,6 +20,7 @@ import {
   Plus,
   Clock,
   Download,
+  Globe,
 } from "lucide-react";
 import { exportProjectAsZip } from "@/lib/export-project";
 
@@ -211,6 +212,12 @@ export default function ProjectsPage() {
                           provider={project.provider}
                           isFallback={project.isFallback}
                         />
+                        {project.isPublished && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/25 bg-violet-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300">
+                            <Globe size={9} />
+                            Published
+                          </span>
+                        )}
                       </div>
                     </div>
 

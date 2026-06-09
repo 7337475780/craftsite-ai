@@ -61,3 +61,17 @@ export async function apiDelete(endpoint: string) {
   });
   return handleResponse(response);
 }
+
+/**
+ * Public GET — no credentials sent.
+ * Use for unauthenticated public endpoints like /api/public/projects/:slug.
+ */
+export async function apiGetPublic(endpoint: string) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return handleResponse(response);
+}

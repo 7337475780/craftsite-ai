@@ -8,15 +8,26 @@ import { healthRouter } from "./routes/health.route.js";
 import { generateRouter } from "./routes/generate.route.js";
 import { projectsRouter } from "./routes/projects.route.js";
 import { authRouter } from "./routes/auth.route.js";
+import { publicRouter } from "./routes/public.route.js";
 
 const app = express();
 
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
+const allowedOrigins = process.env.CLIENT_URLS
+  ? process.env.CLIENT_URLS.split(",").map((url) => url.trim())
+  : [process.env.CLIENT_URL || "http://localhost:3000"];
+
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
@@ -30,7 +41,7 @@ app.get("/", (_req, res) => {
   res.json({
     message: "CraftSite AI API is running",
     status: "success",
-    routes: ["/api/health", "/api/generate", "/api/projects", "/api/auth"],
+    routes: ["/api/health", "/api/generate", "/api/projects", "/api/auth", "/api/public"],
   });
 });
 
@@ -38,11 +49,21 @@ app.use("/api/health", healthRouter);
 app.use("/api/generate", generateRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/public", publicRouter);
 
 app.use((_req, res) => {
   res.status(404).json({
     success: false,
     message: "Route not found",
+  });
+});
+
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("Global Error Handler:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+    stack: process.env.NODE_ENV === "production" ? undefined : err.stack,
   });
 });
 

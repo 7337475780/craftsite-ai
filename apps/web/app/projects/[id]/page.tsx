@@ -34,6 +34,11 @@ import {
   Sparkles,
   X,
   Clock,
+  Globe,
+  Share2,
+  Eye,
+  EyeOff,
+  ExternalLink,
 } from "lucide-react";
 import { exportProjectAsZip } from "@/lib/export-project";
 import {
@@ -142,6 +147,15 @@ export default function ProjectDetailPage() {
   const [deletingVersionId, setDeletingVersionId] = useState<string | null>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // ── Publish / Share State ─────────────────────────────────────────────────
+  const [isPublished, setIsPublished] = useState(false);
+  const [shareSlug, setShareSlug] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [publishPanelOpen, setPublishPanelOpen] = useState(true);
+
   const handleExport = useCallback(async () => {
     if (!generatedCode) return;
     setIsExporting(true);
@@ -177,6 +191,8 @@ export default function ProjectDetailPage() {
             provider: found.provider,
             isFallback: found.isFallback,
           });
+          setIsPublished(found.isPublished ?? false);
+          setShareSlug(found.shareSlug ?? null);
           setIsSaved(true);
         } else {
           const local = getProjectById(id);
@@ -204,6 +220,8 @@ export default function ProjectDetailPage() {
             provider: local.provider,
             isFallback: local.isFallback,
           });
+          setIsPublished(local.isPublished ?? false);
+          setShareSlug(local.shareSlug ?? null);
           setIsSaved(true);
         } else {
           setIsNotFound(true);
@@ -214,6 +232,54 @@ export default function ProjectDetailPage() {
   }, [id, user]);
 
   // Load versions when panel is opened
+  // ── Publish Handler ─────────────────────────────────────────────────────
+  const handlePublish = useCallback(async () => {
+    if (!id) return;
+    setIsPublishing(true);
+    setPublishError("");
+    try {
+      const result = await apiPost(`/api/projects/${id}/publish`);
+      if (!result.success) throw new Error(result.message || "Publish failed.");
+      const updated = result.data;
+      setIsPublished(true);
+      setShareSlug(updated.shareSlug);
+      setProject((prev) => prev ? { ...prev, isPublished: true, shareSlug: updated.shareSlug, publishedAt: updated.publishedAt } : null);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Publish failed.");
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [id]);
+
+  // ── Unpublish Handler ────────────────────────────────────────────────────
+  const handleUnpublish = useCallback(async () => {
+    if (!id) return;
+    setIsUnpublishing(true);
+    setPublishError("");
+    try {
+      const result = await apiPost(`/api/projects/${id}/unpublish`);
+      if (!result.success) throw new Error(result.message || "Unpublish failed.");
+      setIsPublished(false);
+      setShareSlug(null);
+      setProject((prev) => prev ? { ...prev, isPublished: false, shareSlug: null, publishedAt: null } : null);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Unpublish failed.");
+    } finally {
+      setIsUnpublishing(false);
+    }
+  }, [id]);
+
+  // ── Copy Share Link ──────────────────────────────────────────────────────
+  const handleCopyShareLink = useCallback(async () => {
+    if (!shareSlug) return;
+    const url = `${window.location.origin}/share/${shareSlug}`;
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }, [shareSlug]);
+
+  const shareUrl = shareSlug ? `${typeof window !== "undefined" ? window.location.origin : ""}/share/${shareSlug}` : null;
+
   const loadVersions = useCallback(async () => {
     if (!id) return;
     setVersionsLoading(true);
@@ -855,6 +921,156 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
             </motion.div>
+
+            {/* ── Publish / Share Panel ── */}
+            <AnimatePresence>
+              {isCompact && !isGenerating && (
+                <motion.div
+                  key="publish-panel"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 12 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
+                >
+                  <button
+                    onClick={() => setPublishPanelOpen((o) => !o)}
+                    className="flex items-center justify-between px-5 py-3.5 cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className={`flex h-7 w-7 items-center justify-center rounded-xl shadow-md ${
+                        isPublished 
+                          ? "bg-gradient-to-br from-emerald-500 to-teal-400 shadow-emerald-500/20" 
+                          : "bg-gradient-to-br from-slate-200 to-slate-100 dark:from-white/10 dark:to-white/5 shadow-black/5"
+                      }`}>
+                        {isPublished ? (
+                          <Globe size={13} className="text-white" />
+                        ) : (
+                          <Share2 size={13} className="text-slate-500 dark:text-white/50" />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">Share Project</p>
+                        <p className="text-[10px] text-slate-400 dark:text-white/35">
+                          {isPublished ? "Published to web" : "Make publicly accessible"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isPublished && (
+                        <span className="flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+                          <CheckCheck size={10} />
+                          Live
+                        </span>
+                      )}
+                      {publishPanelOpen ? (
+                        <ChevronUp size={14} className="text-slate-400 dark:text-white/30" />
+                      ) : (
+                        <ChevronDown size={14} className="text-slate-400 dark:text-white/30" />
+                      )}
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {publishPanelOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 pt-1 border-t border-black/6 dark:border-white/6">
+                          {publishError && (
+                            <div className="mb-4 overflow-hidden rounded-xl border border-red-400/25 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300">
+                              {publishError}
+                            </div>
+                          )}
+
+                          {!isPublished ? (
+                            <div className="flex flex-col gap-3">
+                              <p className="text-xs text-slate-500 dark:text-white/50">
+                                Publishing will create a unique public link so anyone can view your generated website.
+                              </p>
+                              <button
+                                onClick={handlePublish}
+                                disabled={isPublishing}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:shadow-violet-500/25 hover:shadow-md disabled:opacity-50"
+                              >
+                                {isPublishing ? (
+                                  <>
+                                    <Loader2 size={13} className="animate-spin" />
+                                    Publishing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Globe size={13} />
+                                    Publish Website
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-4 mt-2">
+                              {/* Public Link Box */}
+                              <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-white/40">
+                                  Public Share Link
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 overflow-hidden rounded-xl border border-black/10 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/60">
+                                    <span className="truncate block">{shareUrl}</span>
+                                  </div>
+                                  <button
+                                    onClick={handleCopyShareLink}
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:hover:bg-white/[0.08]"
+                                    title="Copy link"
+                                  >
+                                    {linkCopied ? (
+                                      <CheckCheck size={14} className="text-emerald-500" />
+                                    ) : (
+                                      <Copy size={14} />
+                                    )}
+                                  </button>
+                                  <a
+                                    href={shareUrl || "#"}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:hover:bg-white/[0.08]"
+                                    title="Open link"
+                                  >
+                                    <ExternalLink size={14} />
+                                  </a>
+                                </div>
+                              </div>
+                              
+                              {/* Unpublish */}
+                              <div className="pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between">
+                                <span className="text-[11px] text-slate-500 dark:text-white/40">
+                                  Visible to anyone with the link
+                                </span>
+                                <button
+                                  onClick={handleUnpublish}
+                                  disabled={isUnpublishing}
+                                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                                >
+                                  {isUnpublishing ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    <EyeOff size={12} />
+                                  )}
+                                  Unpublish
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* ── AI Edit Mode Panel ── */}
             <AnimatePresence>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { editWebsiteWithAI } from "../services/ai/index.js";
+import { generateUniqueShareSlug } from "../lib/share.js";
 
 const router = Router();
 
@@ -428,6 +429,95 @@ router.delete(
       });
 
       res.json({ success: true, message: "Version deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ─── Publish / Unpublish ─────────────────────────────────────────────────────
+
+// POST /api/projects/:id/publish — Publish a project and generate a share slug
+router.post(
+  "/:id/publish",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = getUserId(req);
+      const id = req.params.id as string;
+
+      const project = await prisma.project.findUnique({ where: { id } });
+
+      if (!project || project.userId !== userId) {
+        res.status(404).json({ success: false, message: "Project not found" });
+        return;
+      }
+
+      // If already published, return existing data
+      if (project.isPublished && project.shareSlug) {
+        res.json({
+          success: true,
+          message: "Project is already published",
+          data: {
+            ...project,
+            shareSlug: project.shareSlug,
+          },
+        });
+        return;
+      }
+
+      const shareSlug = await generateUniqueShareSlug(project.title);
+
+      const updated = await prisma.project.update({
+        where: { id },
+        data: {
+          isPublished: true,
+          shareSlug,
+          publishedAt: new Date(),
+        },
+      });
+
+      res.json({
+        success: true,
+        message: "Project published successfully",
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// POST /api/projects/:id/unpublish — Unpublish a project and remove share slug
+router.post(
+  "/:id/unpublish",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = getUserId(req);
+      const id = req.params.id as string;
+
+      const project = await prisma.project.findUnique({ where: { id } });
+
+      if (!project || project.userId !== userId) {
+        res.status(404).json({ success: false, message: "Project not found" });
+        return;
+      }
+
+      const updated = await prisma.project.update({
+        where: { id },
+        data: {
+          isPublished: false,
+          shareSlug: null,
+          publishedAt: null,
+        },
+      });
+
+      res.json({
+        success: true,
+        message: "Project unpublished successfully",
+        data: updated,
+      });
     } catch (error) {
       next(error);
     }
