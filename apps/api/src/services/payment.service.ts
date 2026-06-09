@@ -65,18 +65,11 @@ export const verifyPaymentSignature = (
   return expectedSignature === signature;
 };
 
-export const markPaymentSuccess = async (
-  userId: string,
+export const fulfillOrder = async (
   orderId: string,
-  paymentId: string,
-  signature: string
+  razorpayPaymentId?: string,
+  razorpaySignature?: string
 ) => {
-  const isValid = verifyPaymentSignature(orderId, paymentId, signature);
-  if (!isValid) {
-    throw new Error("Invalid payment signature");
-  }
-
-  // Use a transaction to ensure atomic updates
   return await prisma.$transaction(async (tx: any) => {
     const payment = await tx.payment.findUnique({
       where: { razorpayOrderId: orderId },
@@ -84,10 +77,6 @@ export const markPaymentSuccess = async (
 
     if (!payment) {
       throw new Error("Payment order not found");
-    }
-
-    if (payment.userId !== userId) {
-      throw new Error("Unauthorized to verify this payment");
     }
 
     if (payment.status === "paid") {
@@ -105,15 +94,15 @@ export const markPaymentSuccess = async (
       where: { id: payment.id },
       data: {
         status: "paid",
-        razorpayPaymentId: paymentId,
-        razorpaySignature: signature,
+        razorpayPaymentId: razorpayPaymentId || payment.razorpayPaymentId,
+        razorpaySignature: razorpaySignature || payment.razorpaySignature,
         creditsAdded: plan.credits,
       },
     });
 
     // Update user plan and credits
     await tx.user.update({
-      where: { id: userId },
+      where: { id: payment.userId },
       data: {
         plan: plan.id,
         credits: {
@@ -125,7 +114,7 @@ export const markPaymentSuccess = async (
     // Log the event if possible
     await tx.analyticsEvent.create({
       data: {
-        userId,
+        userId: payment.userId,
         event: "plan_upgraded",
         metadata: {
           plan: plan.id,
@@ -138,4 +127,26 @@ export const markPaymentSuccess = async (
 
     return { success: true, message: "Payment verified successfully", payment: updatedPayment };
   });
+};
+
+export const markPaymentSuccess = async (
+  userId: string,
+  orderId: string,
+  paymentId: string,
+  signature: string
+) => {
+  const isValid = verifyPaymentSignature(orderId, paymentId, signature);
+  if (!isValid) {
+    throw new Error("Invalid payment signature");
+  }
+
+  const payment = await prisma.payment.findUnique({
+    where: { razorpayOrderId: orderId },
+  });
+
+  if (payment && payment.userId !== userId) {
+    throw new Error("Unauthorized to verify this payment");
+  }
+
+  return await fulfillOrder(orderId, paymentId, signature);
 };

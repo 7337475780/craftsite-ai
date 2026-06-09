@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import { prisma } from "../lib/prisma";
+import { fulfillOrder } from "../services/payment.service";
 
 const router = Router();
 
@@ -9,15 +10,12 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET || "";
     
-    // In Express, req.body is parsed. For Razorpay webhooks, we usually need the raw body
-    // but since we might be using express.json(), we stringify it.
-    // For perfect validation, express.raw() should be used in the app.js mount.
-    const body = JSON.stringify(req.body);
+    // Because index.ts uses express.raw() for this route, req.body is a Buffer
     const signature = req.headers["x-razorpay-signature"] as string;
 
     const expectedSignature = crypto
       .createHmac("sha256", secret)
-      .update(body)
+      .update(req.body)
       .digest("hex");
 
     if (expectedSignature !== signature) {
@@ -26,10 +24,13 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const event = req.body.event;
+    // Now safely parse the JSON body
+    const payloadStr = req.body.toString("utf8");
+    const parsedBody = JSON.parse(payloadStr);
+    const event = parsedBody.event;
 
-    if (event === "payment.captured") {
-      const paymentData = req.body.payload.payment.entity;
+    if (event === "payment.captured" || event === "order.paid") {
+      const paymentData = parsedBody.payload.payment.entity;
       const orderId = paymentData.order_id;
       const paymentId = paymentData.id;
 
@@ -39,9 +40,8 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       });
 
       if (payment && payment.status !== "paid") {
-        // We could also call markPaymentSuccess here, but since the frontend verify route
-        // is primary, this webhook just acts as a fallback.
-        console.log(`Payment ${paymentId} captured for order ${orderId}`);
+        console.log(`Webhook fulfilling order: ${orderId} (Payment: ${paymentId})`);
+        await fulfillOrder(orderId, paymentId);
       }
     }
 

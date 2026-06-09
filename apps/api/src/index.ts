@@ -40,6 +40,11 @@ app.use(
 app.use(cookieParser());
 app.use(helmet());
 app.use(morgan("dev"));
+
+// IMPORTANT: Webhook route must be registered BEFORE express.json()
+// so we can access the raw body Buffer for Razorpay signature verification.
+app.use("/api/billing/webhook", express.raw({ type: "application/json" }), webhookRouter);
+
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/", (_req, res) => {
@@ -57,7 +62,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/usage", usageRouter);
 app.use("/api/billing", billingRouter);
-app.use("/api/billing/webhook", webhookRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/admin", adminRouter);
 
