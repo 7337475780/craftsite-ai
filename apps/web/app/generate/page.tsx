@@ -85,7 +85,8 @@ function GeneratePageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
-  const { user } = useAuth();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { user, refetchMe } = useAuth();
 
   // ── Refine (unsaved edit) State ──────────────────────────────────────────
   const [refineInstruction, setRefineInstruction] = useState("");
@@ -208,12 +209,17 @@ function GeneratePageContent() {
       setIsSaved(false);
       setTimeout(() => setRefineSuccess(false), 3000);
       setViewMode("preview");
-    } catch (err) {
-      setRefineError(err instanceof Error ? err.message : "Refine failed.");
+      refetchMe();
+    } catch (err: any) {
+      if (err.message?.includes("credits") || err.status === 402) {
+        setShowUpgradeModal(true);
+      } else {
+        setRefineError(err instanceof Error ? err.message : "Refine failed.");
+      }
     } finally {
       setIsRefining(false);
     }
-  }, [generatedCode, refineInstruction, prompt, providerInfo]);
+  }, [generatedCode, refineInstruction, prompt, providerInfo, refetchMe]);
 
   const handleGenerate = async () => {
     try {
@@ -239,6 +245,11 @@ function GeneratePageContent() {
       clearInterval(stepInterval);
 
       if (!result.success) {
+        const anyRes = result as any;
+        if (anyRes.message?.includes("credits") || anyRes.status === 402) {
+          setShowUpgradeModal(true);
+          return;
+        }
         throw new Error(result.message || "Failed to generate website.");
       }
 
@@ -250,12 +261,17 @@ function GeneratePageContent() {
         });
       }
       setViewMode("preview");
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while generating.",
-      );
+      refetchMe();
+    } catch (err: any) {
+      if (err.message?.includes("credits") || err.status === 402) {
+        setShowUpgradeModal(true);
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Something went wrong while generating.",
+        );
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -461,6 +477,42 @@ function GeneratePageContent() {
         </div>
       </motion.header>
 
+      {/* Upgrade Modal */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm overflow-hidden rounded-[2rem] border border-black/10 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900"
+            >
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300">
+                <Zap size={24} className="fill-current" />
+              </div>
+              <h2 className="text-center text-xl font-black text-slate-900 dark:text-white">Out of Credits</h2>
+              <p className="mt-2 text-center text-sm text-slate-500 dark:text-white/60">
+                You've used all your free credits. Upgrade to a Pro plan to unlock unlimited AI generations and edits.
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <button
+                  disabled
+                  className="rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-400 dark:bg-white/5 dark:text-white/30"
+                >
+                  Upgrade plans coming soon
+                </button>
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="rounded-xl border border-black/10 bg-white py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* ── Main Workspace Body ── */}
       <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 overflow-hidden p-4 lg:flex-row lg:p-5">
 
@@ -640,7 +692,8 @@ function GeneratePageContent() {
                 {/* Generate button */}
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || prompt.trim().length < 5}
+                  disabled={isGenerating || prompt.trim().length < 5 || (user?.credits === 0)}
+                  title={user?.credits === 0 ? "No credits remaining" : ""}
                   className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.03] hover:shadow-xl disabled:hover:scale-100 ${
                     isGenerating
                       ? "cursor-wait bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 opacity-80 shadow-[0_0_25px_rgba(124,58,237,0.4)]"
@@ -659,6 +712,9 @@ function GeneratePageContent() {
                         <Wand2 size={13} />
                         {isCompact ? "Regenerate" : "Generate"}
                         <span className="hidden opacity-60 sm:inline">⌘↵</span>
+                        <span className="flex items-center gap-0.5 rounded border border-white/20 bg-black/20 px-1 py-0.5 text-[9px] font-bold">
+                          <Zap size={9} />1
+                        </span>
                       </>
                     )}
                   </span>
@@ -751,7 +807,8 @@ function GeneratePageContent() {
                     />
                     <button
                       onClick={handleRefine}
-                      disabled={isRefining || refineInstruction.trim().length < 5}
+                      disabled={isRefining || refineInstruction.trim().length < 5 || (user?.credits === 0)}
+                      title={user?.credits === 0 ? "No credits remaining" : ""}
                       className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
                     >
                       {isRefining ? (
@@ -760,6 +817,11 @@ function GeneratePageContent() {
                         <Sparkles size={12} />
                       )}
                       {isRefining ? "Refining..." : "Refine"}
+                      {!isRefining && (
+                        <span className="ml-1 flex items-center gap-0.5 rounded border border-white/20 bg-black/20 px-1 py-0.5 text-[9px] font-bold">
+                          <Zap size={9} />1
+                        </span>
+                      )}
                     </button>
                   </div>
                 </div>

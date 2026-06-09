@@ -12,6 +12,8 @@ export interface SafeUser {
   authProvider: string;
   googleId: string | null;
   githubId: string | null;
+  credits: number;
+  plan: string;
   createdAt: Date;
   updatedAt: Date;
 }

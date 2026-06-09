@@ -9,6 +9,7 @@ import {
   CreditCard,
   Settings,
   LogOut,
+  Zap,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
@@ -20,6 +21,7 @@ const sidebarItems = [
   { label: "Projects", href: "/projects", icon: FolderOpen },
   { label: "Templates", href: "/templates", icon: GalleryVerticalEnd },
   { label: "Pricing", href: "/pricing", icon: CreditCard },
+  { label: "Usage", href: "/usage", icon: Zap },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -88,6 +90,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
+            {user && (
+              <Link
+                href="/usage"
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                  user.credits === 0
+                    ? "border-red-400/30 bg-red-50 text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300"
+                    : user.credits <= 5
+                    ? "border-amber-400/30 bg-amber-50 text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-300"
+                    : "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
+                }`}
+              >
+                <Zap size={11} className={user.credits > 0 ? "fill-current" : ""} />
+                {user.credits === 0 ? "No Credits" : `${user.credits} Credits`}
+              </Link>
+            )}
             <ThemeToggle />
             {user?.image ? (
               <img

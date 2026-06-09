@@ -9,6 +9,7 @@ import { generateRouter } from "./routes/generate.route.js";
 import { projectsRouter } from "./routes/projects.route.js";
 import { authRouter } from "./routes/auth.route.js";
 import { publicRouter } from "./routes/public.route.js";
+import { usageRouter } from "./routes/usage.route.js";
 
 const app = express();
 
@@ -41,7 +42,7 @@ app.get("/", (_req, res) => {
   res.json({
     message: "CraftSite AI API is running",
     status: "success",
-    routes: ["/api/health", "/api/generate", "/api/projects", "/api/auth", "/api/public"],
+    routes: ["/api/health", "/api/generate", "/api/projects", "/api/auth", "/api/public", "/api/usage"],
   });
 });
 
@@ -50,6 +51,7 @@ app.use("/api/generate", generateRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/public", publicRouter);
+app.use("/api/usage", usageRouter);
 
 app.use((_req, res) => {
   res.status(404).json({

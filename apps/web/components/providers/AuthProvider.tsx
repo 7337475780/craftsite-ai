@@ -8,6 +8,8 @@ type User = {
   name?: string | null;
   email: string;
   image?: string | null;
+  credits: number;
+  plan: string;
   createdAt: string;
   updatedAt: string;
 };

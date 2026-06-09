@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { editWebsiteWithAI } from "../services/ai/index.js";
 import { generateUniqueShareSlug } from "../lib/share.js";
+import { UsageService } from "../services/usage.service.js";
 
 const router = Router();
 
@@ -227,6 +228,9 @@ router.post(
         return;
       }
 
+      // Check credits before editing
+      await UsageService.ensureUserHasCredits(userId, 1);
+
       // Determine next version number
       const versionCount = await prisma.projectVersion.count({
         where: { projectId: id },
@@ -262,6 +266,14 @@ router.post(
         },
       });
 
+      // Consume credit
+      const creditsRemaining = await UsageService.consumeCredits(
+        userId,
+        "project_edit",
+        1,
+        { projectId: id, editInstruction, provider: aiResult.provider, isFallback: aiResult.isFallback }
+      );
+
       res.json({
         success: true,
         message: "Website edited successfully",
@@ -269,9 +281,16 @@ router.post(
           project: updatedProject,
           provider: aiResult.provider,
           isFallback: aiResult.isFallback,
+          creditsRemaining,
         },
       });
     } catch (error) {
+      if ((error as any).status === 402) {
+        return res.status(402).json({
+          success: false,
+          message: (error as any).message,
+        });
+      }
       next(error);
     }
   },

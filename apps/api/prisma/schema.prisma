@@ -18,7 +18,10 @@ model User {
   githubId     String?   @unique
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  credits      Int       @default(20)
+  plan         String    @default("free")
   projects     Project[]
+  usageLogs    UsageLog[]
 }
 
 model Project {
@@ -55,5 +58,19 @@ model ProjectVersion {
 
   @@index([projectId])
   @@index([userId])
+}
+
+model UsageLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  credits   Int
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
 }
 

@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
 import { generateWebsiteWithAI, editWebsiteWithAI } from "../services/ai/index.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
+import { UsageService } from "../services/usage.service.js";
 
 export const generateRouter = Router();
 
@@ -17,7 +19,7 @@ const editSchema = z.object({
 });
 
 // POST /api/generate — Generate a new website
-generateRouter.post("/", async (req, res) => {
+generateRouter.post("/", requireAuth, async (req, res, next) => {
   try {
     const result = generateSchema.safeParse(req.body);
 
@@ -29,6 +31,13 @@ generateRouter.post("/", async (req, res) => {
       });
     }
 
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    // Check credits before generating (throws 402 if empty)
+    await UsageService.ensureUserHasCredits(userId, 1);
+
     const { prompt, style, websiteType } = result.data;
 
     const aiResult = await generateWebsiteWithAI({
@@ -36,6 +45,13 @@ generateRouter.post("/", async (req, res) => {
       style,
       websiteType,
     });
+
+    const creditsRemaining = await UsageService.consumeCredits(
+      userId,
+      "generate_website",
+      1,
+      { prompt, provider: aiResult.provider, isFallback: aiResult.isFallback }
+    );
 
     return res.json({
       success: true,
@@ -47,10 +63,18 @@ generateRouter.post("/", async (req, res) => {
         generatedCode: aiResult.generatedCode,
         provider: aiResult.provider,
         isFallback: aiResult.isFallback,
+        creditsRemaining,
       },
     });
   } catch (error) {
     console.error("Generate route error:", error);
+
+    if ((error as any).status === 402) {
+      return res.status(402).json({
+        success: false,
+        message: (error as any).message,
+      });
+    }
 
     return res.status(500).json({
       success: false,
@@ -63,7 +87,7 @@ generateRouter.post("/", async (req, res) => {
 });
 
 // POST /api/generate/edit — Edit existing code without saving (unsaved preview edit)
-generateRouter.post("/edit", async (req, res) => {
+generateRouter.post("/edit", requireAuth, async (req, res, next) => {
   try {
     const result = editSchema.safeParse(req.body);
 
@@ -75,6 +99,13 @@ generateRouter.post("/edit", async (req, res) => {
       });
     }
 
+    const userId = req.auth?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    // Check credits before editing
+    await UsageService.ensureUserHasCredits(userId, 1);
+
     const { currentCode, editInstruction, originalPrompt } = result.data;
 
     const aiResult = await editWebsiteWithAI({
@@ -83,6 +114,13 @@ generateRouter.post("/edit", async (req, res) => {
       originalPrompt,
     });
 
+    const creditsRemaining = await UsageService.consumeCredits(
+      userId,
+      "edit_website",
+      1,
+      { editInstruction, provider: aiResult.provider, isFallback: aiResult.isFallback }
+    );
+
     return res.json({
       success: true,
       message: "Website edited successfully",
@@ -90,10 +128,18 @@ generateRouter.post("/edit", async (req, res) => {
         generatedCode: aiResult.generatedCode,
         provider: aiResult.provider,
         isFallback: aiResult.isFallback,
+        creditsRemaining,
       },
     });
   } catch (error) {
     console.error("Edit route error:", error);
+
+    if ((error as any).status === 402) {
+      return res.status(402).json({
+        success: false,
+        message: (error as any).message,
+      });
+    }
 
     return res.status(500).json({
       success: false,
