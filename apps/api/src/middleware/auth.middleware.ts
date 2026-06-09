@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { prisma } from "../lib/prisma.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
 
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // 1. Read token from cookie
     let token = req.cookies?.craftsite_token;
@@ -27,10 +28,33 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     // 3. Verify JWT token
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
     
-    // 4. Attach auth to request
+    // 4. Fetch user to verify they are not blocked and get current role
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, isBlocked: true, role: true },
+    });
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized - User no longer exists",
+      });
+      return;
+    }
+
+    if (user.isBlocked) {
+      res.status(403).json({
+        success: false,
+        message: "Your account has been blocked.",
+      });
+      return;
+    }
+
+    // 5. Attach auth to request
     req.auth = {
       userId: decoded.userId,
       email: decoded.email,
+      role: user.role,
     };
 
     next();

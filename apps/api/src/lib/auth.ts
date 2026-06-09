@@ -14,6 +14,8 @@ export interface SafeUser {
   githubId: string | null;
   credits: number;
   plan: string;
+  role: string;
+  isBlocked: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

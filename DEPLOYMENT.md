@@ -154,3 +154,22 @@ After both applications are deployed successfully, perform a full sanity check:
 - [ ] Render API health endpoint (`/api/health`) returns `{ status: "ok" }`
 - [ ] Supabase connection logs show zero connection pooling/drift errors
 - [ ] No CORS network errors appear in the browser console during API requests
+
+## 7. How to Make Yourself Admin
+
+To grant your account admin privileges, you must update the database directly:
+
+**Option 1: Using Prisma Studio (Local)**
+1. Run `pnpm --filter api exec prisma studio`
+2. Open your browser to http://localhost:5555
+3. Navigate to the User table.
+4. Find your user record and change the `role` field from `"user"` to `"admin"`.
+5. Save the changes.
+
+**Option 2: Using Supabase SQL Editor (Production)**
+1. Open your Supabase project dashboard.
+2. Go to the SQL Editor.
+3. Run the following query:
+```sql
+UPDATE "User" SET role = 'admin' WHERE email = 'your-email@example.com';
+```

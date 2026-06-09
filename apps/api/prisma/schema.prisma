@@ -20,6 +20,8 @@ model User {
   updatedAt    DateTime  @updatedAt
   credits      Int       @default(20)
   plan         String    @default("free")
+  role         String    @default("user")
+  isBlocked    Boolean   @default(false)
   projects     Project[]
   usageLogs    UsageLog[]
   analyticsEvents AnalyticsEvent[]

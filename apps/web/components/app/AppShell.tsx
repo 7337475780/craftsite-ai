@@ -12,6 +12,9 @@ import {
   Zap,
   Receipt,
   Activity,
+  Shield,
+  Users,
+  BarChart3,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
@@ -55,6 +58,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        {user?.role === "admin" && (
+          <div className="mt-8">
+            <p className="mb-2 px-4 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-white/30">
+              Admin
+            </p>
+            <nav className="space-y-2">
+              <Link
+                href="/admin"
+                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+              >
+                <Shield size={18} />
+                Overview
+              </Link>
+              <Link
+                href="/admin/users"
+                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+              >
+                <Users size={18} />
+                Users
+              </Link>
+              <Link
+                href="/admin/projects"
+                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+              >
+                <FolderOpen size={18} />
+                Projects
+              </Link>
+              <Link
+                href="/admin/analytics"
+                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+              >
+                <BarChart3 size={18} />
+                Analytics
+              </Link>
+            </nav>
+          </div>
+        )}
 
         <div className="absolute bottom-4 left-4 right-4">
           <div className="rounded-3xl border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.04]">

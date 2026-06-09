@@ -10,6 +10,8 @@ type User = {
   image?: string | null;
   credits: number;
   plan: string;
+  role: string;
+  isBlocked: boolean;
   createdAt: string;
   updatedAt: string;
 };
