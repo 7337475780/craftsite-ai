@@ -182,7 +182,7 @@ export default function SharePage() {
       <div className="flex-none border-t border-white/[0.06] bg-slate-950/80 px-5 py-2.5">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <p className="text-[11px] text-white/30">
-            Generated with{" "}
+            Built with{" "}
             <span className="font-bold text-violet-400">CraftSite AI</span>
           </p>
           <Link
