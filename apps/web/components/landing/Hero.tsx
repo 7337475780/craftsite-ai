@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { Reveal } from "@/components/animations/Reveal";
@@ -17,6 +21,23 @@ const promptExamples = [
 ];
 
 export function Hero() {
+  const [prompt, setPrompt] = useState("");
+  const router = useRouter();
+
+  const handleGenerate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (prompt.trim()) {
+      router.push(`/generate?prompt=${encodeURIComponent(prompt.trim())}`);
+    } else {
+      router.push("/generate");
+    }
+  };
+
+  const handleExampleClick = (example: string) => {
+    setPrompt(example);
+    router.push(`/generate?prompt=${encodeURIComponent(example)}`);
+  };
+
   return (
     <section className="relative min-h-screen overflow-hidden px-5 pt-32 md:px-8">
       {/* Background Effects */}
@@ -46,31 +67,40 @@ export function Hero() {
           </p>
 
           {/* Prompt Box */}
-          <div className="mt-10 max-w-2xl rounded-3xl border border-black/10 bg-white/75 p-2 shadow-2xl shadow-slate-900/5 backdrop-blur-2xl dark:border-violet-500/40 dark:bg-black/35 dark:shadow-[0_0_50px_rgba(124,58,237,0.22)]">
+          <form 
+            onSubmit={handleGenerate}
+            className="mt-10 max-w-2xl rounded-3xl border border-black/10 bg-white/75 p-2 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-violet-500/30 dark:bg-black/40 dark:shadow-[0_0_50px_rgba(124,58,237,0.15)] transition-all focus-within:shadow-[0_20px_60px_rgba(124,58,237,0.15)] dark:focus-within:shadow-[0_0_60px_rgba(124,58,237,0.3)] dark:focus-within:border-violet-500/60"
+          >
             <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="flex flex-1 items-center gap-3 rounded-2xl bg-slate-100 px-5 py-4 text-slate-500 dark:bg-white/[0.05] dark:text-white/45">
-                <Sparkles size={18} className="text-violet-500 dark:text-cyan-300" />
-                <span className="text-sm sm:text-base">
-                  Build a modern SaaS website for an AI tool...
-                </span>
+              <div className="flex flex-1 items-center gap-3 rounded-2xl bg-slate-100/80 px-5 py-4 text-slate-700 dark:bg-white/[0.03] dark:text-white transition-colors focus-within:bg-white dark:focus-within:bg-white/[0.08]">
+                <Sparkles size={18} className="text-violet-600 dark:text-cyan-300 flex-shrink-0" />
+                <input
+                  type="text"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Build a modern SaaS website for an AI tool..."
+                  className="w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-slate-400 dark:placeholder:text-white/30"
+                />
               </div>
 
-              <Link
-                href="/generate"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-6 py-4 text-sm font-bold text-white shadow-[0_0_35px_rgba(124,58,237,0.45)] transition hover:scale-[1.02]"
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-6 py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(124,58,237,0.5)] active:scale-[0.98]"
               >
                 Generate
                 <ArrowRight size={17} />
-              </Link>
+              </button>
             </div>
-          </div>
+          </form>
 
           {/* Prompt Examples */}
           <div className="mt-5 flex flex-wrap gap-3">
             {promptExamples.map((item) => (
               <button
                 key={item}
-                className="rounded-full border border-black/10 bg-white/60 px-4 py-2 text-sm text-slate-600 transition hover:border-violet-400 hover:text-violet-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/55 dark:hover:border-cyan-300/60 dark:hover:text-white"
+                type="button"
+                onClick={() => handleExampleClick(item)}
+                className="rounded-full border border-black/10 bg-white/60 px-4 py-2 text-sm text-slate-600 transition-all hover:-translate-y-0.5 hover:border-violet-400 hover:text-violet-700 hover:shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:text-white/50 dark:hover:border-cyan-400/50 dark:hover:bg-white/[0.06] dark:hover:text-white"
               >
                 {item}
               </button>

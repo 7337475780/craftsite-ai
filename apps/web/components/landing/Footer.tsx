@@ -3,20 +3,36 @@
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
+import Link from "next/link";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
 
 const footerLinks = [
   {
     title: "Product",
-    links: ["Features", "Templates", "Pricing", "AI Builder"],
+    links: [
+      { label: "Features", href: "/#features" },
+      { label: "Templates", href: "/#templates" },
+      { label: "Pricing", href: "/#pricing" },
+      { label: "AI Builder", href: "/generate" },
+    ],
   },
   {
     title: "Company",
-    links: ["About", "Contact", "Careers", "Brand"],
+    links: [
+      { label: "About", href: "#" },
+      { label: "Contact", href: "#" },
+      { label: "Careers", href: "#" },
+      { label: "Brand", href: "#" },
+    ],
   },
   {
     title: "Resources",
-    links: ["Docs", "Examples", "Blog", "Changelog"],
+    links: [
+      { label: "Docs", href: "#" },
+      { label: "Examples", href: "#" },
+      { label: "Blog", href: "#" },
+      { label: "Changelog", href: "#" },
+    ],
   },
 ];
 
@@ -24,14 +40,17 @@ const socialLinks = [
   {
     label: "GitHub",
     icon: FaGithub,
+    href: "https://github.com",
   },
   {
     label: "X",
     icon: FaXTwitter,
+    href: "https://twitter.com",
   },
   {
     label: "LinkedIn",
     icon: FaLinkedin,
+    href: "https://linkedin.com",
   },
 ];
 
@@ -62,10 +81,10 @@ export function Footer() {
                 websites from a single prompt.
               </p>
 
-              <button className="mt-6 inline-flex items-center gap-2 overflow-hidden rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-[0_0_25px_rgba(124,58,237,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(124,58,237,0.5)] dark:border-white/10">
+              <Link href="/generate" className="mt-6 inline-flex items-center gap-2 overflow-hidden rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-[0_0_25px_rgba(124,58,237,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(124,58,237,0.5)] dark:border-white/10">
                 Start building
                 <ArrowUpRight size={16} />
-              </button>
+              </Link>
             </div>
 
             <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
@@ -77,12 +96,13 @@ export function Footer() {
 
                   <div className="space-y-3">
                     {group.links.map((link) => (
-                      <button
-                        key={link}
+                      <Link
+                        key={link.label}
+                        href={link.href}
                         className="block text-sm text-slate-600 transition hover:translate-x-1 hover:text-violet-700 dark:text-white/50 dark:hover:text-cyan-300"
                       >
-                        {link}
-                      </button>
+                        {link.label}
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -99,13 +119,16 @@ export function Footer() {
                   const Icon = item.icon;
 
                   return (
-                    <button
+                    <Link
                       key={item.label}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label={item.label}
                       className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:-translate-y-1 hover:bg-slate-950 hover:text-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
                     >
                       <Icon size={18} />
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
@@ -129,15 +152,15 @@ export function Footer() {
             </p>
 
             <div className="flex flex-wrap gap-5">
-              <button className="transition hover:text-slate-950 dark:hover:text-white">
+              <Link href="#" className="transition hover:text-slate-950 dark:hover:text-white">
                 Privacy Policy
-              </button>
-              <button className="transition hover:text-slate-950 dark:hover:text-white">
+              </Link>
+              <Link href="#" className="transition hover:text-slate-950 dark:hover:text-white">
                 Terms of Service
-              </button>
-              <button className="transition hover:text-slate-950 dark:hover:text-white">
+              </Link>
+              <Link href="#" className="transition hover:text-slate-950 dark:hover:text-white">
                 Cookie Policy
-              </button>
+              </Link>
             </div>
           </div>
         </motion.div>

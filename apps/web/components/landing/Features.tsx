@@ -82,7 +82,7 @@ export function Features() {
           transition={{ duration: 0.65 }}
           className="mx-auto mb-16 max-w-3xl text-center"
         >
-          <div className="mb-4 inline-flex items-center rounded-full border border-black/10 bg-white/70 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-violet-700 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/4 dark:text-cyan-300">
+          <div className="mb-4 inline-flex items-center rounded-full border border-black/10 bg-white/70 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-violet-700 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] dark:text-cyan-300">
             Features
           </div>
 
@@ -139,7 +139,7 @@ export function Features() {
                       {feature.title}
                     </h3>
 
-                    <span className="rounded-full border border-black/10 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:border-white/10 dark:bg-white/4 dark:text-white/40">
+                    <span className="rounded-full border border-black/10 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/40">
                       0{index + 1}
                     </span>
                   </div>
