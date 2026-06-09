@@ -48,6 +48,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // 1. Check if there's a token in the URL (from OAuth redirect)
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      const token = url.searchParams.get("token");
+      
+      if (token) {
+        // Save the token securely in localStorage
+        localStorage.setItem("craftsite_token", token);
+        
+        // Remove the token from the address bar so the user doesn't accidentally copy it
+        url.searchParams.delete("token");
+        window.history.replaceState({}, document.title, url.toString());
+      }
+    }
+
+    // 2. Fetch user profile
     refetchMe();
   }, [refetchMe]);
 
@@ -56,6 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await apiPost("/api/auth/login", { email, password });
       if (res.success && res.data) {
+        if (res.token) {
+          localStorage.setItem("craftsite_token", res.token);
+        }
         setUser(res.data);
         return res.data;
       }
@@ -73,6 +92,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await apiPost("/api/auth/register", { name, email, password });
       if (res.success && res.data) {
+        if (res.token) {
+          localStorage.setItem("craftsite_token", res.token);
+        }
         setUser(res.data);
         return res.data;
       }
@@ -89,7 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       await apiPost("/api/auth/logout");
+    } catch (e) {
+      // ignore
     } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("craftsite_token");
+      }
       setUser(null);
       setLoading(false);
     }

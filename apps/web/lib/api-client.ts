@@ -1,5 +1,19 @@
-// API requests now go through the Next.js reverse proxy (see next.config.ts)
-const API_URL = "";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+function getAuthHeaders(existingHeaders: any = {}) {
+  const headers: any = {
+    "Content-Type": "application/json",
+    ...existingHeaders,
+  };
+  
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("craftsite_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
 
 async function handleResponse(response: Response) {
   const text = await response.text();
@@ -20,10 +34,8 @@ async function handleResponse(response: Response) {
 export async function apiGet(endpoint: string) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: getAuthHeaders(),
+    credentials: "omit", // We don't need cookies anymore
   });
   return handleResponse(response);
 }
@@ -31,10 +43,8 @@ export async function apiGet(endpoint: string) {
 export async function apiPost(endpoint: string, body?: any) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: getAuthHeaders(),
+    credentials: "omit",
     body: body ? JSON.stringify(body) : undefined,
   });
   return handleResponse(response);
@@ -43,10 +53,8 @@ export async function apiPost(endpoint: string, body?: any) {
 export async function apiPatch(endpoint: string, body?: any) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: getAuthHeaders(),
+    credentials: "omit",
     body: body ? JSON.stringify(body) : undefined,
   });
   return handleResponse(response);
@@ -55,10 +63,8 @@ export async function apiPatch(endpoint: string, body?: any) {
 export async function apiDelete(endpoint: string) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
+    headers: getAuthHeaders(),
+    credentials: "omit",
   });
   return handleResponse(response);
 }

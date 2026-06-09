@@ -84,7 +84,9 @@ router.post("/register", async (req: Request, res: Response, next: NextFunction)
 
     res.status(201).json({
       success: true,
+      message: "User registered successfully",
       data: getSafeUser(user),
+      token,
     });
   } catch (error) {
     next(error);
@@ -143,7 +145,9 @@ router.post("/login", async (req: Request, res: Response, next: NextFunction) =>
 
     res.json({
       success: true,
+      message: "Logged in successfully",
       data: getSafeUser(user),
+      token,
     });
   } catch (error) {
     next(error);
@@ -170,7 +174,14 @@ router.post("/logout", (req: Request, res: Response) => {
 // GET /api/auth/me
 router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies?.craftsite_token;
+    let token = req.cookies?.craftsite_token;
+    if (!token && req.headers.authorization) {
+      const parts = req.headers.authorization.split(" ");
+      if (parts[0] === "Bearer" && parts[1]) {
+        token = parts[1];
+      }
+    }
+
     if (!token) {
       res.status(401).json({ success: false, message: "Unauthenticated" });
       return;
