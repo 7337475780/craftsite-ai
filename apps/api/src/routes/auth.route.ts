@@ -409,7 +409,7 @@ router.get("/google/callback", async (req: Request, res: Response) => {
       userAgent: req.headers["user-agent"] || undefined,
     });
 
-    res.redirect(successRedirect);
+    res.redirect(`${successRedirect}?token=${token}`);
   } catch (err) {
     console.error("Google OAuth Error:", err);
     res.redirect(errorRedirect);
@@ -565,7 +565,7 @@ router.get("/github/callback", async (req: Request, res: Response) => {
       userAgent: req.headers["user-agent"] || undefined,
     });
 
-    res.redirect(successRedirect);
+    res.redirect(`${successRedirect}?token=${token}`);
   } catch (err) {
     console.error("GitHub OAuth Error:", err);
     res.redirect(errorRedirect);
