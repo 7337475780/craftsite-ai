@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Sparkles,
@@ -34,6 +35,7 @@ const sidebarItems = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const pathname = usePathname();
 
   return (
     <main className="craftsite-bg min-h-screen">
@@ -45,12 +47,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="space-y-2">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-950 hover:text-white dark:text-white/60 dark:hover:bg-white dark:hover:text-slate-950"
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  isActive
+                    ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-md"
+                    : "text-slate-600 hover:bg-slate-950/5 hover:text-slate-900 dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+                }`}
               >
                 <Icon size={18} />
                 {item.label}
@@ -67,28 +74,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <nav className="space-y-2">
               <Link
                 href="/admin"
-                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  pathname === "/admin"
+                    ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                    : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                }`}
               >
                 <Shield size={18} />
                 Overview
               </Link>
               <Link
                 href="/admin/users"
-                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  pathname.startsWith("/admin/users")
+                    ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                    : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                }`}
               >
                 <Users size={18} />
                 Users
               </Link>
               <Link
                 href="/admin/projects"
-                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  pathname.startsWith("/admin/projects")
+                    ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                    : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                }`}
               >
                 <FolderOpen size={18} />
                 Projects
               </Link>
               <Link
                 href="/admin/analytics"
-                className="group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  pathname.startsWith("/admin/analytics")
+                    ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                    : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                }`}
               >
                 <BarChart3 size={18} />
                 Analytics

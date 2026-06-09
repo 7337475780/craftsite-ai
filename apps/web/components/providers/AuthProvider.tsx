@@ -11,6 +11,7 @@ type User = {
   credits: number;
   plan: string;
   role: string;
+  authProvider: string;
   isBlocked: boolean;
   createdAt: string;
   updatedAt: string;

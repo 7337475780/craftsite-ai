@@ -12,6 +12,7 @@ import {
 } from "../lib/auth.js";
 import { AnalyticsService } from "../services/analytics.service.js";
 import { EVENTS } from "../lib/events.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -198,6 +199,76 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
     });
   } catch (error) {
     next(error);
+  }
+});
+
+const profileSchema = z.object({
+  name: z.string().max(100).optional(),
+});
+
+// PATCH /api/auth/profile
+router.patch("/profile", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const parsed = profileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, message: "Invalid input", errors: parsed.error.issues });
+      return;
+    }
+
+    const userId = req.auth!.userId;
+    const { name } = parsed.data;
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { name: name || null },
+    });
+
+    res.json({ success: true, data: getSafeUser(user) });
+  } catch (err) {
+    console.error("Profile update error:", err);
+    res.status(500).json({ success: false, message: "Failed to update profile" });
+  }
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "New password must be at least 8 characters long"),
+});
+
+// PATCH /api/auth/password
+router.patch("/password", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const parsed = passwordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, message: "Invalid input", errors: parsed.error.issues });
+      return;
+    }
+
+    const userId = req.auth!.userId;
+    const { currentPassword, newPassword } = parsed.data;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.passwordHash) {
+      res.status(400).json({ success: false, message: "Password login not enabled for this account" });
+      return;
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      res.status(400).json({ success: false, message: "Incorrect current password" });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Password update error:", err);
+    res.status(500).json({ success: false, message: "Failed to update password" });
   }
 });
 
