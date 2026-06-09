@@ -1,4 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+// API requests now go through the Next.js reverse proxy (see next.config.ts)
+const API_URL = "";
 
 async function handleResponse(response: Response) {
   const text = await response.text();
