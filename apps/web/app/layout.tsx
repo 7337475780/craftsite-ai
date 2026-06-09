@@ -42,6 +42,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { ScrollAnimationProvider } from "@/components/providers/ScrollAnimationProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,7 +53,10 @@ export default function RootLayout({
     <AuthProvider>
       <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
         <body suppressHydrationWarning>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <ScrollAnimationProvider />
+            {children}
+          </ThemeProvider>
         </body>
       </html>
     </AuthProvider>

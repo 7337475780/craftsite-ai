@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 
@@ -17,15 +17,17 @@ const navItems = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const scrollToSection = (targetId: string) => {
+    setIsMobileMenuOpen(false);
     const section = document.getElementById(targetId);
     if (!section) return;
     section.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -33,112 +35,152 @@ export function Navbar() {
   };
 
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, ease: "easeOut" }}
-      className="fixed left-0 right-0 top-4 z-50 px-4"
-    >
-      <div className="relative mx-auto max-w-7xl">
-        {/* Soft outer glow — stronger when scrolled */}
-        <div
-          className={`absolute -inset-px rounded-4xl bg-linear-to-r from-white/30 via-violet-400/20 to-cyan-300/20 blur-2xl transition-opacity duration-500 dark:from-cyan-400/10 dark:via-violet-500/20 dark:to-fuchsia-500/10 ${scrolled ? "opacity-70 dark:opacity-80" : "opacity-40 dark:opacity-50"
-            }`}
-        />
-
-        {/* Liquid glass navbar */}
-        <div
-          className={`liquid-glass relative flex h-16 items-center justify-between overflow-hidden rounded-4xl px-4 transition-shadow duration-300 md:px-6 ${scrolled
-              ? "shadow-[0_12px_48px_rgba(15,23,42,0.15)] dark:shadow-[0_12px_48px_rgba(0,0,0,0.5)]"
-              : ""
-            }`}
-        >
-          {/* Moving glass shine */}
-          <div className="pointer-events-none absolute inset-0 opacity-70">
-            <div className="absolute -left-28 top-0 h-full w-44 rotate-12 bg-linear-to-r from-transparent via-white/24 to-transparent blur-2xl dark:via-white/8" />
-          </div>
-
-          {/* Top reflection */}
-          <div className="pointer-events-none absolute inset-x-4 top-1 h-px bg-linear-to-r from-transparent via-white/70 to-transparent dark:via-white/25" />
-
-          {/* Bottom light edge */}
-          <div className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-linear-to-r from-transparent via-violet-500/30 to-transparent" />
-
+    <>
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className={`sticky top-0 z-[100] w-full transition-all duration-300 border-b ${
+          scrolled
+            ? "border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-xl shadow-[var(--shadow-sm)]"
+            : "border-transparent bg-transparent"
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:px-8">
+          
           {/* Logo */}
-          <Link href="/" className="relative z-10 cursor-pointer">
+          <Link href="/" className="relative z-10 flex items-center gap-2">
             <CraftSiteLogo />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="relative z-10 hidden items-center gap-2.5 lg:flex">
+          <nav className="hidden lg:flex items-center gap-8">
             {navItems.map((item) => (
-              <motion.button
+              <button
                 key={item.label}
-                type="button"
-                whileHover={{ scale: 1.05, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 18 }}
                 onClick={() => scrollToSection(item.targetId)}
-                className="group relative flex items-center gap-1.5 rounded-full border border-black/8 bg-white/50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.04)] backdrop-blur-md transition-colors duration-200 cursor-pointer hover:border-violet-500/40 hover:bg-white hover:text-violet-700 hover:shadow-[0_4px_16px_rgba(124,58,237,0.12)] dark:border-white/8 dark:bg-white/[0.04] dark:text-white/70 dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)] dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white dark:hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)]"
+                className="group relative text-sm font-medium text-[var(--text-muted)] transition-colors duration-200 hover:text-[var(--accent)]"
               >
-                <span className="relative z-10">{item.label}</span>
-              </motion.button>
+                {item.label}
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-[var(--accent)] transition-all duration-300 ease-out group-hover:w-full" />
+              </button>
             ))}
           </nav>
 
           {/* Right Actions */}
-          <div className="relative z-10 flex items-center gap-3">
-            <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
 
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3">
                 <Link
                   href="/dashboard"
-                  className="hidden md:flex items-center justify-center rounded-full border border-black/8 bg-white/50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.04)] backdrop-blur-md transition-colors duration-200 cursor-pointer hover:border-violet-500/40 hover:bg-white hover:text-violet-700 dark:border-white/8 dark:bg-white/[0.04] dark:text-white/70 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
+                  className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--accent)] transition"
                 >
                   Dashboard
                 </Link>
                 <button
                   onClick={() => logout()}
-                  className="flex items-center justify-center rounded-full border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-600 shadow-sm backdrop-blur-md transition-colors duration-200 cursor-pointer hover:bg-red-500 hover:text-white dark:border-red-400/30"
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-red-500 hover:bg-red-500/10 transition"
                 >
                   Sign out
                 </button>
               </div>
             ) : (
-              <motion.div
-                whileHover={{ scale: 1.05, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 18 }}
-                className="hidden sm:block"
+              <Link
+                href="/sign-in"
+                className="hidden sm:block text-sm font-medium text-[var(--text)] hover:text-[var(--accent)] transition"
               >
+                Sign in
+              </Link>
+            )}
+
+            <Link
+              href="/generate"
+              className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-white transition-all duration-200"
+              style={{
+                background: "linear-gradient(135deg, var(--accent), var(--accent-2))",
+              }}
+            >
+              <Sparkles size={14} />
+              <span className="hidden sm:inline">Start Building</span>
+              <span className="sm:hidden">Start</span>
+            </Link>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--text)]"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+        </div>
+      </motion.header>
+
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="fixed inset-x-0 top-16 z-[99] border-b border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] lg:hidden"
+          >
+            <div className="flex flex-col px-5 py-6 space-y-6">
+              <nav className="flex flex-col space-y-4">
+                {navItems.map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => scrollToSection(item.targetId)}
+                    className="text-left text-lg font-medium text-[var(--text-muted)] hover:text-[var(--accent)]"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+
+              <div className="h-px w-full bg-[var(--border)]" />
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-[var(--text)]">Theme</span>
+                <ThemeToggle />
+              </div>
+
+              {user ? (
+                <div className="flex flex-col space-y-4 pt-2">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-lg font-medium text-[var(--text)]"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-left text-lg font-medium text-red-500"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : (
                 <Link
                   href="/sign-in"
-                  className="flex items-center justify-center rounded-full border border-black/8 bg-white/50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_2px_8px_rgba(15,23,42,0.04)] backdrop-blur-md transition-colors duration-200 cursor-pointer hover:border-violet-500/40 hover:bg-white hover:text-violet-700 dark:border-white/8 dark:bg-white/[0.04] dark:text-white/70 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-lg font-medium text-[var(--text)]"
                 >
                   Sign in
                 </Link>
-              </motion.div>
-            )}
-
-            <motion.div
-              whileHover={{ scale: 1.05, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 18 }}
-            >
-              <Link
-                href="/generate"
-                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-violet-500/20 bg-linear-to-r from-violet-600 via-purple-600 to-blue-500 px-5 py-2 text-sm font-bold text-white shadow-[0_4px_20px_rgba(124,58,237,0.3)] backdrop-blur-md transition-all duration-300 cursor-pointer hover:shadow-[0_4px_30px_rgba(124,58,237,0.5)] dark:border-violet-400/30"
-              >
-                <span className="absolute inset-0 -translate-x-full bg-linear-to-r from-white/0 via-white/20 to-white/0 opacity-0 transition duration-700 group-hover:translate-x-full group-hover:opacity-100" />
-                <Sparkles size={14} className="relative z-10" />
-                <span className="relative z-10 hidden sm:inline">Start Building</span>
-                <span className="relative z-10 sm:hidden">Start</span>
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-    </motion.header>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

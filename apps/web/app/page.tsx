@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main className="cosmic-bg min-h-screen overflow-hidden">
+    <main className="min-h-screen w-full relative">
       <Navbar />
       <Hero />
       <Features />
