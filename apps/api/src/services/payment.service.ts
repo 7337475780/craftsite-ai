@@ -22,7 +22,7 @@ export const createRazorpayOrder = async (userId: string, planId: string) => {
   const options = {
     amount: plan.amount,
     currency: "INR",
-    receipt: `receipt_${userId}_${Date.now()}`,
+    receipt: `rcpt_${crypto.randomBytes(4).toString("hex")}_${Date.now().toString().slice(-8)}`,
     notes: {
       userId,
       planId,
