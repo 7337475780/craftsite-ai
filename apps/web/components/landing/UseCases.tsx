@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Rocket, Presentation, Code, Smartphone, Store } from "lucide-react";
+import { Briefcase, Rocket, Presentation, Code, Smartphone, ShopWindow } from "lucide-react";
 
 const useCases = [
   { title: "Portfolio websites", desc: "Showcase your work and attract clients.", icon: Briefcase },
@@ -8,7 +8,7 @@ const useCases = [
   { title: "Startup MVP pages", desc: "Validate your ideas quickly and easily.", icon: Presentation },
   { title: "Agency mockups", desc: "Present professional concepts to clients.", icon: Code },
   { title: "App showcases", desc: "Highlight your app's best features.", icon: Smartphone },
-  { title: "Ecommerce storefronts", desc: "Start selling your products online.", icon: Store }
+  { title: "Ecommerce storefronts", desc: "Start selling your products online.", icon: ShopWindow }
 ];
 
 export function UseCases() {
