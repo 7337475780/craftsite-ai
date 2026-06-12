@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9.8.0
+        
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Generate Prisma Client
+      run: pnpm --filter api exec prisma generate
+
+    - name: Build Turbo
+      run: pnpm run build
+      
+    - name: Run Backend Tests
+      run: pnpm --filter api test
+
+    - name: Run Frontend Tests
+      run: pnpm --filter web test
+      
+    - name: Run E2E Tests
+      run: pnpm --filter web test:e2e

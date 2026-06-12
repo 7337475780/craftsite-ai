@@ -7,20 +7,13 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "prisma generate && node dist/index.js",
-    "lint": "echo \"No lint configured yet\""
+    "lint": "echo \"No lint configured yet\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
-    "bcryptjs": "^3.0.3",
-    "cookie-parser": "^1.4.7",
-    "cors": "latest",
-    "dotenv": "latest",
-    "express": "latest",
-    "helmet": "latest",
-    "jsonwebtoken": "^9.0.3",
-    "morgan": "latest",
-    "razorpay": "^2.9.6",
-    "zod": "latest",
     "@types/bcryptjs": "^3.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "latest",
@@ -28,8 +21,26 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "latest",
     "@types/node": "latest",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "latest",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "latest",
+    "pino": "^10.3.1",
     "prisma": "^6.19.3",
+    "razorpay": "^2.9.6",
     "tsx": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.8",
+    "vitest-mock-extended": "^4.0.0"
   }
 }
