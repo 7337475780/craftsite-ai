@@ -16,10 +16,17 @@ import {
   Shield,
   Users,
   BarChart3,
+  Menu,
+  X,
+  Cpu,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { WorkspaceSwitcher } from "@/components/workspaces/WorkspaceSwitcher";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -36,6 +43,22 @@ const sidebarItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <main className="craftsite-bg min-h-screen">
@@ -116,6 +139,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <BarChart3 size={18} />
                 Analytics
               </Link>
+              <Link
+                href="/admin/ai"
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                  pathname.startsWith("/admin/ai")
+                    ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                    : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                }`}
+              >
+                <Cpu size={18} />
+                AI Providers
+              </Link>
             </nav>
           </div>
         )}
@@ -146,15 +180,177 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {/* Mobile Sidebar Navigation Drawer */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm lg:hidden"
+            />
+            
+            {/* Drawer Content */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 z-[101] flex h-full w-72 flex-col border-r border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-[#0d0d14] lg:hidden"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                  <CraftSiteLogo />
+                </Link>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-slate-50 text-slate-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-white/80"
+                  aria-label="Close menu"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <nav className="flex-1 space-y-1.5 overflow-y-auto pr-1">
+                {sidebarItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                        isActive
+                          ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-md"
+                          : "text-slate-600 hover:bg-slate-950/5 hover:text-slate-900 dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+                      }`}
+                    >
+                      <Icon size={18} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+
+                {user?.role === "admin" && (
+                  <div className="mt-6 pt-6 border-t border-black/5 dark:border-white/5">
+                    <p className="mb-2 px-4 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-white/30">
+                      Admin
+                    </p>
+                    <div className="space-y-1.5">
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          pathname === "/admin"
+                            ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                            : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                        }`}
+                      >
+                        <Shield size={18} />
+                        Overview
+                      </Link>
+                      <Link
+                        href="/admin/users"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          pathname.startsWith("/admin/users")
+                            ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                            : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                        }`}
+                      >
+                        <Users size={18} />
+                        Users
+                      </Link>
+                      <Link
+                        href="/admin/projects"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          pathname.startsWith("/admin/projects")
+                            ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                            : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                        }`}
+                      >
+                        <FolderOpen size={18} />
+                        Projects
+                      </Link>
+                      <Link
+                        href="/admin/analytics"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          pathname.startsWith("/admin/analytics")
+                            ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                            : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                        }`}
+                      >
+                        <BarChart3 size={18} />
+                        Analytics
+                      </Link>
+                      <Link
+                        href="/admin/ai"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                          pathname.startsWith("/admin/ai")
+                            ? "bg-violet-600 text-white shadow-md dark:bg-cyan-400 dark:text-slate-900"
+                            : "text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                        }`}
+                      >
+                        <Cpu size={18} />
+                        AI Providers
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </nav>
+
+              <div className="mt-auto pt-6 border-t border-black/5 dark:border-white/5 space-y-4">
+                <div className="rounded-3xl border border-black/10 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                  <p className="text-sm font-bold text-slate-950 dark:text-white">
+                    Pro workspace
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-white/50">
+                    Upgrade to unlock unlimited AI generations.
+                  </p>
+                  <Link
+                    href="/pricing"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-sm font-bold text-white"
+                  >
+                    Upgrade
+                  </Link>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-500 transition hover:bg-red-500/10 hover:text-red-600 dark:text-white/45 dark:hover:text-red-300 cursor-pointer"
+                >
+                  <LogOut size={18} />
+                  Logout
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <section className="min-h-screen px-5 py-5 lg:pl-80">
         <header className="sticky top-5 z-40 mb-8 flex h-16 items-center justify-between rounded-[2rem] border border-black/10 bg-white/70 px-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_18px_70px_rgba(0,0,0,0.35)]">
-          <div>
-            <p className="text-sm text-slate-500 dark:text-white/45">
-              Welcome back
-            </p>
-            <h1 className="text-lg font-black text-slate-950 dark:text-white">
-              CraftSite Workspace
-            </h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white/70 text-slate-700 shadow-sm backdrop-blur-xl transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.05] dark:text-white/80 dark:hover:bg-white/10"
+              aria-label="Toggle mobile menu"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <WorkspaceSwitcher />
           </div>
 
           <div className="flex items-center gap-3">
@@ -173,6 +369,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {user.credits === 0 ? "No Credits" : `${user.credits} Credits`}
               </Link>
             )}
+            <NotificationBell />
             <ThemeToggle />
             {user?.image ? (
               <img

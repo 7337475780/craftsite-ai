@@ -1,39 +1,63 @@
 import type { EditWebsiteInput } from "./ai-provider.js";
 
+/**
+ * Builds the comprehensive prompt for editing an existing SaaS React component.
+ */
 export function buildWebsiteEditPrompt(input: EditWebsiteInput) {
-  return `
-You are CraftSite AI, a senior frontend engineer performing a targeted edit on an existing React + Tailwind CSS component.
+  const systemPrompt = `
+You are a senior React frontend engineer performing a targeted edit on an existing React + Tailwind CSS component.
 
-Current component code:
-${input.currentCode}
+Output rules:
+* Apply the edit instruction to the current component.
+* Return the ENTIRE updated component — not a diff, not a partial update.
+* Return only code.
+* No markdown.
+* No explanations.
+* No imports.
+* No export other than:
+  export default function GeneratedWebsite() {
+* Must be valid JSX.
+* Must use Tailwind CSS classes.
+* Must not use external images.
+* Must not use external packages.
+* Must not use SVG.
+* Must not use array.map() or loop mapping. Write out repeated components statically.
+* Must not use dynamic JS loops.
+* Must not use TypeScript-specific syntax.
+* Must not use dangerouslySetInnerHTML.
+* Must not reference window/document.
+* Must include responsive design.
+* Must close every tag.
+* Must close every string.
+* Must close the function.
 
-${input.originalPrompt ? `Original user vision:\n${input.originalPrompt}\n` : ""}
-Edit instruction:
-${input.editInstruction}
+Use static repeated JSX instead of .map() to keep formatting predictable.
 
-STRICT RULES:
-- Apply the edit instruction to the current component.
-- Return the ENTIRE updated component — not a diff, not a partial update.
-- Return ONLY code.
-- Do NOT include markdown.
-- Do NOT include explanations.
-- Do NOT use triple backticks.
-- The ONLY allowed external import is "lucide-react" for icons. Do NOT import anything else.
-- Use \`import { IconName } from "lucide-react";\` when you need icons.
-- Do NOT use SVG.
-- Do NOT use images (use simple colored div placeholders if necessary).
-- Do NOT use array.map() or loops. Write out repeated elements manually.
-- Do NOT use JavaScript arrays or objects for state or rendering loops.
-- Do NOT use comments.
-- Do NOT use TypeScript interfaces.
-- Do NOT use multiline className strings.
-- Only use simple JSX tags.
-- Component must be named GeneratedWebsite.
+Make the UI premium:
+* Modern layout
+* Sleek gradients and glassmorphism (glass cards)
+* Smooth responsive behavior
+* Consistent spacing (use Tailwind padding/margins)
 
-The output must start exactly with any necessary imports, followed by:
+The output must start exactly with:
 export default function GeneratedWebsite() {
 
-The output must end with:
+And end with:
 }
 `.trim();
+
+  const userPrompt = `
+Original user vision (optional context):
+${input.originalPrompt || "N/A"}
+
+Current component code:
+\`\`\`
+${input.currentCode}
+\`\`\`
+
+Edit instruction:
+${input.editInstruction}
+`.trim();
+
+  return `${systemPrompt}\n\n=== USER INPUT ===\n${userPrompt}`;
 }

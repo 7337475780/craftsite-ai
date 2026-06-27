@@ -55,7 +55,7 @@ export function Features() {
               boxShadow: 'var(--shadow-sm)'
             }}
           >
-            How it works
+            Features
           </div>
 
           <h2 data-animate className="font-black leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.5rem)', color: 'var(--text)' }}>
@@ -120,12 +120,12 @@ export function Features() {
                   </p>
 
                   <div 
-                    className="mt-6 flex items-center justify-between text-sm font-semibold transition-colors duration-200"
+                    className="mt-6 flex items-center justify-start gap-1.5 text-sm font-semibold transition-colors duration-200"
                     style={{ color: 'var(--accent)' }}
                   >
                     <span>Explore feature</span>
                     <span className="transition-transform duration-200 group-hover:translate-x-1">
-                      →
+                      &rarr;
                     </span>
                   </div>
                 </div>

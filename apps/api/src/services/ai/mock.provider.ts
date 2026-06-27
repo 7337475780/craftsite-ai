@@ -5,170 +5,64 @@ import type {
   GenerateWebsiteOutput,
 } from "./ai-provider.js";
 
-export class MockProvider implements AIProvider {
-  async generateWebsite(
-    input: GenerateWebsiteInput,
-  ): Promise<GenerateWebsiteOutput> {
-    const generatedCode = `
-export default function GeneratedWebsite() {
+const DEFAULT_MOCK_JSX = `export default function GeneratedWebsite() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-        <h1 className="text-2xl font-black">CraftSite Preview</h1>
-
-        <div className="hidden items-center gap-6 text-sm text-white/60 md:flex">
-          <a href="#">Features</a>
-          <a href="#">Pricing</a>
-          <a href="#">Reviews</a>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 text-white p-6">
+      <div className="max-w-md text-center">
+        <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400">
+          <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
         </div>
-
-        <button className="rounded-full bg-white px-5 py-2 text-sm font-bold text-slate-950">
-          Get Started
-        </button>
-      </nav>
-
-      <section className="mx-auto max-w-7xl px-6 py-24 text-center">
-        <div className="mx-auto mb-6 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70">
-          ✦ Safe Fallback Mode
+        <h1 className="text-3xl font-black tracking-tight mb-2">Safe Mock Preview</h1>
+        <p className="text-sm text-slate-400 mb-6">This is a fallback template generated automatically. Configure your AI provider keys in .env to connect Gemini or OpenRouter.</p>
+        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-left">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mock Specs</h2>
+          <ul className="space-y-1 text-xs text-slate-400">
+            <li className="flex justify-between"><span>Provider Status</span><span className="font-semibold text-amber-400">Mock Mode Active</span></li>
+            <li className="flex justify-between"><span>Tailwind CSS</span><span className="text-emerald-400">Enabled</span></li>
+            <li className="flex justify-between"><span>Design</span><span className="text-violet-400">Premium Glassmorphic</span></li>
+          </ul>
         </div>
-
-        <h2 className="mx-auto max-w-5xl text-5xl font-black leading-tight md:text-7xl">
-          Build professional websites with AI in minutes
-        </h2>
-
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/60">
-          Turn your ideas into polished, fully functional React components with smart suggestions and instant optimization.
-        </p>
-
-        <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-          <button className="rounded-2xl bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-4 text-sm font-bold text-white">
-            Start Building
-          </button>
-
-          <button className="rounded-2xl border border-white/10 px-6 py-4 text-sm font-bold text-white/80">
-            View Templates
-          </button>
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-7xl gap-6 px-6 py-20 md:grid-cols-3">
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8">
-          <span className="text-3xl">⚡</span>
-          <h3 className="mt-4 text-xl font-black">Fast Generation</h3>
-          <p className="mt-3 leading-7 text-white/55">
-            Generate tailored layouts based on your prompt and requirements.
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8">
-          <span className="text-3xl">✓</span>
-          <h3 className="mt-4 text-xl font-black">Clean Code</h3>
-          <p className="mt-3 leading-7 text-white/55">
-            Get production-ready React components styled with Tailwind CSS.
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8">
-          <span className="text-3xl">🚀</span>
-          <h3 className="mt-4 text-xl font-black">Export Ready</h3>
-          <p className="mt-3 leading-7 text-white/55">
-            Download your code instantly and add it directly to your project.
-          </p>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="rounded-3xl bg-gradient-to-r from-violet-600 to-blue-500 p-10 text-center">
-          <h3 className="text-4xl font-black">
-            Ready to upgrade your workflow?
-          </h3>
-
-          <p className="mx-auto mt-4 max-w-xl text-white/75">
-            Start building websites that help you stand out.
-          </p>
-
-          <button className="mt-8 rounded-2xl bg-white px-6 py-4 text-sm font-black text-slate-950">
-            Start Free
-          </button>
-        </div>
-      </section>
-
-      <footer className="mx-auto max-w-7xl px-6 py-10 text-center text-sm text-white/40">
-        © 2026 CraftSite AI Preview.
-      </footer>
-    </main>
+      </div>
+    </div>
   );
-}
-`.trim();
+}`;
 
+export class MockProvider implements AIProvider {
+  public name = "mock" as const;
+
+  isConfigured(): boolean {
+    return true; // Always configured
+  }
+
+  getModels(): string[] {
+    return ["mock-safe-fallback"];
+  }
+
+  async generateWebsite(input: GenerateWebsiteInput): Promise<GenerateWebsiteOutput> {
     return {
-      generatedCode,
+      generatedCode: DEFAULT_MOCK_JSX,
       provider: "mock",
+      model: "mock-safe-fallback",
       isFallback: true,
     };
   }
 
-  async editWebsite(
-    input: EditWebsiteInput,
-  ): Promise<GenerateWebsiteOutput> {
-    // Escape backtick-sensitive content for template literal safety
-    const escapedInstruction = input.editInstruction.replace(/`/g, "'");
-
-    const generatedCode = `export default function GeneratedWebsite() {
-  return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-        <h1 className="text-2xl font-black">CraftSite Preview</h1>
-
-        <div className="hidden items-center gap-6 text-sm text-white/60 md:flex">
-          <a href="#">Features</a>
-          <a href="#">Pricing</a>
-          <a href="#">Reviews</a>
-        </div>
-
-        <button className="rounded-full bg-white px-5 py-2 text-sm font-bold text-slate-950">
-          Get Started
-        </button>
-      </nav>
-
-      <section className="mx-auto max-w-7xl px-6 py-8 text-center">
-        <div className="mx-auto mb-6 inline-flex rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-2 text-sm text-violet-300">
-          ✦ Edited with CraftSite AI
-        </div>
-
-        <div className="mx-auto mb-4 max-w-lg rounded-2xl border border-violet-400/20 bg-violet-500/10 px-5 py-3 text-sm text-violet-200">
-          Edit instruction applied (fallback mode)
-        </div>
-
-        <h2 className="mx-auto max-w-5xl text-5xl font-black leading-tight md:text-7xl">
-          Your edited website is ready
-        </h2>
-
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/60">
-          AI providers are currently unavailable. This is a safe fallback edit preview.
-        </p>
-
-        <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-          <button className="rounded-2xl bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-4 text-sm font-bold text-white">
-            Start Building
-          </button>
-
-          <button className="rounded-2xl border border-white/10 px-6 py-4 text-sm font-bold text-white/80">
-            View Templates
-          </button>
-        </div>
-      </section>
-
-      <footer className="mx-auto max-w-7xl px-6 py-10 text-center text-sm text-white/40">
-        CraftSite AI — Fallback Edit Mode.
-      </footer>
-    </main>
-  );
-}`;
-
+  async editWebsite(input: EditWebsiteInput): Promise<GenerateWebsiteOutput> {
     return {
-      generatedCode,
+      generatedCode: input.currentCode, // Simply return the code back
       provider: "mock",
+      model: "mock-safe-fallback",
+      isFallback: true,
+    };
+  }
+
+  async repairWebsite(brokenCode: string): Promise<GenerateWebsiteOutput> {
+    return {
+      generatedCode: brokenCode,
+      provider: "mock",
+      model: "mock-safe-fallback",
       isFallback: true,
     };
   }

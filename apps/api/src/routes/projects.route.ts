@@ -7,6 +7,10 @@ import { generateUniqueShareSlug } from "../lib/share.js";
 import { UsageService } from "../services/usage.service.js";
 import { AnalyticsService } from "../services/analytics.service.js";
 import { EVENTS } from "../lib/events.js";
+import { requireWorkspaceMember, requireWorkspaceRole } from "../services/workspace-permission.service.js";
+import { ActivityService } from "../services/activity.service.js";
+import { emitRealtimeEvent } from "../realtime/socket-server.js";
+import { REALTIME_EVENTS } from "../realtime/realtime-events.js";
 
 const router = Router();
 
@@ -54,7 +58,7 @@ router.get(
     try {
       const userId = getUserId(req);
       const projects = await prisma.project.findMany({
-        where: { userId },
+        where: { userId, workspaceId: null },
         orderBy: { createdAt: "desc" },
       });
       res.json({ success: true, data: projects });
@@ -84,9 +88,12 @@ router.post(
       const project = await prisma.project.create({
         data: {
           userId,
+          workspaceId: null,
           ...parsed.data,
         },
       });
+
+      await ActivityService.log(project.id, userId, "project_created", { title: project.title });
 
       AnalyticsService.trackEvent({
         userId,
@@ -152,7 +159,7 @@ router.patch(
         where: { id },
       });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });
@@ -163,6 +170,13 @@ router.patch(
         where: { id },
         data: { ...parsed.data },
       });
+
+      if (parsed.data.title && parsed.data.title !== project.title) {
+        await ActivityService.log(id, userId, "project_renamed", {
+          oldTitle: project.title,
+          newTitle: parsed.data.title,
+        });
+      }
 
       AnalyticsService.trackEvent({
         userId,
@@ -191,7 +205,7 @@ router.delete(
         where: { id },
       });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });
@@ -244,7 +258,7 @@ router.post(
         where: { id },
       });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });
@@ -297,6 +311,21 @@ router.post(
         { projectId: id, editInstruction, provider: aiResult.provider, isFallback: aiResult.isFallback }
       );
 
+      await ActivityService.log(id, userId, "ai_edit_applied", { editInstruction, provider: aiResult.provider });
+
+      const me = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true },
+      });
+      const userName = me?.name || me?.email || "Someone";
+
+      emitRealtimeEvent(`project:${id}`, REALTIME_EVENTS.PROJECT_UPDATED, {
+        projectId: id,
+        userId,
+        userName,
+        action: "edit",
+      });
+
       res.json({
         success: true,
         message: "Website edited successfully",
@@ -335,7 +364,7 @@ router.get(
         where: { id },
       });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });
@@ -379,7 +408,7 @@ router.post(
         where: { id },
       });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });
@@ -421,6 +450,21 @@ router.post(
         },
       });
 
+      await ActivityService.log(id, userId, "version_restored", { versionNumber: version.versionNumber });
+
+      const me = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true },
+      });
+      const userName = me?.name || me?.email || "Someone";
+
+      emitRealtimeEvent(`project:${id}`, REALTIME_EVENTS.PROJECT_UPDATED, {
+        projectId: id,
+        userId,
+        userName,
+        action: "restore",
+      });
+
       AnalyticsService.trackEvent({
         userId,
         event: EVENTS.PROJECT_VERSION_RESTORED,
@@ -454,7 +498,7 @@ router.delete(
         where: { id },
       });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });
@@ -497,7 +541,7 @@ router.post(
 
       const project = await prisma.project.findUnique({ where: { id } });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res.status(404).json({ success: false, message: "Project not found" });
         return;
       }
@@ -525,6 +569,8 @@ router.post(
           publishedAt: new Date(),
         },
       });
+
+      await ActivityService.log(id, userId, "project_published", { shareSlug });
 
       AnalyticsService.trackEvent({
         userId,
@@ -555,7 +601,7 @@ router.post(
 
       const project = await prisma.project.findUnique({ where: { id } });
 
-      if (!project || project.userId !== userId) {
+      if (!project || project.userId !== userId || project.workspaceId !== null) {
         res.status(404).json({ success: false, message: "Project not found" });
         return;
       }
@@ -568,6 +614,8 @@ router.post(
           publishedAt: null,
         },
       });
+
+      await ActivityService.log(id, userId, "project_unpublished", {});
 
       AnalyticsService.trackEvent({
         userId,
@@ -585,6 +633,151 @@ router.post(
       next(error);
     }
   },
+);
+
+// ─── Move / Duplicate ────────────────────────────────────────────────────────
+
+const moveProjectSchema = z.object({
+  workspaceId: z.string().nullable(),
+});
+
+router.post(
+  "/:id/move",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = getUserId(req);
+      const id = req.params.id as string;
+      const { workspaceId } = moveProjectSchema.parse(req.body);
+
+      const project = await prisma.project.findUnique({ where: { id } });
+      if (!project) return res.status(404).json({ error: "Project not found" });
+
+      // Only project creator can move it around natively
+      if (project.userId !== userId) {
+        return res.status(403).json({ error: "Only project creator can move it" });
+      }
+
+      if (workspaceId) {
+        await requireWorkspaceRole(workspaceId, userId, ["owner", "admin", "editor"]);
+      }
+
+      const updated = await prisma.project.update({
+        where: { id },
+        data: { workspaceId },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/:id/duplicate",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = getUserId(req);
+      const id = req.params.id as string;
+      
+      const parsed = z.object({ workspaceId: z.string().nullable().optional() }).safeParse(req.body);
+      const targetWorkspaceId = parsed.success && parsed.data.workspaceId !== undefined ? parsed.data.workspaceId : null;
+
+      const project = await prisma.project.findUnique({
+        where: { id },
+        include: { versions: true }
+      });
+      
+      if (!project) return res.status(404).json({ error: "Project not found" });
+
+      // Verify access to source
+      if (project.workspaceId) {
+        await requireWorkspaceMember(project.workspaceId, userId);
+      } else if (project.userId !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      // Verify access to destination
+      if (targetWorkspaceId) {
+        await requireWorkspaceRole(targetWorkspaceId, userId, ["owner", "admin", "editor"]);
+      }
+
+      // Duplicate
+      const newProject = await prisma.project.create({
+        data: {
+          title: `${project.title} (Copy)`,
+          prompt: project.prompt,
+          generatedCode: project.generatedCode,
+          provider: project.provider,
+          isFallback: project.isFallback,
+          userId,
+          workspaceId: targetWorkspaceId,
+        }
+      });
+
+      res.json(newProject);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /api/projects/:id/activity — Fetch activity logs for a project
+router.get(
+  "/:id/activity",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = getUserId(req);
+      const id = req.params.id as string;
+
+      const project = await prisma.project.findUnique({
+        where: { id },
+      });
+
+      if (!project) {
+        res.status(404).json({ success: false, message: "Project not found" });
+        return;
+      }
+
+      // Access check
+      if (project.workspaceId) {
+        const membership = await prisma.workspaceMember.findUnique({
+          where: {
+            workspaceId_userId: {
+              workspaceId: project.workspaceId,
+              userId,
+            },
+          },
+        });
+        if (!membership) {
+          res.status(403).json({ success: false, message: "Access denied" });
+          return;
+        }
+      } else {
+        if (project.userId !== userId) {
+          res.status(403).json({ success: false, message: "Access denied" });
+          return;
+        }
+      }
+
+      const activities = await prisma.projectActivity.findMany({
+        where: { projectId: id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: { id: true, name: true, image: true, email: true },
+          },
+        },
+      });
+
+      res.json({ success: true, data: activities });
+    } catch (error) {
+      next(error);
+    }
+  }
 );
 
 export const projectsRouter = router;

@@ -44,8 +44,8 @@ NODE_ENV=production
 PORT=5000
 
 # CORS URLs (Vercel domain and localhost for testing)
-CLIENT_URL=https://YOUR-VERCEL-DOMAIN.vercel.app
-CLIENT_URLS=https://YOUR-VERCEL-DOMAIN.vercel.app,http://localhost:3000
+CLIENT_URL=https://craftsite-ai.vercel.app
+CLIENT_URLS=https://craftsite-ai.vercel.app,http://localhost:3000
 
 # Database & Auth Secrets
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_SUPABASE_PROJECT.supabase.co:5432/postgres
@@ -55,26 +55,65 @@ JWT_EXPIRES_IN=7d
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=https://YOUR-RENDER-API.onrender.com/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://craftsite-ai.onrender.com/api/auth/google/callback
 
 # GitHub OAuth
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
-GITHUB_REDIRECT_URI=https://YOUR-RENDER-API.onrender.com/api/auth/github/callback
+GITHUB_REDIRECT_URI=https://craftsite-ai.onrender.com/api/auth/github/callback
 
 # OAuth Frontend Redirects
-FRONTEND_AUTH_SUCCESS_URL=https://YOUR-VERCEL-DOMAIN.vercel.app/dashboard
-FRONTEND_AUTH_ERROR_URL=https://YOUR-VERCEL-DOMAIN.vercel.app/sign-in?error=oauth_failed
+FRONTEND_AUTH_SUCCESS_URL=https://craftsite-ai.vercel.app/dashboard
+FRONTEND_AUTH_ERROR_URL=https://craftsite-ai.vercel.app/sign-in?error=oauth_failed
 
 # AI Providers
 AI_PROVIDER=auto
+AI_MODE=balanced
+ALLOW_MOCK_FALLBACK=true
+AI_REQUEST_TIMEOUT_MS=90000
+AI_EDIT_TIMEOUT_MS=60000
+AI_MAX_RETRIES=1
+
 OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_MODEL=qwen/qwen2.5-coder-32b-instruct
-OPENROUTER_SITE_URL=https://YOUR-VERCEL-DOMAIN.vercel.app
+OPENROUTER_MODEL=deepseek/deepseek-chat-v3.1:free
+OPENROUTER_FALLBACK_MODELS=deepseek/deepseek-chat-v3.1:free,qwen/qwen3-coder:free,google/gemini-2.0-flash-exp:free
+OPENROUTER_SITE_URL=https://craftsite-ai.vercel.app
 OPENROUTER_APP_NAME=CraftSite AI
 
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash
+GEMINI_FALLBACK_MODELS=gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash
+
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_FALLBACK_MODELS=llama-3.3-70b-versatile,llama-3.1-8b-instant
+
+TOGETHER_API_KEY=your_together_api_key
+TOGETHER_MODEL=meta-llama/Llama-3.3-70B-Instruct-Turbo
+TOGETHER_FALLBACK_MODELS=meta-llama/Llama-3.3-70B-Instruct-Turbo,Qwen/Qwen2.5-Coder-32B-Instruct
+
+MISTRAL_API_KEY=your_mistral_api_key
+MISTRAL_MODEL=mistral-large-latest
+MISTRAL_FALLBACK_MODELS=mistral-large-latest,codestral-latest,mistral-small-latest
+
+## AI Generation Fallback Modes
+
+When `AI_PROVIDER=auto` is set, the registry selects the provider list according to `AI_MODE`:
+* **balanced:** OpenRouter → Gemini → Groq → Together → Mistral → Mock
+* **fast:** Groq → Gemini → OpenRouter → Mock
+* **quality:** Gemini → OpenRouter → Mistral → Together → Mock
+* **free:** OpenRouter → Gemini → Mock
+* **code:** OpenRouter → Together → Gemini → Mistral → Mock
+
+## AI Generation Troubleshooting
+
+If your application is constantly using the Mock / Safe Fallback preview, check:
+1. **Missing Keys:** Make sure `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, etc. are defined. Providers with missing keys are skipped automatically under auto mode.
+2. **Model Availability:** Free models can sometimes be overloaded. The system will automatically cycle through the fallback lists before switching providers.
+3. **Invalid Code Output:** If a model returns invalid React component syntax (such as missing tags, markdown fences, or external package imports), our code validator will reject it. The orchestrator will automatically ask the model to perform a self-repair once. If that fails, it tries the next model.
+4. **Endpoint Health Checks:** You can query the GET `/api/generate/provider-health` endpoint to verify which providers are active.
+5. **Direct API Validation:** Use the POST `/api/generate/test-provider` endpoint with `{"provider": "groq"}` to test a direct completion call. This test does not consume user credits.
+
 ```
 
 ## 3. Vercel Deployment (Frontend Web App)
@@ -94,7 +133,7 @@ The frontend is a Next.js 16 application configured for Turbopack.
 Add the following Environment Variable in the Vercel dashboard:
 
 ```env
-NEXT_PUBLIC_API_URL=https://YOUR-RENDER-API.onrender.com
+NEXT_PUBLIC_API_URL=https://craftsite-ai.onrender.com
 ```
 
 > **IMPORTANT WARNING:** Do **NOT** add your `DATABASE_URL`, `JWT_SECRET`, OAuth client secrets, or AI API Keys to the Vercel environment. Vercel only needs the `NEXT_PUBLIC_API_URL`. The backend handles all secrets.
@@ -104,16 +143,16 @@ NEXT_PUBLIC_API_URL=https://YOUR-RENDER-API.onrender.com
 ### Google Cloud Console
 When setting up Google OAuth for production:
 - **Authorized JavaScript origins:**
-  `https://YOUR-VERCEL-DOMAIN.vercel.app`
+  `https://craftsite-ai.vercel.app`
 - **Authorized redirect URI:**
-  `https://YOUR-RENDER-API.onrender.com/api/auth/google/callback`
+  `https://craftsite-ai.onrender.com/api/auth/google/callback`
 
 ### GitHub OAuth App
 When setting up GitHub OAuth for production:
 - **Homepage URL:**
-  `https://YOUR-VERCEL-DOMAIN.vercel.app`
+  `https://craftsite-ai.vercel.app`
 - **Authorization callback URL:**
-  `https://YOUR-RENDER-API.onrender.com/api/auth/github/callback`
+  `https://craftsite-ai.onrender.com/api/auth/github/callback`
 
 ## 5. Security Notes (CORS & Cookies)
 

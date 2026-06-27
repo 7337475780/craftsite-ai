@@ -18,7 +18,7 @@ describe('Projects Routes', () => {
   describe('GET /api/projects', () => {
     it('should return projects for authenticated user', async () => {
       prismaMock.project.findMany.mockResolvedValue([
-        { id: 'proj-1', title: 'Test Proj', prompt: 'test', generatedCode: 'code', userId: 'user-1', provider: 'mock', isFallback: true, isPublished: false, slug: null, createdAt: new Date(), updatedAt: new Date() }
+        { id: 'proj-1', title: 'Test Proj', prompt: 'test', generatedCode: 'code', userId: 'user-1', provider: 'mock', isFallback: true, isPublished: false, shareSlug: null, workspaceId: null, publishedAt: null, createdAt: new Date(), updatedAt: new Date() }
       ]);
 
       const res = await request(app).get('/api/projects');
@@ -41,7 +41,7 @@ describe('Projects Routes', () => {
 
     it('should return 403 if project belongs to another user', async () => {
       prismaMock.project.findUnique.mockResolvedValue({
-        id: 'proj-2', userId: 'user-2', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, slug: null, createdAt: new Date(), updatedAt: new Date()
+        id: 'proj-2', userId: 'user-2', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, shareSlug: null, workspaceId: null, publishedAt: null, createdAt: new Date(), updatedAt: new Date()
       });
 
       const res = await request(app).get('/api/projects/proj-2');
@@ -50,7 +50,7 @@ describe('Projects Routes', () => {
 
     it('should return project if user is owner', async () => {
       prismaMock.project.findUnique.mockResolvedValue({
-        id: 'proj-1', userId: 'user-1', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, slug: null, createdAt: new Date(), updatedAt: new Date()
+        id: 'proj-1', userId: 'user-1', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, shareSlug: null, workspaceId: null, publishedAt: null, createdAt: new Date(), updatedAt: new Date()
       });
       const res = await request(app).get('/api/projects/proj-1');
       expect(res.status).toBe(200);
@@ -61,7 +61,7 @@ describe('Projects Routes', () => {
   describe('DELETE /api/projects/:id', () => {
     it('should delete project if owner', async () => {
       prismaMock.project.findUnique.mockResolvedValue({
-        id: 'proj-1', userId: 'user-1', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, slug: null, createdAt: new Date(), updatedAt: new Date()
+        id: 'proj-1', userId: 'user-1', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, shareSlug: null, workspaceId: null, publishedAt: null, createdAt: new Date(), updatedAt: new Date()
       });
       prismaMock.project.delete.mockResolvedValue({} as any);
 
@@ -71,7 +71,7 @@ describe('Projects Routes', () => {
 
     it('should return 403 if not owner', async () => {
       prismaMock.project.findUnique.mockResolvedValue({
-        id: 'proj-2', userId: 'user-2', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, slug: null, createdAt: new Date(), updatedAt: new Date()
+        id: 'proj-2', userId: 'user-2', title: 'test', prompt: 'test', generatedCode: 'code', provider: 'mock', isFallback: true, isPublished: false, shareSlug: null, workspaceId: null, publishedAt: null, createdAt: new Date(), updatedAt: new Date()
       });
 
       const res = await request(app).delete('/api/projects/proj-2');

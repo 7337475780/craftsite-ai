@@ -25,7 +25,10 @@ async function handleResponse(response: Response) {
   }
 
   if (!response.ok) {
-    throw new Error(data.message || `Request failed with status ${response.status}`);
+    const err = new Error(data.message || `Request failed with status ${response.status}`) as any;
+    err.status = response.status;
+    err.data = data;
+    throw err;
   }
 
   return data;
@@ -35,7 +38,7 @@ export async function apiGet(endpoint: string) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "GET",
     headers: getAuthHeaders(),
-    credentials: "omit", // We don't need cookies anymore
+    credentials: "include",
   });
   return handleResponse(response);
 }
@@ -44,7 +47,7 @@ export async function apiPost(endpoint: string, body?: any) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "POST",
     headers: getAuthHeaders(),
-    credentials: "omit",
+    credentials: "include",
     body: body ? JSON.stringify(body) : undefined,
   });
   return handleResponse(response);
@@ -54,7 +57,7 @@ export async function apiPatch(endpoint: string, body?: any) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "PATCH",
     headers: getAuthHeaders(),
-    credentials: "omit",
+    credentials: "include",
     body: body ? JSON.stringify(body) : undefined,
   });
   return handleResponse(response);
@@ -64,7 +67,7 @@ export async function apiDelete(endpoint: string) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
-    credentials: "omit",
+    credentials: "include",
   });
   return handleResponse(response);
 }

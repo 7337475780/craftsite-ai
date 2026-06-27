@@ -19,8 +19,8 @@ export function Button({
         variant === "primary" &&
           "bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-500 text-white shadow-[0_0_34px_rgba(139,92,246,0.45)] hover:scale-[1.02]",
         variant === "secondary" &&
-          "border border-white/10 bg-white/[0.05] text-white hover:border-violet-400/50 hover:bg-white/[0.08]",
-        variant === "ghost" && "text-white/70 hover:text-white",
+          "border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.05] text-slate-900 dark:text-white hover:border-violet-400/50 dark:hover:border-violet-400/50 hover:bg-black/[0.05] dark:hover:bg-white/[0.08]",
+        variant === "ghost" && "text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white",
         className,
       )}
       {...props}

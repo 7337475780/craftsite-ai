@@ -22,7 +22,7 @@ export const pricingPlans: PricingPlan[] = [
     credits: 20,
     description: "Perfect for exploring CraftSite and testing ideas.",
     features: [
-      "20 starter AI credits",
+      "20 free starter credits",
       "AI website generation",
       "AI editing mode",
       "Export clean code (ZIP)",

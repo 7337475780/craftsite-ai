@@ -89,9 +89,9 @@ export function Hero() {
                     key={item}
                     type="button"
                     onClick={() => handleExampleClick(item)}
-                    className="suggestion-chip"
+                    className="suggestion-chip flex items-center gap-1.5"
                   >
-                    {item}
+                    <span className="text-[var(--accent)]">+</span> {item}
                   </button>
                 ))}
               </div>

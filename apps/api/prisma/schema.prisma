@@ -8,29 +8,38 @@ generator client {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  name         String?
-  email        String    @unique
-  passwordHash String?
-  image        String?
-  authProvider String    @default("credentials")
-  googleId     String?   @unique
-  githubId     String?   @unique
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  credits      Int       @default(20)
-  plan         String    @default("free")
-  role         String    @default("user")
-  isBlocked    Boolean   @default(false)
-  projects     Project[]
-  payments     Payment[]
-  usageLogs    UsageLog[]
-  analyticsEvents AnalyticsEvent[]
+  id                   String                @id @default(uuid())
+  name                 String?
+  email                String                @unique
+  passwordHash         String?
+  image                String?
+  authProvider         String                @default("credentials")
+  googleId             String?               @unique
+  githubId             String?               @unique
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  credits              Int                   @default(20)
+  plan                 String                @default("free")
+  role                 String                @default("user")
+  isBlocked            Boolean               @default(false)
+  projects             Project[]
+  payments             Payment[]
+  usageLogs            UsageLog[]
+  analyticsEvents      AnalyticsEvent[]
+  ownedWorkspaces      Workspace[]           @relation("WorkspaceOwner")
+  workspaceMemberships WorkspaceMember[]
+  workspaceInvitations WorkspaceInvitation[]
+  notifications        Notification[]
+  authoredComments     ProjectComment[]      @relation("CommentAuthor")
+  resolvedComments     ProjectComment[]      @relation("CommentResolver")
+  commentMentions      CommentMention[]
+  activities           ProjectActivity[]
 }
 
 model Project {
   id            String           @id @default(uuid())
   userId        String
+  workspaceId   String?
   title         String
   prompt        String           @db.Text
   generatedCode String           @db.Text
@@ -42,9 +51,13 @@ model Project {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace     Workspace?       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   versions      ProjectVersion[]
+  comments      ProjectComment[]
+  activities    ProjectActivity[]
 
   @@index([userId])
+  @@index([workspaceId])
   @@index([shareSlug])
 }
 
@@ -58,7 +71,7 @@ model ProjectVersion {
   editPrompt    String?
   createdAt     DateTime @default(now())
 
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([userId])
@@ -116,3 +129,128 @@ model Payment {
   @@index([plan])
 }
 
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  plan        String   @default("free")
+  credits     Int      @default(0)
+
+  owner       User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     WorkspaceMember[]
+  invitations WorkspaceInvitation[]
+  projects    Project[]
+
+  @@index([ownerId])
+  @@index([slug])
+}
+
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        String   @default("viewer")
+  joinedAt    DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@index([role])
+}
+
+model WorkspaceInvitation {
+  id          String    @id @default(uuid())
+  workspaceId String
+  email       String
+  role        String    @default("viewer")
+  token       String    @unique
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([token])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([readAt])
+}
+
+model ProjectComment {
+  id           String           @id @default(uuid())
+  projectId    String
+  authorId     String
+  parentId     String?
+  body         String           @db.Text
+  isResolved   Boolean          @default(false)
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author       User             @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  parent       ProjectComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      ProjectComment[] @relation("CommentReplies")
+  resolvedBy   User?            @relation("CommentResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  mentions     CommentMention[]
+
+  @@index([projectId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([isResolved])
+}
+
+model CommentMention {
+  id        String   @id @default(uuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  comment ProjectComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([userId])
+}
+
+model ProjectActivity {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([createdAt])
+}

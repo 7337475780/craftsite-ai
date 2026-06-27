@@ -14,6 +14,10 @@ import { billingRouter } from "./routes/billing.route.js";
 import { analyticsRouter } from "./routes/analytics.route.js";
 import { adminRouter } from "./routes/admin.route.js";
 import { webhookRouter } from "./routes/webhook.route.js";
+import { workspacesRouter } from "./routes/workspaces.route.js";
+import { invitationsRouter } from "./routes/invitations.route.js";
+import { commentsRouter } from "./routes/comments.route.js";
+import { notificationsRouter } from "./routes/notifications.route.js";
 import { rateLimit } from "express-rate-limit";
 // We don't import the strict `env` here for now since some tests mock process.env, 
 // but we apply rate limiter.
@@ -66,12 +70,16 @@ app.get("/", (_req, res) => {
 app.use("/api/health", healthRouter);
 app.use("/api/generate", generateRouter);
 app.use("/api/projects", projectsRouter);
+app.use("/api/projects/:projectId/comments", commentsRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/usage", usageRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/workspaces", workspacesRouter);
+app.use("/api/workspace-invitations", invitationsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({

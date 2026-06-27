@@ -6,35 +6,12 @@ import { Check, Crown, Sparkles, Zap, Loader2 } from "lucide-react";
 import { pricingPlans } from "@/lib/pricing";
 import { useAuth } from "@/components/providers/AuthProvider";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { trackClientEvent } from "@/lib/analytics-client";
 import { apiPost } from "@/lib/api-client";
 import { openRazorpayCheckout } from "@/lib/razorpay";
 import { useRouter } from "next/navigation";
 
-const FAQ = [
-  {
-    q: "Is CraftSite free?",
-    a: "Yes! Every new user gets 20 free starter credits to explore CraftSite, generate AI websites, and edit them.",
-  },
-  {
-    q: "What are credits?",
-    a: "Credits are the currency used to power our advanced AI models. They ensure we can provide fast, high-quality code generation.",
-  },
-  {
-    q: "What costs credits?",
-    a: "Generating a new website from scratch costs 1 credit. Applying an AI edit to an existing website also costs 1 credit.",
-  },
-  {
-    q: "Can I export websites for free?",
-    a: "Absolutely. Exporting your project as a clean React/Tailwind ZIP file is completely free and costs no credits.",
-  },
-  {
-    q: "Can I publish websites publicly?",
-    a: "Yes, you can publish and share your websites with a public link for free.",
-  },
-];
 
 const containerVariants = {
   hidden: {},
@@ -51,7 +28,6 @@ const cardVariants = {
 export function Pricing() {
   const { user, refetchMe } = useAuth();
   const router = useRouter();
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -251,20 +227,33 @@ export function Pricing() {
                     </p>
                   </div>
 
-                  <button
-                    disabled={isCurrentPlan || isLoading || (loadingPlan !== null)}
-                    onClick={() => handleUpgrade(plan.id)}
-                    className={`mt-8 flex w-full justify-center items-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold transition hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed ${
-                      isCurrentPlan
-                        ? "border border-violet-400/30 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
-                        : plan.popular
+                  {!user ? (
+                    <Link
+                      href="/sign-up"
+                      className={`mt-8 flex w-full justify-center items-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold transition hover:-translate-y-0.5 ${
+                        plan.popular
                           ? "bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 text-white shadow-[0_0_35px_rgba(124,58,237,0.45)] hover:shadow-[0_0_45px_rgba(124,58,237,0.6)]"
                           : "border border-violet-500/30 bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md hover:shadow-[0_12px_30px_rgba(124,58,237,0.35)] dark:border-white/10 dark:from-white/10 dark:to-white/10 dark:hover:from-white dark:hover:to-white dark:hover:text-slate-950"
-                    }`}
-                  >
-                    {isLoading && <Loader2 size={16} className="animate-spin" />}
-                    {ctaText}
-                  </button>
+                      }`}
+                    >
+                      {ctaText}
+                    </Link>
+                  ) : (
+                    <button
+                      disabled={isCurrentPlan || isLoading || (loadingPlan !== null)}
+                      onClick={() => handleUpgrade(plan.id)}
+                      className={`mt-8 flex w-full justify-center items-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold transition hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed ${
+                        isCurrentPlan
+                          ? "border border-violet-400/30 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
+                          : plan.popular
+                            ? "bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 text-white shadow-[0_0_35px_rgba(124,58,237,0.45)] hover:shadow-[0_0_45px_rgba(124,58,237,0.6)]"
+                            : "border border-violet-500/30 bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md hover:shadow-[0_12px_30px_rgba(124,58,237,0.35)] dark:border-white/10 dark:from-white/10 dark:to-white/10 dark:hover:from-white dark:hover:to-white dark:hover:text-slate-950"
+                      }`}
+                    >
+                      {isLoading && <Loader2 size={16} className="animate-spin" />}
+                      {ctaText}
+                    </button>
+                  )}
 
                   <div
                     className={`mt-8 h-px w-full ${
@@ -298,47 +287,6 @@ export function Pricing() {
           })}
         </motion.div>
 
-        {/* FAQ Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mx-auto mt-32 max-w-3xl"
-        >
-          <div className="mb-10 text-center">
-            <h3 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-              Frequently asked questions
-            </h3>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {FAQ.map((item, idx) => (
-              <div
-                key={idx}
-                className="overflow-hidden rounded-2xl border border-black/5 bg-white/60 backdrop-blur-xl dark:border-white/5 dark:bg-white/[0.02]"
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left font-bold text-slate-900 transition-colors hover:text-violet-600 dark:text-white dark:hover:text-violet-400 cursor-pointer"
-                >
-                  {item.q}
-                  <ChevronDown
-                    size={20}
-                    className={`transition-transform duration-300 ${openFaq === idx ? "rotate-180 text-violet-600 dark:text-violet-400" : "text-slate-400"}`}
-                  />
-                </button>
-                <motion.div
-                  initial={false}
-                  animate={{ height: openFaq === idx ? "auto" : 0, opacity: openFaq === idx ? 1 : 0 }}
-                  className="overflow-hidden px-6 text-slate-600 dark:text-white/60"
-                >
-                  <p className="pb-5 leading-relaxed">{item.a}</p>
-                </motion.div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </section>
   );

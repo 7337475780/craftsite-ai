@@ -2,139 +2,367 @@ import type {
   EditWebsiteInput,
   GenerateWebsiteInput,
   GenerateWebsiteOutput,
+  AIProviderAttempt,
+  AIProviderName,
+  AIMode,
 } from "./ai-provider.js";
 
+import { AIProviderError } from "./ai-provider.js";
+import { getProvider, getProviderChain } from "./provider-registry.js";
+import { validateGeneratedCode, repairCommonCodeIssues } from "./code-utils.js";
 import { MockProvider } from "./mock.provider.js";
-import { OpenRouterProvider } from "./openrouter.provider.js";
-import { GeminiProvider } from "./gemini.provider.js";
-
-async function tryProvider(
-  name: string,
-  provider: {
-    generateWebsite(
-      input: GenerateWebsiteInput,
-    ): Promise<GenerateWebsiteOutput>;
-  },
-  input: GenerateWebsiteInput,
-): Promise<GenerateWebsiteOutput | null> {
-  try {
-    console.log(`Trying AI provider: ${name}`);
-    const result = await provider.generateWebsite(input);
-    console.log(`AI provider succeeded: ${name}`);
-    return result;
-  } catch (error) {
-    console.warn(`AI provider failed: ${name}`);
-    console.warn(error instanceof Error ? error.message : error);
-    return null;
-  }
-}
-
-async function tryEditProvider(
-  name: string,
-  provider: {
-    editWebsite?(input: EditWebsiteInput): Promise<GenerateWebsiteOutput>;
-  },
-  input: EditWebsiteInput,
-): Promise<GenerateWebsiteOutput | null> {
-  if (!provider.editWebsite) return null;
-  try {
-    console.log(`Trying AI edit provider: ${name}`);
-    const result = await provider.editWebsite(input);
-    console.log(`AI edit provider succeeded: ${name}`);
-    return result;
-  } catch (error) {
-    console.warn(`AI edit provider failed: ${name}`);
-    console.warn(error instanceof Error ? error.message : error);
-    return null;
-  }
-}
 
 export async function generateWebsiteWithAI(
-  input: GenerateWebsiteInput,
+  input: GenerateWebsiteInput & { aiMode?: AIMode; aiProvider?: AIProviderName | "auto" }
 ): Promise<GenerateWebsiteOutput> {
-  const provider = process.env.AI_PROVIDER || "auto";
+  const providerConfig = input.aiProvider || (process.env.AI_PROVIDER as AIProviderName | "auto") || "auto";
+  const selectedMode = input.aiMode || (process.env.AI_MODE as AIMode) || "balanced";
+  const allowMockFallback = process.env.ALLOW_MOCK_FALLBACK === "true";
+  const providerAttempts: AIProviderAttempt[] = [];
 
-  if (provider === "auto") {
-    const openrouterResult = await tryProvider(
-      "openrouter",
-      new OpenRouterProvider(),
-      input,
-    );
-
-    if (openrouterResult) return { ...openrouterResult, isFallback: false };
-
-    const geminiResult = await tryProvider(
-      "gemini",
-      new GeminiProvider(),
-      input,
-    );
-
-    if (geminiResult) return { ...geminiResult, isFallback: false };
-
-    console.warn("All AI providers failed. Falling back to mock.");
-    const mockResult = await new MockProvider().generateWebsite(input);
-    return { ...mockResult, isFallback: true };
+  // 1. Build the queue of provider names to try
+  const queue: AIProviderName[] = [];
+  if (providerConfig !== "auto") {
+    queue.push(providerConfig);
+  } else {
+    const chain = getProviderChain(selectedMode);
+    for (const name of chain) {
+      if (name === "mock") continue; // mock handled separately at the end
+      const p = getProvider(name);
+      if (p.isConfigured()) {
+        queue.push(name);
+      } else {
+        console.log(`[AI Orchestrator] Skipping provider ${name} (not configured)`);
+      }
+    }
   }
 
-  try {
-    if (provider === "openrouter") {
-      return await new OpenRouterProvider().generateWebsite(input);
+  // 2. Iterate each provider in the queue
+  for (const providerName of queue) {
+    if (providerName === "mock") continue;
+
+    let p;
+    try {
+      p = getProvider(providerName);
+    } catch (err: any) {
+      console.warn(`[AI Orchestrator] Failed to instantiate provider ${providerName}: ${err.message}`);
+      continue;
     }
 
-    if (provider === "gemini") {
-      return await new GeminiProvider().generateWebsite(input);
+    const models = p.getModels();
+
+    for (const modelName of models) {
+      const startTime = Date.now();
+      console.log(`[AI Orchestrator] Attempting provider: ${providerName}, model: ${modelName}`);
+
+      try {
+        const providerInstance = getProvider(providerName, modelName);
+        const result = await providerInstance.generateWebsite(input);
+
+        // Validate code
+        if (validateGeneratedCode(result.generatedCode)) {
+          const duration = Date.now() - startTime;
+          providerAttempts.push({
+            provider: providerName,
+            model: modelName,
+            success: true,
+            durationMs: duration,
+          });
+          return {
+            generatedCode: result.generatedCode,
+            provider: providerName,
+            model: modelName,
+            isFallback: false,
+            providerAttempts,
+          };
+        }
+
+        console.warn(`[AI Orchestrator] Code failed initial validation. Trying local repair...`);
+        const locallyRepaired = repairCommonCodeIssues(result.generatedCode);
+        if (validateGeneratedCode(locallyRepaired)) {
+          const duration = Date.now() - startTime;
+          providerAttempts.push({
+            provider: providerName,
+            model: modelName,
+            success: true,
+            durationMs: duration,
+          });
+          return {
+            generatedCode: locallyRepaired,
+            provider: providerName,
+            model: modelName,
+            isFallback: false,
+            providerAttempts,
+          };
+        }
+
+        // Single-attempt provider repair
+        if (providerInstance.repairWebsite) {
+          console.warn(`[AI Orchestrator] Local repair failed. Prompting model for self-repair...`);
+          const repairResult = await providerInstance.repairWebsite(result.generatedCode, false);
+
+          if (validateGeneratedCode(repairResult.generatedCode)) {
+            const duration = Date.now() - startTime;
+            providerAttempts.push({
+              provider: providerName,
+              model: modelName,
+              success: true,
+              durationMs: duration,
+            });
+            return {
+              generatedCode: repairResult.generatedCode,
+              provider: providerName,
+              model: modelName,
+              isFallback: false,
+              providerAttempts,
+            };
+          }
+
+          // Try local repair on provider repaired code
+          const locallyRepairedRepair = repairCommonCodeIssues(repairResult.generatedCode);
+          if (validateGeneratedCode(locallyRepairedRepair)) {
+            const duration = Date.now() - startTime;
+            providerAttempts.push({
+              provider: providerName,
+              model: modelName,
+              success: true,
+              durationMs: duration,
+            });
+            return {
+              generatedCode: locallyRepairedRepair,
+              provider: providerName,
+              model: modelName,
+              isFallback: false,
+              providerAttempts,
+            };
+          }
+        }
+
+        throw new AIProviderError(
+          "Model generated code that failed validation checks",
+          providerName,
+          modelName,
+          "invalid_code"
+        );
+      } catch (error: any) {
+        const duration = Date.now() - startTime;
+        const errorType = error instanceof AIProviderError ? error.errorType : "unknown";
+
+        console.warn(
+          `[AI Orchestrator] Provider attempt failed: ${providerName} / ${modelName}. ErrorType: ${errorType}. Error: ${error.message}`
+        );
+
+        providerAttempts.push({
+          provider: providerName,
+          model: modelName,
+          success: false,
+          errorType,
+          errorMessage: process.env.NODE_ENV === "development" ? error.message : undefined,
+          durationMs: duration,
+        });
+      }
     }
-  } catch (error) {
-    console.warn(`${provider} failed. Falling back to mock.`);
-    const mockResult = await new MockProvider().generateWebsite(input);
-    return { ...mockResult, isFallback: true };
   }
 
-  const mockResult = await new MockProvider().generateWebsite(input);
-  return { ...mockResult, isFallback: false };
+  // 3. Fallback to Mock
+  if (providerConfig === "mock" || allowMockFallback) {
+    console.warn("[AI Orchestrator] All real models failed or Mock explicitly selected. Falling back to Mock.");
+    const startTime = Date.now();
+    const mockResult = await new MockProvider().generateWebsite(input);
+    const duration = Date.now() - startTime;
+    providerAttempts.push({
+      provider: "mock",
+      model: "mock-safe-fallback",
+      success: true,
+      durationMs: duration,
+    });
+    return {
+      generatedCode: mockResult.generatedCode,
+      provider: "mock",
+      model: "mock-safe-fallback",
+      isFallback: true,
+      providerAttempts,
+    };
+  }
+
+  // 4. Return custom status if fallback disabled
+  const err = new Error("All AI providers failed and fallback is disabled.") as any;
+  err.status = 502;
+  err.providerAttempts = providerAttempts;
+  throw err;
 }
 
 export async function editWebsiteWithAI(
-  input: EditWebsiteInput,
+  input: EditWebsiteInput & { aiMode?: AIMode; aiProvider?: AIProviderName | "auto" }
 ): Promise<GenerateWebsiteOutput> {
-  const provider = process.env.AI_PROVIDER || "auto";
+  const providerConfig = input.aiProvider || (process.env.AI_PROVIDER as AIProviderName | "auto") || "auto";
+  const selectedMode = input.aiMode || (process.env.AI_MODE as AIMode) || "balanced";
+  const allowMockFallback = process.env.ALLOW_MOCK_FALLBACK === "true";
+  const providerAttempts: AIProviderAttempt[] = [];
 
-  if (provider === "auto") {
-    const openrouterResult = await tryEditProvider(
-      "openrouter",
-      new OpenRouterProvider(),
-      input,
-    );
-
-    if (openrouterResult) return { ...openrouterResult, isFallback: false };
-
-    const geminiResult = await tryEditProvider(
-      "gemini",
-      new GeminiProvider(),
-      input,
-    );
-
-    if (geminiResult) return { ...geminiResult, isFallback: false };
-
-    console.warn("All AI edit providers failed. Falling back to mock.");
-    const mockResult = await new MockProvider().editWebsite!(input);
-    return { ...mockResult, isFallback: true };
+  const queue: AIProviderName[] = [];
+  if (providerConfig !== "auto") {
+    queue.push(providerConfig);
+  } else {
+    const chain = getProviderChain(selectedMode);
+    for (const name of chain) {
+      if (name === "mock") continue;
+      const p = getProvider(name);
+      if (p.isConfigured()) {
+        queue.push(name);
+      } else {
+        console.log(`[AI Orchestrator] Skipping provider ${name} (not configured)`);
+      }
+    }
   }
 
-  try {
-    if (provider === "openrouter") {
-      return await new OpenRouterProvider().editWebsite!(input);
+  for (const providerName of queue) {
+    if (providerName === "mock") continue;
+
+    let p;
+    try {
+      p = getProvider(providerName);
+    } catch (err: any) {
+      console.warn(`[AI Orchestrator] Failed to instantiate provider ${providerName}: ${err.message}`);
+      continue;
     }
 
-    if (provider === "gemini") {
-      return await new GeminiProvider().editWebsite!(input);
+    const models = p.getModels();
+
+    for (const modelName of models) {
+      const startTime = Date.now();
+      console.log(`[AI Orchestrator] Attempting edit provider: ${providerName}, model: ${modelName}`);
+
+      try {
+        const providerInstance = getProvider(providerName, modelName);
+        const result = await providerInstance.editWebsite(input);
+
+        // Validate code
+        if (validateGeneratedCode(result.generatedCode)) {
+          const duration = Date.now() - startTime;
+          providerAttempts.push({
+            provider: providerName,
+            model: modelName,
+            success: true,
+            durationMs: duration,
+          });
+          return {
+            generatedCode: result.generatedCode,
+            provider: providerName,
+            model: modelName,
+            isFallback: false,
+            providerAttempts,
+          };
+        }
+
+        console.warn(`[AI Orchestrator] Edit code failed initial validation. Trying local repair...`);
+        const locallyRepaired = repairCommonCodeIssues(result.generatedCode);
+        if (validateGeneratedCode(locallyRepaired)) {
+          const duration = Date.now() - startTime;
+          providerAttempts.push({
+            provider: providerName,
+            model: modelName,
+            success: true,
+            durationMs: duration,
+          });
+          return {
+            generatedCode: locallyRepaired,
+            provider: providerName,
+            model: modelName,
+            isFallback: false,
+            providerAttempts,
+          };
+        }
+
+        // Single-attempt provider repair
+        if (providerInstance.repairWebsite) {
+          console.warn(`[AI Orchestrator] Edit local repair failed. Prompting model for self-repair...`);
+          const repairResult = await providerInstance.repairWebsite(result.generatedCode, true);
+
+          if (validateGeneratedCode(repairResult.generatedCode)) {
+            const duration = Date.now() - startTime;
+            providerAttempts.push({
+              provider: providerName,
+              model: modelName,
+              success: true,
+              durationMs: duration,
+            });
+            return {
+              generatedCode: repairResult.generatedCode,
+              provider: providerName,
+              model: modelName,
+              isFallback: false,
+              providerAttempts,
+            };
+          }
+
+          const locallyRepairedRepair = repairCommonCodeIssues(repairResult.generatedCode);
+          if (validateGeneratedCode(locallyRepairedRepair)) {
+            const duration = Date.now() - startTime;
+            providerAttempts.push({
+              provider: providerName,
+              model: modelName,
+              success: true,
+              durationMs: duration,
+            });
+            return {
+              generatedCode: locallyRepairedRepair,
+              provider: providerName,
+              model: modelName,
+              isFallback: false,
+              providerAttempts,
+            };
+          }
+        }
+
+        throw new AIProviderError(
+          "Model generated edited code that failed validation checks",
+          providerName,
+          modelName,
+          "invalid_code"
+        );
+      } catch (error: any) {
+        const duration = Date.now() - startTime;
+        const errorType = error instanceof AIProviderError ? error.errorType : "unknown";
+
+        console.warn(
+          `[AI Orchestrator] Provider edit attempt failed: ${providerName} / ${modelName}. ErrorType: ${errorType}. Error: ${error.message}`
+        );
+
+        providerAttempts.push({
+          provider: providerName,
+          model: modelName,
+          success: false,
+          errorType,
+          errorMessage: process.env.NODE_ENV === "development" ? error.message : undefined,
+          durationMs: duration,
+        });
+      }
     }
-  } catch (error) {
-    console.warn(`${provider} edit failed. Falling back to mock.`);
-    const mockResult = await new MockProvider().editWebsite!(input);
-    return { ...mockResult, isFallback: true };
   }
 
-  const mockResult = await new MockProvider().editWebsite!(input);
-  return { ...mockResult, isFallback: false };
+  if (providerConfig === "mock" || allowMockFallback) {
+    console.warn("[AI Orchestrator] All real models failed during edit. Falling back to Mock.");
+    const startTime = Date.now();
+    const mockResult = await new MockProvider().editWebsite(input);
+    const duration = Date.now() - startTime;
+    providerAttempts.push({
+      provider: "mock",
+      model: "mock-safe-fallback",
+      success: true,
+      durationMs: duration,
+    });
+    return {
+      generatedCode: mockResult.generatedCode,
+      provider: "mock",
+      model: "mock-safe-fallback",
+      isFallback: true,
+      providerAttempts,
+    };
+  }
+
+  const err = new Error("All AI providers failed during edit and fallback is disabled.") as any;
+  err.status = 502;
+  err.providerAttempts = providerAttempts;
+  throw err;
 }

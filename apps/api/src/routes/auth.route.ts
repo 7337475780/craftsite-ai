@@ -10,13 +10,14 @@ import {
   clearAuthCookie,
   getSafeUser,
 } from "../lib/auth.js";
+import { env } from "../config/env.js";
 import { AnalyticsService } from "../services/analytics.service.js";
 import { EVENTS } from "../lib/events.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me";
+const JWT_SECRET = env.JWT_SECRET;
 
 const registerSchema = z.object({
   name: z.string().max(100).optional(),
@@ -287,7 +288,7 @@ router.patch("/password", requireAuth, async (req: Request, res: Response) => {
 const setOauthStateCookie = (res: Response, state: string) => {
   res.cookie("oauth_state", state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 10 * 60 * 1000, // 10 minutes
   });
@@ -299,8 +300,8 @@ router.get("/google", (req: Request, res: Response) => {
   setOauthStateCookie(res, state);
 
   const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-  googleAuthUrl.searchParams.append("client_id", process.env.GOOGLE_CLIENT_ID || "");
-  googleAuthUrl.searchParams.append("redirect_uri", process.env.GOOGLE_REDIRECT_URI || "");
+  googleAuthUrl.searchParams.append("client_id", env.GOOGLE_CLIENT_ID || "");
+  googleAuthUrl.searchParams.append("redirect_uri", env.GOOGLE_REDIRECT_URI || "");
   googleAuthUrl.searchParams.append("response_type", "code");
   googleAuthUrl.searchParams.append("scope", "openid email profile");
   googleAuthUrl.searchParams.append("state", state);
@@ -310,8 +311,8 @@ router.get("/google", (req: Request, res: Response) => {
 
 // GET /api/auth/google/callback
 router.get("/google/callback", async (req: Request, res: Response) => {
-  const errorRedirect = process.env.FRONTEND_AUTH_ERROR_URL || "http://localhost:3000/sign-in?error=oauth_failed";
-  const successRedirect = process.env.FRONTEND_AUTH_SUCCESS_URL || "http://localhost:3000/dashboard";
+  const errorRedirect = env.FRONTEND_AUTH_ERROR_URL || "http://localhost:3000/sign-in?error=oauth_failed";
+  const successRedirect = env.FRONTEND_AUTH_SUCCESS_URL || "http://localhost:3000/dashboard";
 
   try {
     const { code, state } = req.query;
@@ -337,9 +338,9 @@ router.get("/google/callback", async (req: Request, res: Response) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code: code as string,
-        client_id: process.env.GOOGLE_CLIENT_ID || "",
-        client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI || "",
+        client_id: env.GOOGLE_CLIENT_ID || "",
+        client_secret: env.GOOGLE_CLIENT_SECRET || "",
+        redirect_uri: env.GOOGLE_REDIRECT_URI || "",
         grant_type: "authorization_code",
       }),
     });
@@ -422,8 +423,8 @@ router.get("/github", (req: Request, res: Response) => {
   setOauthStateCookie(res, state);
 
   const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");
-  githubAuthUrl.searchParams.append("client_id", process.env.GITHUB_CLIENT_ID || "");
-  githubAuthUrl.searchParams.append("redirect_uri", process.env.GITHUB_REDIRECT_URI || "");
+  githubAuthUrl.searchParams.append("client_id", env.GITHUB_CLIENT_ID || "");
+  githubAuthUrl.searchParams.append("redirect_uri", env.GITHUB_REDIRECT_URI || "");
   githubAuthUrl.searchParams.append("scope", "read:user user:email");
   githubAuthUrl.searchParams.append("state", state);
 
@@ -432,8 +433,8 @@ router.get("/github", (req: Request, res: Response) => {
 
 // GET /api/auth/github/callback
 router.get("/github/callback", async (req: Request, res: Response) => {
-  const errorRedirect = process.env.FRONTEND_AUTH_ERROR_URL || "http://localhost:3000/sign-in?error=oauth_failed";
-  const successRedirect = process.env.FRONTEND_AUTH_SUCCESS_URL || "http://localhost:3000/dashboard";
+  const errorRedirect = env.FRONTEND_AUTH_ERROR_URL || "http://localhost:3000/sign-in?error=oauth_failed";
+  const successRedirect = env.FRONTEND_AUTH_SUCCESS_URL || "http://localhost:3000/dashboard";
 
   try {
     const { code, state } = req.query;
@@ -461,10 +462,10 @@ router.get("/github/callback", async (req: Request, res: Response) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID || "",
-        client_secret: process.env.GITHUB_CLIENT_SECRET || "",
+        client_id: env.GITHUB_CLIENT_ID || "",
+        client_secret: env.GITHUB_CLIENT_SECRET || "",
         code: code as string,
-        redirect_uri: process.env.GITHUB_REDIRECT_URI || "",
+        redirect_uri: env.GITHUB_REDIRECT_URI || "",
       }),
     });
 

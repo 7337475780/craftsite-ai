@@ -54,7 +54,7 @@ a {
 
 a:hover {
   color: var(--accent-2);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 button:focus-visible, a:focus-visible {
@@ -76,11 +76,26 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* INPUT WHITESPACE FIX */
+/* INPUT WHITESPACE & AUTOFILL FIX */
 input, textarea, select {
-  background: var(--surface) !important;
-  color: var(--text) !important;
   caret-color: var(--accent);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 input::placeholder, textarea::placeholder {

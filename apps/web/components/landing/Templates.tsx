@@ -2,49 +2,56 @@
 
 import { motion } from "framer-motion";
 import { ArrowUpRight, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const templates = [
   {
     title: "AI SaaS",
     description:
       "A conversion-focused landing page for AI tools and software products.",
-    badge: "Popular",
+    badge: "AI Tools",
     color: "from-cyan-400 via-blue-500 to-violet-600",
+    prompt: "A premium AI SaaS landing page with dark design, stats section, features with icons, testimonials carousel, and direct checkout CTA.",
   },
   {
     title: "Portfolio",
     description:
       "A premium personal brand website for developers, designers, and creators.",
-    badge: "Creator",
+    badge: "Personal",
     color: "from-pink-400 via-violet-500 to-blue-500",
+    prompt: "A sleek developer portfolio showcasing personal details, projects grid with modern hover effects, detailed tech stack badges, clean timeline for work history, and a contact form.",
   },
   {
     title: "Agency",
     description:
       "A bold agency website with services, case studies, and strong CTAs.",
-    badge: "Business",
+    badge: "Agency",
     color: "from-orange-400 via-pink-500 to-violet-600",
+    prompt: "A professional creative agency website with bold headers, services grid, case studies grid with high-resolution placeholder images, and a clean meeting scheduler section.",
   },
   {
     title: "Restaurant",
     description:
       "A modern restaurant website with menu, story, gallery, and booking flow.",
-    badge: "Local",
+    badge: "Local Biz",
     color: "from-emerald-400 via-cyan-500 to-blue-600",
+    prompt: "A gourmet restaurant website with an elegant food menu layout, story/history section, chef spotlight, location map details, and a table reservation form.",
   },
   {
     title: "Startup",
     description:
       "A launch-ready startup page with hero, features, social proof, and pricing.",
-    badge: "Launch",
+    badge: "Startup",
     color: "from-yellow-400 via-orange-500 to-pink-500",
+    prompt: "A modern tech startup homepage with trusted logos, product feature grid with illustrations, client reviews carousel, and email newsletter sign up CTA.",
   },
   {
     title: "E-commerce",
     description:
       "A clean product storefront layout built for modern online brands.",
-    badge: "Store",
+    badge: "E-commerce",
     color: "from-fuchsia-400 via-purple-500 to-cyan-500",
+    prompt: "A clean ecommerce storefront product listing grid, feature section, customer reviews, detailed FAQs, and checkout options.",
   },
 ];
 
@@ -71,6 +78,12 @@ const cardVariants = {
 };
 
 export function Templates() {
+  const router = useRouter();
+
+  const handleUseTemplate = (prompt: string) => {
+    router.push(`/generate?prompt=${encodeURIComponent(prompt)}`);
+  };
+
   return (
     <section
       id="templates"
@@ -121,7 +134,8 @@ export function Templates() {
                 y: -8,
                 scale: 1.015,
               }}
-              className="group relative overflow-hidden rounded-[2rem] border border-black/10 bg-white/75 p-4 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl transition dark:border-white/10 dark:bg-white/[0.035] dark:shadow-[0_24px_90px_rgba(0,0,0,0.38)]"
+              onClick={() => handleUseTemplate(template.prompt)}
+              className="group relative overflow-hidden rounded-[2rem] border border-black/10 bg-white/75 p-4 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl transition dark:border-white/10 dark:bg-white/[0.035] dark:shadow-[0_24px_90px_rgba(0,0,0,0.38)] cursor-pointer"
             >
               <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100">
                 <div className="absolute -left-24 top-0 h-full w-40 rotate-12 bg-gradient-to-r from-transparent via-white/40 to-transparent blur-2xl dark:via-white/10" />
@@ -184,7 +198,13 @@ export function Templates() {
                   {template.description}
                 </p>
 
-                <button className="mt-6 w-full rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-600 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(124,58,237,0.4)] dark:border-white/10 dark:from-white/10 dark:to-white/10 dark:hover:from-white dark:hover:to-white dark:hover:text-slate-950">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUseTemplate(template.prompt);
+                  }}
+                  className="mt-6 w-full rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-600 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(124,58,237,0.4)] dark:border-white/10 dark:from-white/10 dark:to-white/10 dark:hover:from-white dark:hover:to-white dark:hover:text-slate-950 cursor-pointer"
+                >
                   Use template
                 </button>
               </div>

@@ -1,5 +1,5 @@
 // AI Provider names used across the app
-export type AIProviderName = "openrouter" | "gemini" | "mock";
+export type AIProviderName = "openrouter" | "gemini" | "groq" | "together" | "mistral" | "mock";
 
 // A project saved by the user
 export type SavedProject = {
@@ -16,6 +16,11 @@ export type SavedProject = {
   publishedAt?: string | null;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
 };
 
 // A version snapshot of a project's generated code

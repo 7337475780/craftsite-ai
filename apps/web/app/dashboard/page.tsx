@@ -6,6 +6,7 @@ import { getSavedProjects } from "@/lib/projects-storage";
 import type { SavedProject } from "@/types/project";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { apiGet } from "@/lib/api-client";
 import Link from "next/link";
 import {
@@ -38,12 +39,20 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useAuth();
+  const { activeWorkspaceId } = useWorkspace();
 
   useEffect(() => {
     async function load() {
       try {
-        const result = await apiGet("/api/projects");
-        if (result.success) {
+        const endpoint = activeWorkspaceId 
+          ? `/api/workspaces/${activeWorkspaceId}/projects` 
+          : "/api/projects";
+        const result = await apiGet(endpoint);
+        
+        // Sometimes apiGet returns an array directly (like from workspace projects), sometimes {success: true, data: ...}
+        if (Array.isArray(result)) {
+          setProjects(result);
+        } else if (result.success) {
           setProjects(result.data);
         } else {
           setProjects(getSavedProjects());
@@ -63,7 +72,7 @@ export default function DashboardPage() {
     if (user) {
       load();
     }
-  }, [user]);
+  }, [user, activeWorkspaceId]);
 
   const totalProjects = projects.length;
   const latestProject = projects[0];

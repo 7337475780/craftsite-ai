@@ -17,3 +17,27 @@ A GitHub Actions workflow (`.github/workflows/ci.yml`) is set up to run on `push
 - We never use actual production API keys during testing.
 - AI Provider integrations are mocked heavily using `vitest-mock-extended`.
 - Payment webhooks are validated by injecting mocked `crypto` verification logic.
+
+## 4. Running Tests Locally
+
+### Run Backend API tests
+To run the Vitest unit/integration tests for the backend API:
+```bash
+# Standard command
+pnpm --filter api test
+
+# Windows PowerShell execution policy bypass (if script execution is disabled)
+powershell -ExecutionPolicy Bypass -Command "pnpm --filter api test"
+```
+
+### Run AI Pipeline Specific tests
+To run tests targeting code cleaning, validation, self-repair, multi-model fallback chains, modes registry filtering, and unconfigured model exclusion:
+```bash
+# Run specifically the ai-pipeline tests
+pnpm --filter api test src/services/ai/__tests__/ai-pipeline.test.ts
+
+# Windows PowerShell execution policy bypass
+powershell -ExecutionPolicy Bypass -Command "pnpm --filter api test src/services/ai/__tests__/ai-pipeline.test.ts"
+```
+
+

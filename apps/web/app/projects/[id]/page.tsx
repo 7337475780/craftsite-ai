@@ -40,6 +40,7 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 import { exportProjectAsZip } from "@/lib/export-project";
 import {
@@ -50,6 +51,11 @@ import {
 } from "@/lib/projects-storage";
 import type { AIProviderName, ProjectVersion, SavedProject } from "@/types/project";
 import { trackClientEvent } from "@/lib/analytics-client";
+import { useProjectPresence } from "@/hooks/useProjectPresence";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
+import { PresenceAvatars } from "@/components/realtime/PresenceAvatars";
+import { ProjectComments } from "@/components/comments/ProjectComments";
+import { REALTIME_EVENTS } from "@/types/realtime";
 
 type GenerateResponse = {
   success: boolean;
@@ -158,6 +164,52 @@ export default function ProjectDetailPage() {
   const [publishError, setPublishError] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const [publishPanelOpen, setPublishPanelOpen] = useState(true);
+
+  // ── Realtime & Collaboration State ────────────────────────────────────────
+  const { socket } = useRealtime();
+  const projectPresence = useProjectPresence(id);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [showRefreshBanner, setShowRefreshBanner] = useState(false);
+  const [refreshBannerUserName, setRefreshBannerUserName] = useState("");
+
+  const handleReloadProject = useCallback(async () => {
+    try {
+      setShowRefreshBanner(false);
+      const result = await apiGet(`/api/projects/${id}`);
+      if (result.success) {
+        const found = result.data;
+        setProject(found);
+        setPrompt(found.prompt);
+        setGeneratedCode(found.generatedCode);
+        setProviderInfo({
+          provider: found.provider,
+          isFallback: found.isFallback,
+        });
+        setIsPublished(found.isPublished ?? false);
+        setShareSlug(found.shareSlug ?? null);
+        setIsSaved(true);
+      }
+    } catch (err) {
+      console.error("Failed to reload project details:", err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!socket || !id) return;
+
+    const onProjectUpdated = (data: { projectId: string; userId: string; userName: string; action: string }) => {
+      if (data.projectId === id && data.userId !== user?.id) {
+        setRefreshBannerUserName(data.userName);
+        setShowRefreshBanner(true);
+      }
+    };
+
+    socket.on(REALTIME_EVENTS.PROJECT_UPDATED, onProjectUpdated);
+
+    return () => {
+      socket.off(REALTIME_EVENTS.PROJECT_UPDATED, onProjectUpdated);
+    };
+  }, [socket, id, user?.id]);
 
   const handleExport = useCallback(async () => {
     if (!generatedCode) return;
@@ -279,13 +331,15 @@ export default function ProjectDetailPage() {
   // ── Copy Share Link ──────────────────────────────────────────────────────
   const handleCopyShareLink = useCallback(async () => {
     if (!shareSlug) return;
-    const url = `${window.location.origin}/share/${shareSlug}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
+    const url = `${appUrl}/share/${shareSlug}`;
     await navigator.clipboard.writeText(url);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   }, [shareSlug]);
 
-  const shareUrl = shareSlug ? `${typeof window !== "undefined" ? window.location.origin : ""}/share/${shareSlug}` : null;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
+  const shareUrl = shareSlug ? `${appUrl}/share/${shareSlug}` : null;
 
   const loadVersions = useCallback(async () => {
     if (!id) return;
@@ -761,6 +815,21 @@ export default function ProjectDetailPage() {
                   </motion.button>
                 )}
               </AnimatePresence>
+
+              <PresenceAvatars presenceList={projectPresence} />
+
+              <button
+                onClick={() => setCommentsOpen(!commentsOpen)}
+                className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer ${
+                  commentsOpen
+                    ? "border-violet-500/60 bg-violet-50 text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/20 dark:text-violet-300"
+                    : "border-black/10 bg-white/80 text-slate-700 hover:border-slate-300 dark:border-white/10 dark:bg-white/[0.05] dark:text-white/70"
+                }`}
+                title="Project Comments"
+              >
+                <MessageSquare size={12} />
+                <span>Comments</span>
+              </button>
 
               <ThemeToggle />
             </div>
@@ -1466,8 +1535,30 @@ export default function ProjectDetailPage() {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 40, scale: 0.97 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="flex min-h-0 flex-1 flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)]"
+                className="flex min-h-0 flex-1 flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] overflow-hidden"
               >
+                {/* Real-time Update Warning Banner */}
+                <AnimatePresence>
+                  {showRefreshBanner && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="flex items-center justify-between gap-4 bg-amber-500 text-zinc-950 px-5 py-3 text-xs font-bold shadow-lg z-30 flex-none"
+                    >
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={14} className="shrink-0" />
+                        <span>Project updated by {refreshBannerUserName}. Refresh to load latest code.</span>
+                      </div>
+                      <button
+                        onClick={handleReloadProject}
+                        className="bg-zinc-950 text-white rounded-lg px-3 py-1 text-[10px] font-extrabold hover:bg-zinc-850 transition-colors cursor-pointer"
+                      >
+                        Refresh
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 {/* Canvas navbar */}
                 <div className="flex flex-none items-center justify-between border-b border-black/6 px-5 py-3 dark:border-white/6">
                   <div className="flex items-center gap-3">

@@ -24,8 +24,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useCallback, useRef, Suspense } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useState, useCallback, useRef, Suspense } from "react";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiPost } from "@/lib/api-client";
 import { exportProjectAsZip } from "@/lib/export-project";
@@ -45,7 +46,9 @@ type GenerateResponse = {
     websiteType: string;
     generatedCode: string;
     provider: AIProviderName;
+    model?: string;
     isFallback: boolean;
+    providerAttempts?: any[];
   };
 };
 
@@ -57,8 +60,9 @@ const SUGGESTIONS = [
 ];
 
 const STEPS = [
-  "Analyzing your prompt...",
-  "Designing the layout...",
+  "Trying OpenRouter...",
+  "Trying Gemini...",
+  "Using safe fallback...",
   "Writing React components...",
   "Polishing styles...",
   "Spinning up the preview...",
@@ -78,8 +82,14 @@ function GeneratePageContent() {
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
   const [providerInfo, setProviderInfo] = useState<{
     provider: AIProviderName;
+    model?: string;
     isFallback: boolean;
+    providerAttempts?: any[];
   } | null>(null);
+  const [showDebugDetails, setShowDebugDetails] = useState(false);
+  const [aiMode, setAiMode] = useState<string>("balanced");
+  const [aiProvider, setAiProvider] = useState<string>("auto");
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
@@ -89,6 +99,7 @@ function GeneratePageContent() {
   const [exportSuccess, setExportSuccess] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { user, refetchMe } = useAuth();
+  const { activeWorkspaceId } = useWorkspace();
 
   // ── Refine (unsaved edit) State ──────────────────────────────────────────
   const [refineInstruction, setRefineInstruction] = useState("");
@@ -140,7 +151,8 @@ function GeneratePageContent() {
     const title = generateProjectTitle(prompt);
 
     try {
-      const result = await apiPost("/api/projects", {
+      const endpoint = activeWorkspaceId ? `/api/workspaces/${activeWorkspaceId}/projects` : "/api/projects";
+      const result = await apiPost(endpoint, {
         title,
         prompt,
         generatedCode,
@@ -148,8 +160,15 @@ function GeneratePageContent() {
         isFallback: providerInfo.isFallback,
       });
 
-      if (!result.success) {
-        throw new Error(result.message || "Failed to save project to cloud.");
+      if (activeWorkspaceId) {
+        // Workspace project response might not have success wrapping
+        if (!result || result.error) {
+           throw new Error(result.error || "Failed to save project to workspace.");
+        }
+      } else {
+        if (!result.success) {
+          throw new Error(result.message || "Failed to save project to cloud.");
+        }
       }
 
       setIsSaved(true);
@@ -181,7 +200,7 @@ function GeneratePageContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [generatedCode, prompt, providerInfo, style, websiteType, user, router]);
+  }, [generatedCode, prompt, providerInfo, style, websiteType, user, router, activeWorkspaceId]);
 
   // ── Refine Handler (unsaved edit on generate page) ─────────────────────
   const handleRefine = useCallback(async () => {
@@ -198,6 +217,8 @@ function GeneratePageContent() {
         currentCode: generatedCode,
         editInstruction: refineInstruction.trim(),
         originalPrompt: prompt,
+        aiMode,
+        aiProvider,
       });
       if (!result.success) {
         throw new Error(result.message || "Refine failed.");
@@ -206,7 +227,9 @@ function GeneratePageContent() {
       if (result.data) {
         setProviderInfo({
           provider: result.data.provider,
+          model: result.data.model,
           isFallback: result.data.isFallback,
+          providerAttempts: result.data.providerAttempts,
         });
       }
       setRefineInstruction("");
@@ -219,7 +242,14 @@ function GeneratePageContent() {
       if (err.message?.includes("credits") || err.status === 402) {
         setShowUpgradeModal(true);
       } else {
-        setRefineError(err instanceof Error ? err.message : "Refine failed.");
+        setRefineError(err.data?.message || err.message || "Refine failed.");
+        if (err.data?.error?.providerAttempts) {
+          setProviderInfo({
+            provider: "mock",
+            isFallback: true,
+            providerAttempts: err.data.error.providerAttempts,
+          });
+        }
       }
     } finally {
       setIsRefining(false);
@@ -228,6 +258,7 @@ function GeneratePageContent() {
 
   const handleGenerate = async () => {
     trackClientEvent("generate_button_clicked", { style, websiteType });
+    let stepInterval: any = null;
     try {
       setError("");
       setProviderInfo(null);
@@ -242,13 +273,19 @@ function GeneratePageContent() {
       setIsGenerating(true);
 
       // Cycle through loading steps
-      const stepInterval = setInterval(() => {
+      stepInterval = setInterval(() => {
         setLoadingStep((prev) => Math.min(prev + 1, STEPS.length - 1));
       }, 1400);
 
-      const result = (await apiPost("/api/generate", { prompt, style, websiteType })) as GenerateResponse;
+      const result = (await apiPost("/api/generate", { 
+        prompt, 
+        style, 
+        websiteType,
+        aiMode,
+        aiProvider,
+      })) as GenerateResponse;
 
-      clearInterval(stepInterval);
+      if (stepInterval) clearInterval(stepInterval);
 
       if (!result.success) {
         const anyRes = result as any;
@@ -263,32 +300,42 @@ function GeneratePageContent() {
       if (result.data) {
         setProviderInfo({
           provider: result.data.provider,
+          model: result.data.model,
           isFallback: result.data.isFallback,
+          providerAttempts: result.data.providerAttempts,
         });
       }
       setViewMode("preview");
       refetchMe();
     } catch (err: any) {
-      if (err.message?.includes("credits") || err.status === 402) {
-        setShowUpgradeModal(true);
-      } else {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Something went wrong while generating.",
-        );
+      setError(
+        err.data?.message || err.message || "Something went wrong while generating."
+      );
+      if (err.data?.error?.providerAttempts) {
+        setProviderInfo({
+          provider: "mock",
+          isFallback: true,
+          providerAttempts: err.data.error.providerAttempts,
+        });
       }
     } finally {
+      if (stepInterval) clearInterval(stepInterval);
       setIsGenerating(false);
     }
   };
 
   const providerLabel =
     providerInfo?.provider === "openrouter"
-      ? "OpenRouter"
+      ? `OpenRouter (${providerInfo.model || "Unknown"})`
       : providerInfo?.provider === "gemini"
-        ? "Gemini Flash"
-        : "Safe Fallback";
+        ? `Gemini (${providerInfo.model || "Unknown"})`
+        : providerInfo?.provider === "groq"
+          ? `Groq (${providerInfo.model || "Unknown"})`
+          : providerInfo?.provider === "together"
+            ? `Together (${providerInfo.model || "Unknown"})`
+            : providerInfo?.provider === "mistral"
+              ? `Mistral (${providerInfo.model || "Unknown"})`
+              : "Safe Fallback (Mock)";
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden craftsite-bg">
@@ -540,16 +587,44 @@ function GeneratePageContent() {
                     initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                     animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
                     exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    className={`flex items-center gap-2 overflow-hidden rounded-xl border px-3.5 py-2.5 text-xs font-semibold ${
+                    className={`flex flex-col gap-2 overflow-hidden rounded-xl border p-3.5 text-xs font-semibold ${
                       providerInfo.isFallback
                         ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
                         : "border-emerald-400/25 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                     }`}
                   >
-                    <Cpu size={12} className="shrink-0" />
-                    {providerInfo.isFallback
-                      ? "AI providers were busy. Showing safe fallback preview."
-                      : `Powered by ${providerLabel}`}
+                    <div className="flex items-center gap-2">
+                      <Cpu size={12} className="shrink-0" />
+                      <span className="flex-1">
+                        {providerInfo.isFallback
+                          ? "Safe fallback was used because AI providers failed."
+                          : `Powered by ${providerInfo.provider.toUpperCase()} (${providerInfo.model || ""})`}
+                      </span>
+                      {providerInfo.providerAttempts && providerInfo.providerAttempts.length > 0 && (
+                        <button
+                          onClick={() => setShowDebugDetails(!showDebugDetails)}
+                          className="rounded bg-black/5 px-2 py-1 text-[10px] font-bold hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20"
+                        >
+                          {showDebugDetails ? "Hide details" : "Show details"}
+                        </button>
+                      )}
+                    </div>
+
+                    {showDebugDetails && process.env.NODE_ENV !== "production" && providerInfo.providerAttempts && (
+                      <div className="mt-2.5 rounded-lg border border-black/5 bg-black/[0.02] p-2.5 font-mono text-[10px] leading-relaxed dark:border-white/5 dark:bg-white/[0.02]">
+                        <p className="font-bold border-b border-black/5 pb-1 mb-1.5 dark:border-white/5">Provider Attempts Log (Dev only):</p>
+                        <div className="space-y-1">
+                          {providerInfo.providerAttempts.map((attempt: any, idx: number) => (
+                            <div key={idx} className="flex justify-between">
+                              <span>{idx + 1}. {attempt.provider} ({attempt.model})</span>
+                              <span className={attempt.success ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}>
+                                {attempt.success ? "Success" : `Failed (${attempt.errorType || "error"})`} - {attempt.durationMs || attempt.duration}ms
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
@@ -664,7 +739,65 @@ function GeneratePageContent() {
                     <MonitorSmartphone size={11} />
                     {websiteType === "responsive" ? "Responsive" : "SaaS"}
                   </button>
+
+                  <button
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    disabled={isGenerating}
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                      showAdvanced
+                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
+                        : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
+                    }`}
+                  >
+                    <Cpu size={11} />
+                    Settings
+                  </button>
                 </div>
+
+                <AnimatePresence>
+                  {showAdvanced && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="w-full grid gap-3 sm:grid-cols-2 border-t border-black/5 pt-4 mt-1 dark:border-white/5 overflow-hidden"
+                    >
+                      <div>
+                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/30 block mb-1">AI Provider</label>
+                        <select
+                          value={aiProvider}
+                          onChange={(e) => setAiProvider(e.target.value)}
+                          disabled={isGenerating}
+                          className="w-full rounded-xl border border-black/10 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+                        >
+                          <option value="auto">Auto (Smart Fallback)</option>
+                          <option value="openrouter">OpenRouter</option>
+                          <option value="gemini">Gemini</option>
+                          <option value="groq">Groq</option>
+                          <option value="together">Together AI</option>
+                          <option value="mistral">Mistral AI</option>
+                          <option value="mock">Mock Fallback Only</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/30 block mb-1">AI Mode (Order Chain)</label>
+                        <select
+                          value={aiMode}
+                          onChange={(e) => setAiMode(e.target.value)}
+                          disabled={isGenerating || aiProvider !== "auto"}
+                          className="w-full rounded-xl border border-black/10 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white disabled:opacity-50"
+                        >
+                          <option value="balanced">Balanced</option>
+                          <option value="fast">Fast</option>
+                          <option value="quality">Quality</option>
+                          <option value="free">Free</option>
+                          <option value="code">Code</option>
+                        </select>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Generate button */}
                 <button

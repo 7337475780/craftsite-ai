@@ -16,41 +16,23 @@ const footerLinks = [
       { label: "AI Builder", href: "/generate" },
     ],
   },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "#" },
-      { label: "Contact", href: "#" },
-      { label: "Careers", href: "#" },
-      { label: "Brand", href: "#" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { label: "Docs", href: "#" },
-      { label: "Examples", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Changelog", href: "#" },
-    ],
-  },
 ];
 
 const socialLinks = [
   {
     label: "GitHub",
     icon: FaGithub,
-    href: "https://github.com",
+    href: "https://github.com/craftsite-ai",
   },
   {
     label: "X",
     icon: FaXTwitter,
-    href: "https://twitter.com",
+    href: "https://twitter.com/craftsite-ai",
   },
   {
     label: "LinkedIn",
     icon: FaLinkedin,
-    href: "https://linkedin.com",
+    href: "https://linkedin.com/company/craftsite-ai",
   },
 ];
 
@@ -132,15 +114,6 @@ export function Footer() {
                   );
                 })}
               </div>
-
-              <div className="mt-8 rounded-2xl border border-black/10 bg-white/65 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                <p className="text-sm font-bold text-slate-950 dark:text-white">
-                  Built for shipping fast
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/50">
-                  CraftSite helps you move from idea to website faster with AI.
-                </p>
-              </div>
             </div>
           </div>
 
@@ -152,15 +125,9 @@ export function Footer() {
             </p>
 
             <div className="flex flex-wrap gap-5">
-              <Link href="#" className="transition hover:text-slate-950 dark:hover:text-white">
-                Privacy Policy
-              </Link>
-              <Link href="#" className="transition hover:text-slate-950 dark:hover:text-white">
-                Terms of Service
-              </Link>
-              <Link href="#" className="transition hover:text-slate-950 dark:hover:text-white">
-                Cookie Policy
-              </Link>
+              <span>Privacy Policy</span>
+              <span>Terms of Service</span>
+              <span>Cookie Policy</span>
             </div>
           </div>
         </motion.div>

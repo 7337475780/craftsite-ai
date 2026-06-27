@@ -47,10 +47,10 @@ export function FAQ() {
     <section className="relative overflow-hidden py-24 sm:py-32">
       <div className="mx-auto max-w-3xl px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
             Frequently Asked Questions
           </h2>
-          <p className="mt-4 text-lg text-white/60">
+          <p className="mt-4 text-lg text-slate-600 dark:text-white/60">
             Everything you need to know about CraftSite AI.
           </p>
         </div>
@@ -59,17 +59,17 @@ export function FAQ() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden transition hover:border-white/20"
+              className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/5 overflow-hidden transition hover:border-black/20 dark:hover:border-white/20"
             >
               <button
                 onClick={() => toggle(index)}
                 className="flex w-full items-center justify-between px-6 py-5 text-left"
               >
-                <span className="text-base font-medium text-white">
+                <span className="text-base font-medium text-slate-900 dark:text-white">
                   {faq.question}
                 </span>
                 <ChevronDown
-                  className={`h-5 w-5 text-white/50 transition-transform duration-200 ${
+                  className={`h-5 w-5 text-slate-500 dark:text-white/50 transition-transform duration-200 ${
                     openIndex === index ? "rotate-180" : ""
                   }`}
                 />
@@ -82,7 +82,7 @@ export function FAQ() {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className="px-6 pb-5 text-white/60 text-sm leading-relaxed">
+                    <div className="px-6 pb-5 text-slate-600 dark:text-white/60 text-sm leading-relaxed">
                       {faq.answer}
                     </div>
                   </motion.div>

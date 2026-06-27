@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { RealtimeProvider } from "@/components/providers/RealtimeProvider";
+import { WorkspaceProvider } from "@/components/providers/WorkspaceProvider";
 import "./globals.css";
 
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
@@ -23,6 +25,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -30,11 +35,20 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
     siteName: SITE_NAME,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: SITE_NAME,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
+    images: ["/og-image.png"],
   },
   icons: {
     icon: "/icon.svg",
@@ -51,14 +65,18 @@ export default function RootLayout({
 }>) {
   return (
     <AuthProvider>
-      <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
-        <body suppressHydrationWarning>
-          <ThemeProvider>
-            <ScrollAnimationProvider />
-            {children}
-          </ThemeProvider>
-        </body>
-      </html>
+      <RealtimeProvider>
+        <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
+          <body suppressHydrationWarning>
+            <ThemeProvider>
+              <WorkspaceProvider>
+                <ScrollAnimationProvider />
+                {children}
+              </WorkspaceProvider>
+            </ThemeProvider>
+          </body>
+        </html>
+      </RealtimeProvider>
     </AuthProvider>
   );
 }
