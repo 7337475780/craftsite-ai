@@ -71,7 +71,7 @@ export class GeminiProvider implements AIProvider {
 
     let attempts = 0;
     const maxRetries = process.env.AI_MAX_RETRIES ? parseInt(process.env.AI_MAX_RETRIES) : 1;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.activeModel}:generateContent`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.activeModel}:generateContent?key=${this.apiKey}`;
 
     while (attempts <= maxRetries) {
       attempts++;
@@ -79,19 +79,11 @@ export class GeminiProvider implements AIProvider {
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-
-        if (this.apiKey.startsWith("ya29.") || this.apiKey.startsWith("AQ.")) {
-          headers["Authorization"] = `Bearer ${this.apiKey}`;
-        } else {
-          headers["x-goog-api-key"] = this.apiKey;
-        }
-
         const response = await fetch(url, {
           method: "POST",
-          headers,
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             contents: [
               {
@@ -104,7 +96,7 @@ export class GeminiProvider implements AIProvider {
               },
             ],
             generationConfig: {
-              temperature: 0.1,
+              temperature: 0.3,
               maxOutputTokens: 6000,
             },
           }),
@@ -115,6 +107,12 @@ export class GeminiProvider implements AIProvider {
 
         if (!response.ok) {
           const errorText = await response.text();
+          let errorMessage = errorText;
+          try {
+            const parsed = JSON.parse(errorText);
+            errorMessage = parsed.error?.message || errorText;
+          } catch {}
+
           let errorType: AIProviderErrorType = "unknown";
           let retryable = false;
 
@@ -137,7 +135,7 @@ export class GeminiProvider implements AIProvider {
           }
 
           throw new AIProviderError(
-            `Gemini upstream error: ${response.status} - ${errorText}`,
+            `Gemini upstream error: ${response.status} - ${errorMessage}`,
             "gemini",
             this.activeModel,
             errorType,
@@ -195,15 +193,48 @@ export class GeminiProvider implements AIProvider {
     );
   }
 
-  async generateWebsite(input: GenerateWebsiteInput): Promise<GenerateWebsiteOutput> {
-    const prompt = buildWebsiteGenerationPrompt(input);
-    const timeout = process.env.AI_REQUEST_TIMEOUT_MS ? parseInt(process.env.AI_REQUEST_TIMEOUT_MS) : 90000;
+  private extractGeneratedCode(data: GeminiResponse): string {
+    // 1. Check prompt feedback safety blocks
+    if ((data as any).promptFeedback?.blockReason) {
+      throw new AIProviderError(
+        `Gemini blocked the request: ${(data as any).promptFeedback.blockReason}`,
+        "gemini",
+        this.activeModel,
+        "safety_blocked"
+      );
+    }
 
-    const data = await this.callWithTimeoutAndRetry(prompt, timeout);
+    const candidate = data.candidates?.[0];
+    if (!candidate) {
+      throw new AIProviderError(
+        "Invalid response from Gemini: No candidates returned",
+        "gemini",
+        this.activeModel,
+        "invalid_response"
+      );
+    }
 
-    const part = data.candidates?.[0]?.content?.parts?.[0];
+    const finishReason = candidate.finishReason;
+    if (finishReason === "SAFETY" || finishReason === "safety") {
+      throw new AIProviderError(
+        "Gemini blocked response due to safety settings",
+        "gemini",
+        this.activeModel,
+        "safety_blocked"
+      );
+    }
+
+    if (finishReason === "MAX_TOKENS" || finishReason === "length") {
+      throw new AIProviderError(
+        "Gemini response was truncated due to output limit",
+        "gemini",
+        this.activeModel,
+        "truncated_output"
+      );
+    }
+
+    const part = candidate.content?.parts?.[0];
     const rawContent = part?.text || "";
-    const finishReason = data.candidates?.[0]?.finishReason;
 
     if (!rawContent) {
       throw new AIProviderError(
@@ -214,16 +245,15 @@ export class GeminiProvider implements AIProvider {
       );
     }
 
-    if (finishReason === "MAX_TOKENS" || finishReason === "length") {
-      throw new AIProviderError(
-        "Gemini output was truncated due to output limit rules",
-        "gemini",
-        this.activeModel,
-        "truncated_output"
-      );
-    }
+    return normalizeGeneratedCode(rawContent);
+  }
 
-    const generatedCode = normalizeGeneratedCode(rawContent);
+  async generateWebsite(input: GenerateWebsiteInput): Promise<GenerateWebsiteOutput> {
+    const prompt = buildWebsiteGenerationPrompt(input);
+    const timeout = process.env.AI_REQUEST_TIMEOUT_MS ? parseInt(process.env.AI_REQUEST_TIMEOUT_MS) : 90000;
+
+    const data = await this.callWithTimeoutAndRetry(prompt, timeout);
+    const generatedCode = this.extractGeneratedCode(data);
 
     return {
       generatedCode,
@@ -238,30 +268,7 @@ export class GeminiProvider implements AIProvider {
     const timeout = process.env.AI_EDIT_TIMEOUT_MS ? parseInt(process.env.AI_EDIT_TIMEOUT_MS) : 60000;
 
     const data = await this.callWithTimeoutAndRetry(prompt, timeout);
-
-    const part = data.candidates?.[0]?.content?.parts?.[0];
-    const rawContent = part?.text || "";
-    const finishReason = data.candidates?.[0]?.finishReason;
-
-    if (!rawContent) {
-      throw new AIProviderError(
-        "Empty response content from Gemini during edit",
-        "gemini",
-        this.activeModel,
-        "invalid_response"
-      );
-    }
-
-    if (finishReason === "MAX_TOKENS" || finishReason === "length") {
-      throw new AIProviderError(
-        "Gemini edit output was truncated due to output limit rules",
-        "gemini",
-        this.activeModel,
-        "truncated_output"
-      );
-    }
-
-    const generatedCode = normalizeGeneratedCode(rawContent);
+    const generatedCode = this.extractGeneratedCode(data);
 
     return {
       generatedCode,
@@ -284,9 +291,7 @@ ${brokenCode}
       : (process.env.AI_REQUEST_TIMEOUT_MS ? parseInt(process.env.AI_REQUEST_TIMEOUT_MS) : 90000);
 
     const data = await this.callWithTimeoutAndRetry(promptText, timeout);
-    const part = data.candidates?.[0]?.content?.parts?.[0];
-    const rawContent = part?.text || "";
-    const generatedCode = normalizeGeneratedCode(rawContent);
+    const generatedCode = this.extractGeneratedCode(data);
 
     return {
       generatedCode,

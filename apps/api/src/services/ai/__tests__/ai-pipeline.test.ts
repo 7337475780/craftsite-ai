@@ -8,6 +8,7 @@ import {
 } from "../code-utils.js";
 import { AIProviderError } from "../ai-provider.js";
 import { getProviderChain, getAIConfigSummary } from "../provider-registry.js";
+import { setModelCooldown, clearAllCooldowns } from "../model-cooldown.js";
 
 const originalEnv = { ...process.env };
 
@@ -100,6 +101,7 @@ describe("AI Orchestrator Pipeline", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     process.env = { ...originalEnv };
+    clearAllCooldowns(); // Prevent cooldown state from leaking between tests
   });
 
   it("OpenRouter success returns provider openrouter", async () => {
@@ -128,19 +130,17 @@ describe("AI Orchestrator Pipeline", () => {
   });
 
   it("OpenRouter rate-limit (429) tries Gemini", async () => {
-    // Mock 1st call (OpenRouter 1st attempt) as 429 rate limit
-    (fetch as any).mockResolvedValueOnce({
+    const make429 = () => ({
       ok: false,
       status: 429,
+      headers: { get: (h: string) => (h === "Retry-After" ? "5" : null) },
       text: async () => "Rate limit exceeded",
     });
 
-    // Mock 2nd call (OpenRouter retry attempt) as 429 rate limit
-    (fetch as any).mockResolvedValueOnce({
-      ok: false,
-      status: 429,
-      text: async () => "Rate limit exceeded",
-    });
+    // Mock 1st call (OpenRouter 1st attempt) as 429 rate limit
+    (fetch as any).mockResolvedValueOnce(make429());
+    // Mock 2nd call (OpenRouter retry attempt) as 429 rate limit (shouldn't happen but guard)
+    (fetch as any).mockResolvedValueOnce(make429());
 
     // Mock 3rd call (Gemini 1st attempt) as successful
     const geminiMockResponse = {
@@ -249,8 +249,8 @@ describe("AI Orchestrator Pipeline", () => {
     expect(result.generatedCode).toContain("Gemini Worked");
   });
 
-  it("Gemini authorization sends Bearer token if API key starts with AQ. or ya29.", async () => {
-    process.env.GEMINI_API_KEY = "AQ.test_gcp_token";
+  it("Gemini uses ?key= query parameter (not Authorization Bearer)", async () => {
+    process.env.GEMINI_API_KEY = "AIzaSy_test_api_key";
     // OpenRouter fails
     (fetch as any).mockResolvedValueOnce({
       ok: false,
@@ -279,10 +279,12 @@ describe("AI Orchestrator Pipeline", () => {
 
     await generateWebsiteWithAI({ prompt: "Generate website" });
 
-    // The second fetch call is Gemini
+    // The second fetch call is Gemini — verify URL contains ?key= and no Auth header
     const geminiFetchCall = (fetch as any).mock.calls[1];
-    expect(geminiFetchCall[1].headers["Authorization"]).toBe("Bearer AQ.test_gcp_token");
-    expect(geminiFetchCall[1].headers["x-goog-api-key"]).toBeUndefined();
+    const [url, options] = geminiFetchCall;
+    expect(url).toContain("?key=AIzaSy_test_api_key");
+    expect(options.headers["Authorization"]).toBeUndefined();
+    expect(options.headers["x-goog-api-key"]).toBeUndefined();
   });
 
   it("Mock is used only after real providers fail", async () => {
@@ -360,5 +362,43 @@ describe("AI Orchestrator Pipeline", () => {
     expect(result.generatedCode).toContain("Gemini Skip Test");
     // Should NOT have an OpenRouter attempt log since it was skipped entirely
     expect(result.providerAttempts?.find((a) => a.provider === "openrouter")).toBeUndefined();
+  });
+
+  it("skips model in cooldown and records cooldown errorType", async () => {
+    setModelCooldown("openrouter", "test-model-or", 60); // 60s cooldown
+
+    // Gemini succeeds
+    const geminiMockResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: `export default function GeneratedWebsite() { return <div>Gemini After Cooldown Skip</div>; }`,
+              },
+            ],
+          },
+          finishReason: "STOP",
+        },
+      ],
+    };
+
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => geminiMockResponse,
+    });
+
+    const result = await generateWebsiteWithAI({ prompt: "Generate website" });
+
+    // OpenRouter model should be in providerAttempts with errorType: "cooldown"
+    const openrouterAttempt = result.providerAttempts?.find((a) => a.provider === "openrouter");
+    expect(openrouterAttempt).toBeDefined();
+    expect(openrouterAttempt?.errorType).toBe("cooldown");
+    expect(openrouterAttempt?.success).toBe(false);
+
+    // Gemini should succeed
+    expect(result.provider).toBe("gemini");
+    // isFallback is false — Gemini is a real provider, not mock
+    expect(result.isFallback).toBe(false);
   });
 });

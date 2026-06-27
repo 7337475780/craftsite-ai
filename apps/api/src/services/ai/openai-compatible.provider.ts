@@ -115,7 +115,28 @@ export class OpenAICompatibleProvider implements AIProvider {
             errorType = "quota_exceeded";
           } else if (response.status === 429) {
             errorType = "rate_limited";
-            retryable = true;
+            retryable = false; // Disable retry on the same model to move to fallbacks immediately
+
+            let cooldownSeconds = 30; // Default fallback cooldown
+            const retryAfterHeader = response.headers.get("Retry-After");
+            if (retryAfterHeader) {
+              const seconds = parseInt(retryAfterHeader, 10);
+              if (!isNaN(seconds)) {
+                cooldownSeconds = seconds;
+              }
+            } else {
+              try {
+                const parsed = JSON.parse(errorText);
+                const metadata = parsed.error?.metadata;
+                const bodySeconds = metadata?.retry_after_seconds || metadata?.retry_after_seconds_raw;
+                if (bodySeconds && !isNaN(parseFloat(bodySeconds))) {
+                  cooldownSeconds = Math.ceil(parseFloat(bodySeconds));
+                }
+              } catch {}
+            }
+
+            const { setModelCooldown } = await import("./model-cooldown.js");
+            setModelCooldown(this.name, this.activeModel, cooldownSeconds);
           } else if (response.status >= 500) {
             errorType = "model_unavailable";
             retryable = true;

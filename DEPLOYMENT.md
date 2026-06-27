@@ -76,7 +76,7 @@ AI_MAX_RETRIES=1
 
 OPENROUTER_API_KEY=your_openrouter_api_key
 OPENROUTER_MODEL=deepseek/deepseek-chat-v3.1:free
-OPENROUTER_FALLBACK_MODELS=deepseek/deepseek-chat-v3.1:free,qwen/qwen3-coder:free,google/gemini-2.0-flash-exp:free
+OPENROUTER_FALLBACK_MODELS=deepseek/deepseek-chat-v3.1:free,qwen/qwen3-coder:free,google/gemini-2.0-flash-exp:free,meta-llama/llama-3.1-8b-instruct:free
 OPENROUTER_SITE_URL=https://craftsite-ai.vercel.app
 OPENROUTER_APP_NAME=CraftSite AI
 
@@ -111,10 +111,25 @@ If your application is constantly using the Mock / Safe Fallback preview, check:
 1. **Missing Keys:** Make sure `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, etc. are defined. Providers with missing keys are skipped automatically under auto mode.
 2. **Model Availability:** Free models can sometimes be overloaded. The system will automatically cycle through the fallback lists before switching providers.
 3. **Invalid Code Output:** If a model returns invalid React component syntax (such as missing tags, markdown fences, or external package imports), our code validator will reject it. The orchestrator will automatically ask the model to perform a self-repair once. If that fails, it tries the next model.
-4. **Endpoint Health Checks:** You can query the GET `/api/generate/provider-health` endpoint to verify which providers are active.
-5. **Direct API Validation:** Use the POST `/api/generate/test-provider` endpoint with `{"provider": "groq"}` to test a direct completion call. This test does not consume user credits.
+4. **Endpoint Health Checks:** You can query the GET `/api/generate/provider-health` endpoint to verify which providers are active. It now includes per-provider `warnings` (e.g. `fallback_models_empty`, `model_in_cooldown`, `gemini_key_missing`) and a global `warnings` array (e.g. `fallback_disabled`, `only_one_real_provider_configured`).
+5. **Direct API Validation:** Use the POST `/api/generate/test-provider` endpoint with `{"provider": "gemini", "model": "gemini-2.5-flash"}` to test a direct completion call for a specific provider and model. This test does not consume user credits.
+6. **OpenRouter Rate Limits (429):** When a model is rate-limited, the orchestrator reads the `Retry-After` header and registers a cooldown. The model is skipped for that window and the next fallback model in `OPENROUTER_FALLBACK_MODELS` is tried automatically. No manual intervention needed.
 
-```
+### Gemini `ACCESS_TOKEN_TYPE_UNSUPPORTED` Fix
+
+If Gemini returns `401 - ACCESS_TOKEN_TYPE_UNSUPPORTED`, this means the key format is wrong:
+- **Cause:** A GCP IAM/OAuth access token was passed instead of a Google AI Studio API Key.
+- **Fix:** Generate an API Key from [Google AI Studio](https://aistudio.google.com/app/apikey) and set it as `GEMINI_API_KEY`.
+- **Verify:** The Gemini provider now always passes the key as a `?key=` query parameter (never as `Authorization: Bearer`). This is the correct format for Google AI Studio API keys.
+- **Test:** Use `POST /api/generate/test-provider` with `{"provider": "gemini"}` after updating the key.
+
+### Model Cooldown Behavior
+
+When a provider returns HTTP 429 (rate limited):
+- The orchestrator reads `Retry-After` from response headers or `retry_after_seconds` from the response body.
+- The specific `provider:model` combination is placed in an in-memory cooldown for the reported duration (default 30s if header is absent).
+- The cooldown is skipped automatically when the window expires — no restart needed.
+- `GET /api/generate/provider-health` will show `model_in_cooldown` warning and `cooldownRemainingMs` for affected models.
 
 ## 3. Vercel Deployment (Frontend Web App)
 

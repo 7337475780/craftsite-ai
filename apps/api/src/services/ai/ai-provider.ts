@@ -19,6 +19,8 @@ export type AIProviderErrorType =
   | "rate_limited"
   | "quota_exceeded"
   | "model_unavailable"
+  | "safety_blocked"
+  | "cooldown"
   | "timeout"
   | "network_error"
   | "invalid_response"
@@ -71,6 +73,7 @@ export type GenerateWebsiteOutput = {
 
 export interface AIProvider {
   name: AIProviderName;
+  activeModel?: string;
   isConfigured(): boolean;
   getModels(): string[];
   generateWebsite(input: GenerateWebsiteInput): Promise<GenerateWebsiteOutput>;

@@ -309,7 +309,7 @@ function GeneratePageContent() {
       refetchMe();
     } catch (err: any) {
       setError(
-        err.data?.message || err.message || "Something went wrong while generating."
+        "AI generation failed. Please check provider configuration or try again."
       );
       if (err.data?.error?.providerAttempts) {
         setProviderInfo({
@@ -597,10 +597,10 @@ function GeneratePageContent() {
                       <Cpu size={12} className="shrink-0" />
                       <span className="flex-1">
                         {providerInfo.isFallback
-                          ? "Safe fallback was used because AI providers failed."
+                          ? "Safe fallback was used because real AI providers were temporarily unavailable."
                           : `Powered by ${providerInfo.provider.toUpperCase()} (${providerInfo.model || ""})`}
                       </span>
-                      {providerInfo.providerAttempts && providerInfo.providerAttempts.length > 0 && (
+                      {providerInfo.providerAttempts && providerInfo.providerAttempts.length > 0 && (user?.role === "admin" || process.env.NODE_ENV !== "production") && (
                         <button
                           onClick={() => setShowDebugDetails(!showDebugDetails)}
                           className="rounded bg-black/5 px-2 py-1 text-[10px] font-bold hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20"
@@ -610,12 +610,12 @@ function GeneratePageContent() {
                       )}
                     </div>
 
-                    {showDebugDetails && process.env.NODE_ENV !== "production" && providerInfo.providerAttempts && (
+                    {showDebugDetails && (user?.role === "admin" || process.env.NODE_ENV !== "production") && providerInfo.providerAttempts && (
                       <div className="mt-2.5 rounded-lg border border-black/5 bg-black/[0.02] p-2.5 font-mono text-[10px] leading-relaxed dark:border-white/5 dark:bg-white/[0.02]">
-                        <p className="font-bold border-b border-black/5 pb-1 mb-1.5 dark:border-white/5">Provider Attempts Log (Dev only):</p>
+                        <p className="font-bold border-b border-black/5 pb-1 mb-1.5 dark:border-white/5">Provider Attempts Log:</p>
                         <div className="space-y-1">
                           {providerInfo.providerAttempts.map((attempt: any, idx: number) => (
-                            <div key={idx} className="flex justify-between">
+                            <div key={idx} className="flex justify-between gap-4">
                               <span>{idx + 1}. {attempt.provider} ({attempt.model})</span>
                               <span className={attempt.success ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}>
                                 {attempt.success ? "Success" : `Failed (${attempt.errorType || "error"})`} - {attempt.durationMs || attempt.duration}ms
@@ -659,7 +659,27 @@ function GeneratePageContent() {
                     exit={{ opacity: 0, height: 0 }}
                     className="mb-4 overflow-hidden rounded-xl border border-red-400/25 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300"
                   >
-                    {error}
+                    <div className="flex flex-col gap-1.5">
+                      <p>{error}</p>
+                      {providerInfo?.providerAttempts && providerInfo.providerAttempts.length > 0 && (
+                        <div className="mt-1 space-y-1 font-mono text-[10px] opacity-80 border-t border-red-400/10 pt-1.5">
+                          {providerInfo.providerAttempts.map((attempt: any, idx: number) => (
+                            <div key={idx} className="flex justify-between gap-4">
+                              <span className="capitalize">{attempt.provider}:</span>
+                              <span>
+                                {attempt.errorType === "rate_limited" 
+                                  ? "rate limited" 
+                                  : attempt.errorType === "invalid_api_key" 
+                                    ? "invalid API key" 
+                                    : attempt.errorType === "quota_exceeded"
+                                      ? "quota exceeded"
+                                      : attempt.errorType || "failed"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

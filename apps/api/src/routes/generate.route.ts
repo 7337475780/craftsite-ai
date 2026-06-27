@@ -47,35 +47,44 @@ generateRouter.get("/provider-health", checkDevOrAdmin, (req, res) => {
 
 // POST /api/generate/test-provider — Direct model verification (does not consume credits)
 generateRouter.post("/test-provider", checkDevOrAdmin, async (req, res) => {
-  const { provider } = req.body;
+  const { provider, model } = req.body;
   const validProviders = ["openrouter", "gemini", "groq", "together", "mistral", "mock"];
   if (!validProviders.includes(provider)) {
     return res.status(400).json({ success: false, message: "Invalid provider specified" });
   }
 
+  let instance;
   try {
-    const instance = getProvider(provider);
+    instance = getProvider(provider, model);
     if (!instance.isConfigured()) {
       return res.status(400).json({ success: false, message: `${provider} key is missing / not configured` });
     }
-    const testPrompt = { prompt: "Return only: export default function GeneratedWebsite() { return <div>Hello</div>; }" };
+    const testPrompt = { 
+      prompt: "Return only: export default function GeneratedWebsite() { return <div className=\"p-6\">Hello from AI</div>; }",
+      style: "modern",
+      websiteType: "landing-page"
+    };
     const resVal = await instance.generateWebsite(testPrompt);
 
     return res.json({
       success: true,
       message: `Verified ${provider} API successfully`,
       data: {
+        provider,
+        model: instance.activeModel,
         generatedCode: resVal.generatedCode,
       },
     });
   } catch (error: any) {
+    const isDev = process.env.NODE_ENV !== "production";
+    const errorType = error.errorType || "unknown";
     return res.status(500).json({
       success: false,
-      message: `Verification failed: ${error.message}`,
+      message: isDev ? `Verification failed: ${error.message}` : "Verification failed due to provider error",
       error: {
-        message: error.message,
-        errorType: error.errorType,
-        status: error.status,
+        errorType,
+        provider,
+        model: model || (instance ? instance.activeModel : undefined),
       },
     });
   }

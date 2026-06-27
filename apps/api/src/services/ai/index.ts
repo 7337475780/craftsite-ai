@@ -11,12 +11,15 @@ import { AIProviderError } from "./ai-provider.js";
 import { getProvider, getProviderChain } from "./provider-registry.js";
 import { validateGeneratedCode, repairCommonCodeIssues } from "./code-utils.js";
 import { MockProvider } from "./mock.provider.js";
+import { env } from "../../config/env.js";
+import { isModelCoolingDown } from "./model-cooldown.js";
 
 export async function generateWebsiteWithAI(
   input: GenerateWebsiteInput & { aiMode?: AIMode; aiProvider?: AIProviderName | "auto" }
 ): Promise<GenerateWebsiteOutput> {
-  const providerConfig = input.aiProvider || (process.env.AI_PROVIDER as AIProviderName | "auto") || "auto";
-  const selectedMode = input.aiMode || (process.env.AI_MODE as AIMode) || "balanced";
+  const providerConfig = input.aiProvider || env.AI_PROVIDER || "auto";
+  const selectedMode = input.aiMode || env.AI_MODE || "balanced";
+  // Read at request time so tests can mutate process.env
   const allowMockFallback = process.env.ALLOW_MOCK_FALLBACK === "true";
   const providerAttempts: AIProviderAttempt[] = [];
 
@@ -52,12 +55,26 @@ export async function generateWebsiteWithAI(
     const models = p.getModels();
 
     for (const modelName of models) {
+      if (isModelCoolingDown(providerName, modelName)) {
+        console.warn(`[AI Orchestrator] Skipping provider: ${providerName}, model: ${modelName} (cooling down)`);
+        providerAttempts.push({
+          provider: providerName,
+          model: modelName,
+          success: false,
+          errorType: "cooldown",
+          durationMs: 0,
+        });
+        continue;
+      }
+
       const startTime = Date.now();
       console.log(`[AI Orchestrator] Attempting provider: ${providerName}, model: ${modelName}`);
 
       try {
         const providerInstance = getProvider(providerName, modelName);
         const result = await providerInstance.generateWebsite(input);
+
+        const isFallback = false; // isFallback is only true when mock is used
 
         // Validate code
         if (validateGeneratedCode(result.generatedCode)) {
@@ -72,7 +89,7 @@ export async function generateWebsiteWithAI(
             generatedCode: result.generatedCode,
             provider: providerName,
             model: modelName,
-            isFallback: false,
+            isFallback,
             providerAttempts,
           };
         }
@@ -91,7 +108,7 @@ export async function generateWebsiteWithAI(
             generatedCode: locallyRepaired,
             provider: providerName,
             model: modelName,
-            isFallback: false,
+            isFallback,
             providerAttempts,
           };
         }
@@ -113,7 +130,7 @@ export async function generateWebsiteWithAI(
               generatedCode: repairResult.generatedCode,
               provider: providerName,
               model: modelName,
-              isFallback: false,
+              isFallback,
               providerAttempts,
             };
           }
@@ -132,7 +149,7 @@ export async function generateWebsiteWithAI(
               generatedCode: locallyRepairedRepair,
               provider: providerName,
               model: modelName,
-              isFallback: false,
+              isFallback,
               providerAttempts,
             };
           }
@@ -195,8 +212,9 @@ export async function generateWebsiteWithAI(
 export async function editWebsiteWithAI(
   input: EditWebsiteInput & { aiMode?: AIMode; aiProvider?: AIProviderName | "auto" }
 ): Promise<GenerateWebsiteOutput> {
-  const providerConfig = input.aiProvider || (process.env.AI_PROVIDER as AIProviderName | "auto") || "auto";
-  const selectedMode = input.aiMode || (process.env.AI_MODE as AIMode) || "balanced";
+  const providerConfig = input.aiProvider || env.AI_PROVIDER || "auto";
+  const selectedMode = input.aiMode || env.AI_MODE || "balanced";
+  // Read at request time so tests can mutate process.env
   const allowMockFallback = process.env.ALLOW_MOCK_FALLBACK === "true";
   const providerAttempts: AIProviderAttempt[] = [];
 
@@ -230,12 +248,26 @@ export async function editWebsiteWithAI(
     const models = p.getModels();
 
     for (const modelName of models) {
+      if (isModelCoolingDown(providerName, modelName)) {
+        console.warn(`[AI Orchestrator] Skipping provider: ${providerName}, model: ${modelName} (cooling down)`);
+        providerAttempts.push({
+          provider: providerName,
+          model: modelName,
+          success: false,
+          errorType: "cooldown",
+          durationMs: 0,
+        });
+        continue;
+      }
+
       const startTime = Date.now();
       console.log(`[AI Orchestrator] Attempting edit provider: ${providerName}, model: ${modelName}`);
 
       try {
         const providerInstance = getProvider(providerName, modelName);
         const result = await providerInstance.editWebsite(input);
+
+        const isFallback = providerAttempts.some((a) => !a.success);
 
         // Validate code
         if (validateGeneratedCode(result.generatedCode)) {
@@ -250,7 +282,7 @@ export async function editWebsiteWithAI(
             generatedCode: result.generatedCode,
             provider: providerName,
             model: modelName,
-            isFallback: false,
+            isFallback,
             providerAttempts,
           };
         }
@@ -269,7 +301,7 @@ export async function editWebsiteWithAI(
             generatedCode: locallyRepaired,
             provider: providerName,
             model: modelName,
-            isFallback: false,
+            isFallback,
             providerAttempts,
           };
         }
@@ -291,7 +323,7 @@ export async function editWebsiteWithAI(
               generatedCode: repairResult.generatedCode,
               provider: providerName,
               model: modelName,
-              isFallback: false,
+              isFallback,
               providerAttempts,
             };
           }
@@ -309,7 +341,7 @@ export async function editWebsiteWithAI(
               generatedCode: locallyRepairedRepair,
               provider: providerName,
               model: modelName,
-              isFallback: false,
+              isFallback,
               providerAttempts,
             };
           }
