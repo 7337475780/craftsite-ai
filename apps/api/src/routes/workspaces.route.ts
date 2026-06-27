@@ -110,7 +110,7 @@ router.get("/", requireAuth, async (req, res, next) => {
     });
 
     res.json(
-      workspaces.map((w) => ({
+      workspaces.map((w: any) => ({
         ...w,
         currentUserRole: w.members[0]?.role || "viewer",
         members: undefined,

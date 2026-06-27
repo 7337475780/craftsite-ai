@@ -156,7 +156,7 @@ router.post("/", requireAuth, commentLimiter, async (req: Request, res: Response
           },
           select: { userId: true },
         });
-        validMentionIds.push(...members.map((m) => m.userId));
+        validMentionIds.push(...members.map((m: any) => m.userId));
       } else {
         // Personal project — can only mention owner
         if (mentionedUserIds.includes(access.project.userId)) {
@@ -173,7 +173,7 @@ router.post("/", requireAuth, commentLimiter, async (req: Request, res: Response
     const displayName = me?.name || me?.email || authorName;
 
     // Create comment in transaction
-    const comment = await prisma.$transaction(async (tx) => {
+    const comment = await prisma.$transaction(async (tx: any) => {
       const newComment = await tx.projectComment.create({
         data: {
           projectId,
