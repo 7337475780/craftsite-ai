@@ -155,14 +155,18 @@ function hasBalancedQuotes(code: string) {
 }
 
 function hasBasicComponentShape(code: string) {
-  return (
-    code.includes("export default function GeneratedWebsite") &&
-    code.includes("return") &&
-    code.includes("<main") &&
-    code.includes("</main>") &&
-    code.includes(");") &&
-    code.includes("}")
-  );
+  // Accept both GeneratedWebsite and App as valid function names
+  const hasExport =
+    code.includes("export default function GeneratedWebsite") ||
+    code.includes("export default function App") ||
+    code.includes("export default GeneratedWebsite") ||
+    code.includes("export default App");
+
+  // Accept any JSX root element — don't require <main>
+  const hasJSX = code.includes("return (") || code.includes("return(");
+  const hasClosingBrace = code.trimEnd().endsWith("}");
+
+  return hasExport && hasJSX && hasClosingBrace;
 }
 
 function isProbablyIncomplete(code: string) {
