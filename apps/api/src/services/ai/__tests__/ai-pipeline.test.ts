@@ -249,6 +249,42 @@ describe("AI Orchestrator Pipeline", () => {
     expect(result.generatedCode).toContain("Gemini Worked");
   });
 
+  it("Gemini authorization sends Bearer token if API key starts with AQ. or ya29.", async () => {
+    process.env.GEMINI_API_KEY = "AQ.test_gcp_token";
+    // OpenRouter fails
+    (fetch as any).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      text: async () => "Unauthorized",
+    });
+
+    // Gemini succeeds
+    const geminiMockResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: "export default function GeneratedWebsite() { return <div>Gemini Worked</div>; }",
+              },
+            ],
+          },
+        },
+      ],
+    };
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => geminiMockResponse,
+    });
+
+    await generateWebsiteWithAI({ prompt: "Generate website" });
+
+    // The second fetch call is Gemini
+    const geminiFetchCall = (fetch as any).mock.calls[1];
+    expect(geminiFetchCall[1].headers["Authorization"]).toBe("Bearer AQ.test_gcp_token");
+    expect(geminiFetchCall[1].headers["x-goog-api-key"]).toBeUndefined();
+  });
+
   it("Mock is used only after real providers fail", async () => {
     // OpenRouter fails
     (fetch as any).mockResolvedValueOnce({

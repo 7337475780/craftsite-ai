@@ -79,12 +79,19 @@ export class GeminiProvider implements AIProvider {
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+
+        if (this.apiKey.startsWith("ya29.") || this.apiKey.startsWith("AQ.")) {
+          headers["Authorization"] = `Bearer ${this.apiKey}`;
+        } else {
+          headers["x-goog-api-key"] = this.apiKey;
+        }
+
         const response = await fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": this.apiKey,
-          },
+          headers,
           body: JSON.stringify({
             contents: [
               {
