@@ -13,7 +13,14 @@ export function initRealtimeServer(httpServer: any): Server {
         const allowedOrigins = process.env.CLIENT_URLS
           ? process.env.CLIENT_URLS.split(",").map((url) => url.trim())
           : [process.env.CLIENT_URL || "http://localhost:3000"];
-        if (!origin || allowedOrigins.includes(origin)) {
+        const isOriginAllowed = (o: string): boolean => {
+          if (process.env.NODE_ENV === "development") return true;
+          if (allowedOrigins.includes(o)) return true;
+          if (/^https:\/\/craftsite-ai-.*\.vercel\.app$/.test(o)) return true;
+          if (/^http:\/\/localhost(:\d+)?$/.test(o) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(o)) return true;
+          return false;
+        };
+        if (!origin || isOriginAllowed(origin)) {
           callback(null, true);
         } else {
           callback(new Error("Not allowed by CORS"));

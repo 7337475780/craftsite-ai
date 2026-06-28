@@ -239,7 +239,7 @@ export function Pricing() {
                 <div className="relative z-10 flex h-full flex-col">
                   <div
                     className={`mb-7 flex h-14 w-14 items-center justify-center rounded-2xl border ${plan.popular
-                      ? "border-white/10 bg-white/10 text-cyan-200 shadow-[0_0_35px_rgba(56,189,248,0.18)]"
+                      ? "border-white/10 bg-white text-cyan-200 shadow-[0_0_35px_rgba(56,189,248,0.18)]"
                       : "border-violet-500/20 bg-violet-500/10 text-violet-700 shadow-[0_18px_40px_rgba(124,58,237,0.12)] dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-cyan-200"
                       }`}
                   >

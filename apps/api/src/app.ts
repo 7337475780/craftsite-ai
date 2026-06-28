@@ -28,10 +28,18 @@ const allowedOrigins = process.env.CLIENT_URLS
   ? process.env.CLIENT_URLS.split(",").map((url) => url.trim())
   : [process.env.CLIENT_URL || "http://localhost:3000"];
 
+const isOriginAllowed = (origin: string): boolean => {
+  if (process.env.NODE_ENV === "development") return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (/^https:\/\/craftsite-ai-.*\.vercel\.app$/.test(origin)) return true;
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return true;
+  return false;
+};
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));

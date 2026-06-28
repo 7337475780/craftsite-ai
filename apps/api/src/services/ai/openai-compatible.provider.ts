@@ -115,7 +115,7 @@ export class OpenAICompatibleProvider implements AIProvider {
             model: this.activeModel,
             messages,
             temperature: 0.3,
-            max_tokens: 6000,
+            max_tokens: 8192,
           }),
           signal: controller.signal,
         });
