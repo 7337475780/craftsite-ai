@@ -33,12 +33,26 @@ export class OpenAICompatibleProvider implements AIProvider {
     this.name = config.name;
     this.baseURL = config.baseURL;
     this.apiKey = process.env[config.apiKeyEnvKey] || "";
-    this.defaultModel = process.env[config.modelEnvKey] || "";
-    this.fallbackModels = process.env[config.fallbackModelsEnvKey]
+
+    const mapModelSlug = (model: string): string => {
+      if (config.name === "openrouter") {
+        if (model === "deepseek/deepseek-chat-v3.1:free") return "deepseek/deepseek-chat-v3.1";
+        if (model === "google/gemini-2.0-flash-exp:free") return "google/gemma-4-31b-it:free";
+        if (model === "meta-llama/llama-3.1-8b-instruct:free") return "meta-llama/llama-3.3-70b-instruct:free";
+      }
+      return model;
+    };
+
+    const rawDefault = process.env[config.modelEnvKey] || "";
+    this.defaultModel = mapModelSlug(rawDefault);
+
+    const rawFallbacks = process.env[config.fallbackModelsEnvKey]
       ? process.env[config.fallbackModelsEnvKey]!.split(",").map((m) => m.trim()).filter(Boolean)
       : [];
+    this.fallbackModels = rawFallbacks.map(mapModelSlug);
+
     this.headersBuilder = config.headersBuilder;
-    this.activeModel = selectedModel || this.defaultModel || this.getModels()[0];
+    this.activeModel = selectedModel ? mapModelSlug(selectedModel) : (this.defaultModel || this.getModels()[0]);
   }
 
   isConfigured(): boolean {
@@ -55,7 +69,11 @@ export class OpenAICompatibleProvider implements AIProvider {
     }
     // Safe default fallbacks if none are configured in env
     if (list.length === 0) {
-      if (this.name === "openrouter") list.push("deepseek/deepseek-chat-v3.1:free");
+      if (this.name === "openrouter") {
+        list.push("deepseek/deepseek-chat-v3.1");
+        list.push("qwen/qwen3-coder:free");
+        list.push("meta-llama/llama-3.3-70b-instruct:free");
+      }
       else if (this.name === "groq") list.push("llama-3.3-70b-versatile");
       else if (this.name === "together") list.push("meta-llama/Llama-3.3-70B-Instruct-Turbo");
       else if (this.name === "mistral") list.push("mistral-large-latest");

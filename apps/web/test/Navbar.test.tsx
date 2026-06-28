@@ -16,7 +16,7 @@ describe('Navbar Component', () => {
 
     render(<Navbar />);
 
-    expect(screen.getByText('Log in')).toBeInTheDocument();
+    expect(screen.getByText('Sign in')).toBeInTheDocument();
     expect(screen.getByText('Start Building')).toBeInTheDocument();
   });
 

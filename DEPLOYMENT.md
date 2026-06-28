@@ -75,8 +75,8 @@ AI_EDIT_TIMEOUT_MS=60000
 AI_MAX_RETRIES=1
 
 OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_MODEL=deepseek/deepseek-chat-v3.1:free
-OPENROUTER_FALLBACK_MODELS=deepseek/deepseek-chat-v3.1:free,qwen/qwen3-coder:free,google/gemini-2.0-flash-exp:free,meta-llama/llama-3.1-8b-instruct:free
+OPENROUTER_MODEL=deepseek/deepseek-chat-v3.1
+OPENROUTER_FALLBACK_MODELS=deepseek/deepseek-chat-v3.1,qwen/qwen3-coder:free,google/gemma-4-31b-it:free,meta-llama/llama-3.3-70b-instruct:free
 OPENROUTER_SITE_URL=https://craftsite-ai.vercel.app
 OPENROUTER_APP_NAME=CraftSite AI
 

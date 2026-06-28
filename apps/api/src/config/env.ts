@@ -16,7 +16,7 @@ const envSchema = z.object({
   AI_PROVIDER: z.enum(["auto", "openrouter", "gemini", "groq", "together", "mistral", "mock"]).optional().default("auto"),
   AI_MODE: z.enum(["balanced", "fast", "quality", "free", "code"]).optional().default("balanced"),
   ALLOW_MOCK_FALLBACK: z.string().optional().transform((val) => val === "true"),
-  OPENROUTER_MODEL: z.string().optional().default("deepseek/deepseek-chat-v3.1:free"),
+  OPENROUTER_MODEL: z.string().optional().default("deepseek/deepseek-chat-v3.1"),
   GEMINI_MODEL: z.string().optional().default("gemini-2.5-flash"),
   OPENROUTER_FALLBACK_MODELS: z.string().optional(),
   GEMINI_FALLBACK_MODELS: z.string().optional(),
