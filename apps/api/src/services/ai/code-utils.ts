@@ -229,6 +229,17 @@ export function validateGeneratedCode(code: string): boolean {
     return false;
   }
 
+  // 8. does not contain protected fallback phrases
+  const invalidPhrases = [
+    "Preview protected",
+    "The AI returned incomplete code",
+    "CraftSite prevented the broken code",
+    "Regenerate Website"
+  ];
+  if (invalidPhrases.some(p => trimmed.includes(p))) {
+    return false;
+  }
+
   return true;
 }
 
@@ -383,5 +394,91 @@ export function isTruncatedOutput(code: string): boolean {
     return true;
   }
   return false;
+}
+
+export function scoreGeneratedUIQuality(code: string, websiteType?: string): { score: number; issues: string[] } {
+  let score = 100;
+  const issues: string[] = [];
+
+  const positiveSignals = [
+    { regex: /sm:|md:|lg:/, weight: 10 },
+    { regex: /max-w-/, weight: 10 },
+    { regex: /grid-cols-/, weight: 10 },
+    { regex: /rounded-(2xl|3xl)/, weight: 5 },
+    { regex: /bg-gradient-to-/, weight: 5 },
+    { regex: /backdrop-blur|bg-white\/\[0\.0[1-9]\]/, weight: 5 },
+  ];
+
+  const hasNavbar = /<nav|<header/i.test(code);
+  const hasFooter = /<footer/i.test(code);
+  const hasButton = /<button|className="[^"]*rounded-2xl[^"]*bg-gradient/.test(code);
+  
+  if (!hasNavbar) { score -= 15; issues.push("Missing Navbar"); }
+  if (!hasFooter) { score -= 10; issues.push("Missing Footer"); }
+  if (!hasButton) { score -= 10; issues.push("Missing stylized buttons"); }
+
+  let matchCount = 0;
+  for (const sig of positiveSignals) {
+    if (sig.regex.test(code)) matchCount++;
+  }
+  if (matchCount < 3) {
+    score -= 20;
+    issues.push("Lacks premium styling (gradients, glassmorphism, rounded corners)");
+  }
+
+  // Negative signals
+  if (!/sm:|md:|lg:|xl:/.test(code)) {
+    score -= 30;
+    issues.push("No responsive breakpoints (sm:, md:, lg:)");
+  }
+  
+  if (/w-\[[0-9]+px\](?!.*max-w-full)/.test(code)) {
+    score -= 20;
+    issues.push("Uses fixed widths without max-w-full");
+  }
+
+  if (/bg-green-|bg-teal-/.test(code) && !websiteType?.toLowerCase().includes("green")) {
+    score -= 10;
+    issues.push("Uses basic green/teal template style");
+  }
+
+  if (/SaaSify|John Doe|Globex/i.test(code)) {
+    score -= 15;
+    issues.push("Contains placeholder dummy content (SaaSify, John Doe, Globex)");
+  }
+
+  if (code.split('\\n').length < 100) {
+    score -= 15;
+    issues.push("Code is too short for a premium landing page (< 100 lines)");
+  }
+
+  if (!/flex-col/.test(code) && /flex-row/.test(code)) {
+    score -= 10;
+    issues.push("Uses flex-row without flex-col (might not stack on mobile)");
+  }
+
+  return { score: Math.max(0, score), issues };
+}
+
+export function detectResponsiveIssues(code: string): string[] {
+  const issues: string[] = [];
+  
+  if (!/sm:|md:|lg:|xl:/.test(code)) {
+    issues.push("No responsive breakpoints found");
+  }
+  if (/w-\[[0-9]+px\](?!.*max-w-full)/.test(code)) {
+    issues.push("Fixed widths used without max-w-full");
+  }
+  if (/grid-cols-[2-9]/.test(code) && !/sm:grid-cols-|md:grid-cols-|lg:grid-cols-/.test(code)) {
+    issues.push("Grid columns set without mobile fallback");
+  }
+  if (/flex-row/.test(code) && !/flex-col/.test(code)) {
+    issues.push("flex-row used without flex-col fallback for mobile");
+  }
+  if (/w-screen/.test(code) && !/overflow-x-hidden/.test(code)) {
+    issues.push("w-screen used without overflow-x-hidden (risk of horizontal scroll)");
+  }
+  
+  return issues;
 }
 

@@ -21,6 +21,7 @@ export type AIProviderErrorType =
   | "model_unavailable"
   | "safety_blocked"
   | "cooldown"
+  | "low_quality_ui"
   | "timeout"
   | "network_error"
   | "invalid_response"
@@ -61,6 +62,8 @@ export type AIProviderAttempt = {
   durationMs?: number;
   errorType?: string;
   errorMessage?: string;
+  qualityScore?: number;
+  qualityIssues?: string[];
 };
 
 export type GenerateWebsiteOutput = {
@@ -78,5 +81,5 @@ export interface AIProvider {
   getModels(): string[];
   generateWebsite(input: GenerateWebsiteInput): Promise<GenerateWebsiteOutput>;
   editWebsite(input: EditWebsiteInput): Promise<GenerateWebsiteOutput>;
-  repairWebsite?(brokenCode: string, isEdit: boolean): Promise<GenerateWebsiteOutput>;
+  repairWebsite?(brokenCode: string, isEdit: boolean, qualityIssues?: string[]): Promise<GenerateWebsiteOutput>;
 }

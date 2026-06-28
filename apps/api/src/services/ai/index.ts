@@ -9,7 +9,7 @@ import type {
 
 import { AIProviderError } from "./ai-provider.js";
 import { getProvider, getProviderChain } from "./provider-registry.js";
-import { validateGeneratedCode, repairCommonCodeIssues } from "./code-utils.js";
+import { validateGeneratedCode, repairCommonCodeIssues, scoreGeneratedUIQuality, detectResponsiveIssues } from "./code-utils.js";
 import { MockProvider } from "./mock.provider.js";
 import { env } from "../../config/env.js";
 import { isModelCoolingDown } from "./model-cooldown.js";
@@ -76,77 +76,73 @@ export async function generateWebsiteWithAI(
 
         const isFallback = false; // isFallback is only true when mock is used
 
-        // Validate code
-        if (validateGeneratedCode(result.generatedCode)) {
-          const duration = Date.now() - startTime;
-          providerAttempts.push({
-            provider: providerName,
-            model: modelName,
-            success: true,
-            durationMs: duration,
-          });
-          return {
-            generatedCode: result.generatedCode,
-            provider: providerName,
-            model: modelName,
-            isFallback,
-            providerAttempts,
-          };
-        }
-
-        console.warn(`[AI Orchestrator] Code failed initial validation. Trying local repair...`);
-        const locallyRepaired = repairCommonCodeIssues(result.generatedCode);
-        if (validateGeneratedCode(locallyRepaired)) {
-          const duration = Date.now() - startTime;
-          providerAttempts.push({
-            provider: providerName,
-            model: modelName,
-            success: true,
-            durationMs: duration,
-          });
-          return {
-            generatedCode: locallyRepaired,
-            provider: providerName,
-            model: modelName,
-            isFallback,
-            providerAttempts,
-          };
-        }
-
-        // Single-attempt provider repair
-        if (providerInstance.repairWebsite) {
-          console.warn(`[AI Orchestrator] Local repair failed. Prompting model for self-repair...`);
-          const repairResult = await providerInstance.repairWebsite(result.generatedCode, false);
-
-          if (validateGeneratedCode(repairResult.generatedCode)) {
-            const duration = Date.now() - startTime;
-            providerAttempts.push({
-              provider: providerName,
-              model: modelName,
-              success: true,
-              durationMs: duration,
-            });
-            return {
-              generatedCode: repairResult.generatedCode,
-              provider: providerName,
-              model: modelName,
-              isFallback,
-              providerAttempts,
-            };
+        // Helper to check validity and quality
+        const evaluateCode = (code: string) => {
+          let finalCode = code;
+          let isValid = validateGeneratedCode(finalCode);
+          if (!isValid) {
+            const locallyRepaired = repairCommonCodeIssues(finalCode);
+            if (validateGeneratedCode(locallyRepaired)) {
+              isValid = true;
+              finalCode = locallyRepaired;
+            }
           }
 
-          // Try local repair on provider repaired code
-          const locallyRepairedRepair = repairCommonCodeIssues(repairResult.generatedCode);
-          if (validateGeneratedCode(locallyRepairedRepair)) {
+          if (!isValid) return { isValid: false, finalCode, score: 0, issues: [] };
+
+          const { score, issues } = scoreGeneratedUIQuality(finalCode, input.websiteType);
+          const responsiveIssues = detectResponsiveIssues(finalCode);
+          const allIssues = [...issues, ...responsiveIssues];
+
+          return { isValid: true, finalCode, score, issues: allIssues };
+        };
+
+        const eval1 = evaluateCode(result.generatedCode);
+
+        if (eval1.isValid && eval1.score >= 75 && !eval1.issues.some(i => i.toLowerCase().includes("responsive") || i.includes("fallback"))) {
+          const duration = Date.now() - startTime;
+          providerAttempts.push({
+            provider: providerName,
+            model: modelName,
+            success: true,
+            durationMs: duration,
+            qualityScore: eval1.score,
+            qualityIssues: eval1.issues
+          });
+          return {
+            generatedCode: eval1.finalCode,
+            provider: providerName,
+            model: modelName,
+            isFallback,
+            providerAttempts,
+          };
+        }
+
+        if (providerInstance.repairWebsite) {
+          const isUIError = eval1.isValid;
+          console.warn(`[AI Orchestrator] ${isUIError ? `UI quality low (Score: ${eval1.score})` : 'Code invalid'}. Prompting repair...`);
+          
+          const repairResult = await providerInstance.repairWebsite(
+            isUIError ? eval1.finalCode : result.generatedCode,
+            false,
+            isUIError ? eval1.issues : undefined
+          );
+
+          const eval2 = evaluateCode(repairResult.generatedCode);
+
+          // For repair, if it's a syntax issue we just want it valid. If it's UI we want it >= 75
+          if (eval2.isValid && (isUIError ? eval2.score >= 75 : true)) {
             const duration = Date.now() - startTime;
             providerAttempts.push({
               provider: providerName,
               model: modelName,
               success: true,
               durationMs: duration,
+              qualityScore: eval2.score,
+              qualityIssues: eval2.issues
             });
             return {
-              generatedCode: locallyRepairedRepair,
+              generatedCode: eval2.finalCode,
               provider: providerName,
               model: modelName,
               isFallback,
@@ -156,10 +152,10 @@ export async function generateWebsiteWithAI(
         }
 
         throw new AIProviderError(
-          "Model generated code that failed validation checks",
+          eval1.isValid ? `Model generated code that failed UI quality checks (Score: ${eval1.score})` : "Model generated code that failed validation checks",
           providerName,
           modelName,
-          "invalid_code"
+          eval1.isValid ? "low_quality_ui" : "invalid_code"
         );
       } catch (error: any) {
         const duration = Date.now() - startTime;
@@ -269,76 +265,72 @@ export async function editWebsiteWithAI(
 
         const isFallback = providerAttempts.some((a) => !a.success);
 
-        // Validate code
-        if (validateGeneratedCode(result.generatedCode)) {
-          const duration = Date.now() - startTime;
-          providerAttempts.push({
-            provider: providerName,
-            model: modelName,
-            success: true,
-            durationMs: duration,
-          });
-          return {
-            generatedCode: result.generatedCode,
-            provider: providerName,
-            model: modelName,
-            isFallback,
-            providerAttempts,
-          };
-        }
-
-        console.warn(`[AI Orchestrator] Edit code failed initial validation. Trying local repair...`);
-        const locallyRepaired = repairCommonCodeIssues(result.generatedCode);
-        if (validateGeneratedCode(locallyRepaired)) {
-          const duration = Date.now() - startTime;
-          providerAttempts.push({
-            provider: providerName,
-            model: modelName,
-            success: true,
-            durationMs: duration,
-          });
-          return {
-            generatedCode: locallyRepaired,
-            provider: providerName,
-            model: modelName,
-            isFallback,
-            providerAttempts,
-          };
-        }
-
-        // Single-attempt provider repair
-        if (providerInstance.repairWebsite) {
-          console.warn(`[AI Orchestrator] Edit local repair failed. Prompting model for self-repair...`);
-          const repairResult = await providerInstance.repairWebsite(result.generatedCode, true);
-
-          if (validateGeneratedCode(repairResult.generatedCode)) {
-            const duration = Date.now() - startTime;
-            providerAttempts.push({
-              provider: providerName,
-              model: modelName,
-              success: true,
-              durationMs: duration,
-            });
-            return {
-              generatedCode: repairResult.generatedCode,
-              provider: providerName,
-              model: modelName,
-              isFallback,
-              providerAttempts,
-            };
+        // Helper to check validity and quality
+        const evaluateCode = (code: string) => {
+          let finalCode = code;
+          let isValid = validateGeneratedCode(finalCode);
+          if (!isValid) {
+            const locallyRepaired = repairCommonCodeIssues(finalCode);
+            if (validateGeneratedCode(locallyRepaired)) {
+              isValid = true;
+              finalCode = locallyRepaired;
+            }
           }
 
-          const locallyRepairedRepair = repairCommonCodeIssues(repairResult.generatedCode);
-          if (validateGeneratedCode(locallyRepairedRepair)) {
+          if (!isValid) return { isValid: false, finalCode, score: 0, issues: [] };
+
+          const { score, issues } = scoreGeneratedUIQuality(finalCode);
+          const responsiveIssues = detectResponsiveIssues(finalCode);
+          const allIssues = [...issues, ...responsiveIssues];
+
+          return { isValid: true, finalCode, score, issues: allIssues };
+        };
+
+        const eval1 = evaluateCode(result.generatedCode);
+
+        if (eval1.isValid && eval1.score >= 75 && !eval1.issues.some(i => i.toLowerCase().includes("responsive") || i.includes("fallback"))) {
+          const duration = Date.now() - startTime;
+          providerAttempts.push({
+            provider: providerName,
+            model: modelName,
+            success: true,
+            durationMs: duration,
+            qualityScore: eval1.score,
+            qualityIssues: eval1.issues
+          });
+          return {
+            generatedCode: eval1.finalCode,
+            provider: providerName,
+            model: modelName,
+            isFallback,
+            providerAttempts,
+          };
+        }
+
+        if (providerInstance.repairWebsite) {
+          const isUIError = eval1.isValid;
+          console.warn(`[AI Orchestrator] Edit: ${isUIError ? `UI quality low (Score: ${eval1.score})` : 'Code invalid'}. Prompting repair...`);
+          
+          const repairResult = await providerInstance.repairWebsite(
+            isUIError ? eval1.finalCode : result.generatedCode,
+            true,
+            isUIError ? eval1.issues : undefined
+          );
+
+          const eval2 = evaluateCode(repairResult.generatedCode);
+
+          if (eval2.isValid && (isUIError ? eval2.score >= 75 : true)) {
             const duration = Date.now() - startTime;
             providerAttempts.push({
               provider: providerName,
               model: modelName,
               success: true,
               durationMs: duration,
+              qualityScore: eval2.score,
+              qualityIssues: eval2.issues
             });
             return {
-              generatedCode: locallyRepairedRepair,
+              generatedCode: eval2.finalCode,
               provider: providerName,
               model: modelName,
               isFallback,
@@ -348,10 +340,10 @@ export async function editWebsiteWithAI(
         }
 
         throw new AIProviderError(
-          "Model generated edited code that failed validation checks",
+          eval1.isValid ? `Model generated edited code that failed UI quality checks (Score: ${eval1.score})` : "Model generated edited code that failed validation checks",
           providerName,
           modelName,
-          "invalid_code"
+          eval1.isValid ? "low_quality_ui" : "invalid_code"
         );
       } catch (error: any) {
         const duration = Date.now() - startTime;

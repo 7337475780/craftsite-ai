@@ -13,7 +13,7 @@ router.post("/track", async (req, res) => {
     const { event, metadata, path } = req.body;
     
     // Safely parse user ID if provided by the client, or extract if logged in
-    const userId = (req as any).user?.id || req.body.userId;
+    const userId = (req as any).auth?.userId || req.body.userId;
     
     const ip = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || undefined;
     const userAgent = req.headers["user-agent"] || undefined;
@@ -45,7 +45,7 @@ router.post("/track", async (req, res) => {
  */
 router.get("/me", requireAuth, async (req, res) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).auth.userId;
     const events = await AnalyticsService.getUserActivity(userId);
     
     return res.json({ success: true, data: events });
@@ -60,7 +60,7 @@ router.get("/me", requireAuth, async (req, res) => {
  */
 router.get("/summary", requireAuth, async (req, res) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).auth.userId;
     const summary = await AnalyticsService.getUserSummary(userId);
     
     return res.json({ success: true, data: summary });

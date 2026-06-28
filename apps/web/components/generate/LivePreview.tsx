@@ -203,6 +203,7 @@ function cleanPreviewCode(code: string) {
 export function LivePreview({ code }: LivePreviewProps) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [viewport, setViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");
 
   useEffect(() => {
     setMounted(true);
@@ -245,6 +246,44 @@ ${safeCode}
         </div>
       )}
 
+      <div className="flex items-center justify-between border-b border-black/10 bg-white/50 px-4 py-2 dark:border-white/10 dark:bg-black/20">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <span className="text-slate-500 dark:text-slate-400">Viewport:</span>
+          <div className="flex items-center gap-1 rounded-lg border border-black/10 bg-white p-1 dark:border-white/10 dark:bg-black/50">
+            <button
+              onClick={() => setViewport("desktop")}
+              className={`rounded-md px-3 py-1 transition-colors ${
+                viewport === "desktop"
+                  ? "bg-slate-200 text-slate-900 dark:bg-white/20 dark:text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10"
+              }`}
+            >
+              Desktop
+            </button>
+            <button
+              onClick={() => setViewport("tablet")}
+              className={`rounded-md px-3 py-1 transition-colors ${
+                viewport === "tablet"
+                  ? "bg-slate-200 text-slate-900 dark:bg-white/20 dark:text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10"
+              }`}
+            >
+              Tablet
+            </button>
+            <button
+              onClick={() => setViewport("mobile")}
+              className={`rounded-md px-3 py-1 transition-colors ${
+                viewport === "mobile"
+                  ? "bg-slate-200 text-slate-900 dark:bg-white/20 dark:text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10"
+              }`}
+            >
+              Mobile
+            </button>
+          </div>
+        </div>
+      </div>
+
       <SandpackProvider
         template="react"
         theme={resolvedTheme === "dark" ? "dark" : "light"}
@@ -266,6 +305,7 @@ ${safeCode}
 body {
   margin: 0;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
 }
 
 button {
@@ -286,7 +326,7 @@ button {
           recompileDelay: 600,
         }}
       >
-        <SandpackLayout style={{ height: "100%" }} className="flex-1 min-h-0 border-none">
+        <SandpackLayout style={{ height: "100%" }} className="flex-1 min-h-0 border-none bg-transparent">
           <div className="hidden h-full border-r border-black/10 dark:border-white/10 xl:block">
             <SandpackFileExplorer />
           </div>
@@ -303,15 +343,30 @@ button {
             }}
           />
 
-          <SandpackPreview
-            showOpenInCodeSandbox={false}
-            showRefreshButton
-            style={{
-              height: "100%",
-              minWidth: 0,
-              flex: 1,
-            }}
-          />
+          <div className="flex h-full flex-1 items-center justify-center bg-slate-100 dark:bg-slate-950/50 p-4 overflow-hidden">
+            <div
+              className="h-full overflow-hidden rounded-xl border border-black/10 bg-white shadow-2xl transition-all duration-300 dark:border-white/10 dark:bg-slate-900"
+              style={{
+                width:
+                  viewport === "mobile"
+                    ? "375px"
+                    : viewport === "tablet"
+                    ? "768px"
+                    : "100%",
+              }}
+            >
+              <SandpackPreview
+                showOpenInCodeSandbox={false}
+                showRefreshButton
+                showSandpackErrorOverlay={false}
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  minHeight: "100%",
+                }}
+              />
+            </div>
+          </div>
         </SandpackLayout>
       </SandpackProvider>
     </div>

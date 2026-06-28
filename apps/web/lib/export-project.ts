@@ -105,9 +105,21 @@ createRoot(document.getElementById('root')).render(
 
   const indexCss = `@import "tailwindcss";
 
-body {
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
 }
 `;
 

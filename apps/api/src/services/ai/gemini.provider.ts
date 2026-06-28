@@ -278,13 +278,12 @@ export class GeminiProvider implements AIProvider {
     };
   }
 
-  async repairWebsite(brokenCode: string, isEdit: boolean): Promise<GenerateWebsiteOutput> {
-    const promptText = `
-Fix this React component. Return only valid code.
+  async repairWebsite(brokenCode: string, isEdit: boolean, qualityIssues?: string[]): Promise<GenerateWebsiteOutput> {
+    const { buildIncompleteRepairPrompt, buildUIRepairPrompt } = await import("./repair-prompts.js");
+    const promptText = qualityIssues 
+      ? buildUIRepairPrompt(brokenCode, qualityIssues)
+      : buildIncompleteRepairPrompt(brokenCode);
 
-Broken code:
-${brokenCode}
-`.trim();
 
     const timeout = isEdit
       ? (process.env.AI_EDIT_TIMEOUT_MS ? parseInt(process.env.AI_EDIT_TIMEOUT_MS) : 60000)

@@ -615,11 +615,25 @@ function GeneratePageContent() {
                         <p className="font-bold border-b border-black/5 pb-1 mb-1.5 dark:border-white/5">Provider Attempts Log:</p>
                         <div className="space-y-1">
                           {providerInfo.providerAttempts.map((attempt: any, idx: number) => (
-                            <div key={idx} className="flex justify-between gap-4">
-                              <span>{idx + 1}. {attempt.provider} ({attempt.model})</span>
-                              <span className={attempt.success ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}>
-                                {attempt.success ? "Success" : `Failed (${attempt.errorType || "error"})`} - {attempt.durationMs || attempt.duration}ms
-                              </span>
+                            <div key={idx} className="flex flex-col border-b border-black/5 dark:border-white/5 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
+                              <div className="flex justify-between gap-4">
+                                <span>{idx + 1}. {attempt.provider} ({attempt.model})</span>
+                                <span className={attempt.success ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}>
+                                  {attempt.success ? "Success" : `Failed (${attempt.errorType || "error"})`} - {attempt.durationMs || attempt.duration}ms
+                                </span>
+                              </div>
+                              {attempt.qualityScore !== undefined && (
+                                <div className="mt-1 text-slate-500 dark:text-slate-400">
+                                  UI Quality Score: <span className={attempt.qualityScore >= 75 ? "text-emerald-500" : "text-amber-500"}>{attempt.qualityScore}</span>/100
+                                </div>
+                              )}
+                              {attempt.qualityIssues && attempt.qualityIssues.length > 0 && (
+                                <ul className="mt-1 list-disc pl-4 text-[9px] text-slate-500 dark:text-slate-400">
+                                  {attempt.qualityIssues.map((issue: string, i: number) => (
+                                    <li key={i}>{issue}</li>
+                                  ))}
+                                </ul>
+                              )}
                             </div>
                           ))}
                         </div>
