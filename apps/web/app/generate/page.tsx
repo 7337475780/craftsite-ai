@@ -163,7 +163,7 @@ function GeneratePageContent() {
       if (activeWorkspaceId) {
         // Workspace project response might not have success wrapping
         if (!result || result.error) {
-           throw new Error(result.error || "Failed to save project to workspace.");
+          throw new Error(result.error || "Failed to save project to workspace.");
         }
       } else {
         if (!result.success) {
@@ -277,9 +277,9 @@ function GeneratePageContent() {
         setLoadingStep((prev) => Math.min(prev + 1, STEPS.length - 1));
       }, 1400);
 
-      const result = (await apiPost("/api/generate", { 
-        prompt, 
-        style, 
+      const result = (await apiPost("/api/generate", {
+        prompt,
+        style,
         websiteType,
         aiMode,
         aiProvider,
@@ -391,11 +391,10 @@ function GeneratePageContent() {
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.85, x: 12 }}
                   transition={{ duration: 0.3 }}
-                  className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide sm:flex ${
-                    providerInfo.isFallback
+                  className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide sm:flex ${providerInfo.isFallback
                       ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
                       : "border-emerald-400/25 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                  }`}
+                    }`}
                 >
                   <Cpu size={11} />
                   {providerLabel}
@@ -414,13 +413,12 @@ function GeneratePageContent() {
                   transition={{ duration: 0.25 }}
                   onClick={handleSave}
                   disabled={isSaved || isSaving}
-                  className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all sm:flex ${
-                    saveSuccess
+                  className={`hidden items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all sm:flex ${saveSuccess
                       ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                       : isSaved
                         ? "border-black/10 bg-slate-100 text-slate-400 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/30"
                         : "border-violet-400/30 bg-violet-50 text-violet-700 hover:border-violet-500/40 hover:bg-violet-100 hover:shadow-sm dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
-                  }`}
+                    }`}
                 >
                   {saveSuccess ? (
                     <>
@@ -546,19 +544,17 @@ function GeneratePageContent() {
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className={`flex flex-col gap-4 transition-all duration-500 ${
-            isCompact
+          className={`flex flex-col gap-4 transition-all duration-500 ${isCompact
               ? "lg:w-[320px] xl:w-[380px]"
               : "mx-auto w-full max-w-2xl justify-center lg:w-[600px]"
-          }`}
+            }`}
         >
           {/* Panel header */}
           <motion.div layout className="flex flex-col gap-1.5">
             <motion.h1
               layout
-              className={`font-black tracking-tight text-slate-900 dark:text-white transition-all duration-300 ${
-                isCompact ? "text-xl" : "text-3xl"
-              }`}
+              className={`font-black tracking-tight text-slate-900 dark:text-white transition-all duration-300 ${isCompact ? "text-xl" : "text-3xl"
+                }`}
             >
               {isCompact ? "Craft Again" : "AI Website Builder"}
             </motion.h1>
@@ -572,9 +568,8 @@ function GeneratePageContent() {
           {/* Input Card */}
           <motion.div
             layout
-            className={`flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl transition-shadow duration-300 hover:shadow-[0_12px_50px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_12px_60px_rgba(0,0,0,0.4)] ${
-              !isCompact ? "glow-border" : ""
-            }`}
+            className={`flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl transition-shadow duration-300 hover:shadow-[0_12px_50px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_12px_60px_rgba(0,0,0,0.4)] ${!isCompact ? "glow-border" : ""
+              }`}
           >
             <div className="relative rounded-[1.5rem] p-5">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[1.5rem] bg-gradient-to-r from-transparent via-white to-transparent opacity-70" />
@@ -587,11 +582,10 @@ function GeneratePageContent() {
                     initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                     animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
                     exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    className={`flex flex-col gap-2 overflow-hidden rounded-xl border p-3.5 text-xs font-semibold ${
-                      providerInfo.isFallback
+                    className={`flex flex-col gap-2 overflow-hidden rounded-xl border p-3.5 text-xs font-semibold ${providerInfo.isFallback
                         ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
                         : "border-emerald-400/25 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <Cpu size={12} className="shrink-0" />
@@ -615,25 +609,11 @@ function GeneratePageContent() {
                         <p className="font-bold border-b border-black/5 pb-1 mb-1.5 dark:border-white/5">Provider Attempts Log:</p>
                         <div className="space-y-1">
                           {providerInfo.providerAttempts.map((attempt: any, idx: number) => (
-                            <div key={idx} className="flex flex-col border-b border-black/5 dark:border-white/5 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
-                              <div className="flex justify-between gap-4">
-                                <span>{idx + 1}. {attempt.provider} ({attempt.model})</span>
-                                <span className={attempt.success ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}>
-                                  {attempt.success ? "Success" : `Failed (${attempt.errorType || "error"})`} - {attempt.durationMs || attempt.duration}ms
-                                </span>
-                              </div>
-                              {attempt.qualityScore !== undefined && (
-                                <div className="mt-1 text-slate-500 dark:text-slate-400">
-                                  UI Quality Score: <span className={attempt.qualityScore >= 75 ? "text-emerald-500" : "text-amber-500"}>{attempt.qualityScore}</span>/100
-                                </div>
-                              )}
-                              {attempt.qualityIssues && attempt.qualityIssues.length > 0 && (
-                                <ul className="mt-1 list-disc pl-4 text-[9px] text-slate-500 dark:text-slate-400">
-                                  {attempt.qualityIssues.map((issue: string, i: number) => (
-                                    <li key={i}>{issue}</li>
-                                  ))}
-                                </ul>
-                              )}
+                            <div key={idx} className="flex justify-between gap-4">
+                              <span>{idx + 1}. {attempt.provider} ({attempt.model})</span>
+                              <span className={attempt.success ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}>
+                                {attempt.success ? "Success" : `Failed (${attempt.errorType || "error"})`} - {attempt.durationMs || attempt.duration}ms
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -681,10 +661,10 @@ function GeneratePageContent() {
                             <div key={idx} className="flex justify-between gap-4">
                               <span className="capitalize">{attempt.provider}:</span>
                               <span>
-                                {attempt.errorType === "rate_limited" 
-                                  ? "rate limited" 
-                                  : attempt.errorType === "invalid_api_key" 
-                                    ? "invalid API key" 
+                                {attempt.errorType === "rate_limited"
+                                  ? "rate limited"
+                                  : attempt.errorType === "invalid_api_key"
+                                    ? "invalid API key"
                                     : attempt.errorType === "quota_exceeded"
                                       ? "quota exceeded"
                                       : attempt.errorType || "failed"}
@@ -707,9 +687,8 @@ function GeneratePageContent() {
                     ? "Refine your prompt..."
                     : "Build a sleek SaaS landing page with a hero, features, pricing..."
                 }
-                className={`w-full resize-none bg-transparent text-slate-900 outline-none placeholder:text-slate-400 transition-all duration-300 dark:text-white dark:placeholder:text-white/30 ${
-                  isCompact ? "min-h-[90px] text-sm" : "min-h-[130px] text-lg"
-                }`}
+                className={`w-full resize-none bg-transparent text-slate-900 outline-none placeholder:text-slate-400 transition-all duration-300 dark:text-white dark:placeholder:text-white/30 ${isCompact ? "min-h-[90px] text-sm" : "min-h-[130px] text-lg"
+                  }`}
                 disabled={isGenerating}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -749,11 +728,10 @@ function GeneratePageContent() {
                   <button
                     onClick={() => setStyle(style === "modern" ? "premium" : "modern")}
                     disabled={isGenerating}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
-                      style === "modern"
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${style === "modern"
                         ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
                         : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     <Palette size={11} />
                     {style === "modern" ? "Modern" : "Premium"}
@@ -764,11 +742,10 @@ function GeneratePageContent() {
                       setWebsiteType(websiteType === "responsive" ? "saas" : "responsive")
                     }
                     disabled={isGenerating}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
-                      websiteType === "responsive"
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${websiteType === "responsive"
                         ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
                         : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     <MonitorSmartphone size={11} />
                     {websiteType === "responsive" ? "Responsive" : "SaaS"}
@@ -777,11 +754,10 @@ function GeneratePageContent() {
                   <button
                     onClick={() => setShowAdvanced(!showAdvanced)}
                     disabled={isGenerating}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
-                      showAdvanced
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${showAdvanced
                         ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
                         : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     <Cpu size={11} />
                     Settings
@@ -838,11 +814,10 @@ function GeneratePageContent() {
                   onClick={handleGenerate}
                   disabled={isGenerating || prompt.trim().length < 5 || (user?.credits === 0)}
                   title={user?.credits === 0 ? "No credits remaining" : ""}
-                  className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.03] hover:shadow-xl disabled:hover:scale-100 ${
-                    isGenerating
+                  className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.03] hover:shadow-xl disabled:hover:scale-100 ${isGenerating
                       ? "cursor-wait bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 opacity-80 shadow-[0_0_25px_rgba(124,58,237,0.4)]"
                       : "bg-gradient-to-r from-violet-600 via-purple-600 to-blue-500 shadow-[0_0_20px_rgba(124,58,237,0.35)] hover:shadow-[0_0_35px_rgba(124,58,237,0.55)] disabled:opacity-50"
-                  }`}
+                    }`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   <span className="relative z-10 flex items-center gap-2">
@@ -886,11 +861,10 @@ function GeneratePageContent() {
                 exit={{ opacity: 0, y: 6 }}
                 onClick={handleSave}
                 disabled={isSaved || isSaving}
-                className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition-all sm:hidden ${
-                  isSaved
+                className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-bold transition-all sm:hidden ${isSaved
                     ? "border-emerald-400/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                     : "border-violet-400/30 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
-                }`}
+                  }`}
               >
                 {isSaving ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -996,11 +970,10 @@ function GeneratePageContent() {
                     <p className="text-sm font-bold leading-tight text-slate-900 dark:text-white">
                       Live Canvas
                     </p>
-                    <p className={`text-[10px] font-medium transition-colors duration-300 ${
-                      isGenerating
+                    <p className={`text-[10px] font-medium transition-colors duration-300 ${isGenerating
                         ? "text-violet-600 dark:text-cyan-400"
                         : "text-slate-400 dark:text-white/35"
-                    }`}>
+                      }`}>
                       {isGenerating ? "Building…" : "Output ready"}
                     </p>
                   </div>
@@ -1013,11 +986,10 @@ function GeneratePageContent() {
                       <button
                         key={mode}
                         onClick={() => setViewMode(mode)}
-                        className={`relative rounded-full px-4 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${
-                          viewMode === mode
+                        className={`relative rounded-full px-4 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${viewMode === mode
                             ? "bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md dark:from-white dark:to-white dark:text-slate-950"
                             : "text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white"
-                        }`}
+                          }`}
                       >
                         {mode === "preview" ? (
                           <span className="flex items-center gap-1.5">
@@ -1089,11 +1061,10 @@ function GeneratePageContent() {
                               scale: i === loadingStep ? 1 : 0.7,
                               opacity: i === loadingStep ? 1 : i < loadingStep ? 0.5 : 0.25,
                             }}
-                            className={`rounded-full ${
-                              i === loadingStep
+                            className={`rounded-full ${i === loadingStep
                                 ? "h-2.5 w-2.5 bg-cyan-400"
                                 : "h-2 w-2 bg-white/30"
-                            }`}
+                              }`}
                           />
                         ))}
                       </div>

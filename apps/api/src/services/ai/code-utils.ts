@@ -447,7 +447,7 @@ export function scoreGeneratedUIQuality(code: string, websiteType?: string): { s
     issues.push("Contains placeholder dummy content (SaaSify, John Doe, Globex)");
   }
 
-  if (code.split('\\n').length < 100) {
+  if (code.split('\n').length < 100) {
     score -= 15;
     issues.push("Code is too short for a premium landing page (< 100 lines)");
   }

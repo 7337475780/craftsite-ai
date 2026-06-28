@@ -83,6 +83,118 @@ describe("AI Provider Registry", () => {
   });
 });
 
+function createHighQualityMockCode(keyword: string): string {
+  return `
+export default function GeneratedWebsite() {
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      {/* 1. Navbar */}
+      <header className="fixed top-0 w-full backdrop-blur">
+        <nav className="max-w-7xl mx-auto flex items-center justify-between p-4">
+          <div className="text-xl font-bold">Logo - ${keyword}</div>
+          <div className="hidden md:flex gap-4">
+            <a href="#">Link</a>
+          </div>
+        </nav>
+      </header>
+
+      {/* 2. Content with positive signals */}
+      <main className="pt-24 pb-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="rounded-3xl p-6 bg-white/5 backdrop-blur-lg">
+              <h1 className="text-4xl md:text-6xl font-black bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+                Title
+              </h1>
+              <p className="mt-4 text-slate-400">Description</p>
+              {/* 3. Stylized Button */}
+              <button className="mt-6 px-6 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-500 font-bold">
+                Get Started
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* 4. Footer */}
+      <footer className="border-t border-white/10 py-8">
+        <div className="max-w-7xl mx-auto text-center text-slate-500">
+          <p>Footer</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+// Line 39
+// Line 40
+// Line 41
+// Line 42
+// Line 43
+// Line 44
+// Line 45
+// Line 46
+// Line 47
+// Line 48
+// Line 49
+// Line 50
+// Line 51
+// Line 52
+// Line 53
+// Line 54
+// Line 55
+// Line 56
+// Line 57
+// Line 58
+// Line 59
+// Line 60
+// Line 61
+// Line 62
+// Line 63
+// Line 64
+// Line 65
+// Line 66
+// Line 67
+// Line 68
+// Line 69
+// Line 70
+// Line 71
+// Line 72
+// Line 73
+// Line 74
+// Line 75
+// Line 76
+// Line 77
+// Line 78
+// Line 79
+// Line 80
+// Line 81
+// Line 82
+// Line 83
+// Line 84
+// Line 85
+// Line 86
+// Line 87
+// Line 88
+// Line 89
+// Line 90
+// Line 91
+// Line 92
+// Line 93
+// Line 94
+// Line 95
+// Line 96
+// Line 97
+// Line 98
+// Line 99
+// Line 100
+// Line 101
+// Line 102
+// Line 103
+// Line 104
+// Line 105
+`;
+}
+
 describe("AI Orchestrator Pipeline", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -109,7 +221,7 @@ describe("AI Orchestrator Pipeline", () => {
       choices: [
         {
           message: {
-            content: `export default function GeneratedWebsite() { return <div>OpenRouter Success</div>; }`,
+            content: createHighQualityMockCode("OpenRouter Success"),
           },
           finish_reason: "stop",
         },
@@ -149,7 +261,7 @@ describe("AI Orchestrator Pipeline", () => {
           content: {
             parts: [
               {
-                text: `export default function GeneratedWebsite() { return <div>Gemini Success</div>; }`,
+                text: createHighQualityMockCode("Gemini Success"),
               },
             ],
           },
@@ -191,7 +303,7 @@ describe("AI Orchestrator Pipeline", () => {
       choices: [
         {
           message: {
-            content: `export default function GeneratedWebsite() { return <div>Repaired JSX</div>; }`,
+            content: createHighQualityMockCode("Repaired JSX"),
           },
           finish_reason: "stop",
         },
@@ -229,7 +341,7 @@ describe("AI Orchestrator Pipeline", () => {
           content: {
             parts: [
               {
-                text: `export default function GeneratedWebsite() { return <div>Gemini Worked</div>; }`,
+                text: createHighQualityMockCode("Gemini Worked"),
               },
             ],
           },
@@ -265,7 +377,7 @@ describe("AI Orchestrator Pipeline", () => {
           content: {
             parts: [
               {
-                text: "export default function GeneratedWebsite() { return <div>Gemini Worked</div>; }",
+                text: createHighQualityMockCode("Gemini Worked"),
               },
             ],
           },
@@ -316,7 +428,7 @@ describe("AI Orchestrator Pipeline", () => {
     expect(result.provider).toBe("mock");
     expect(result.isFallback).toBe(true);
     // Since MockProvider exports mock-safe-fallback structure:
-    expect(result.generatedCode).toContain("Safe Mock Preview");
+    expect(result.generatedCode).toContain("Beautiful Fallback");
   });
 
   it("AI_PROVIDER=openrouter does not silently mock unless fallback enabled", async () => {
@@ -342,7 +454,7 @@ describe("AI Orchestrator Pipeline", () => {
           content: {
             parts: [
               {
-                text: `export default function GeneratedWebsite() { return <div>Gemini Skip Test</div>; }`,
+                text: createHighQualityMockCode("Gemini Skip Test"),
               },
             ],
           },
@@ -374,7 +486,7 @@ describe("AI Orchestrator Pipeline", () => {
           content: {
             parts: [
               {
-                text: `export default function GeneratedWebsite() { return <div>Gemini After Cooldown Skip</div>; }`,
+                text: createHighQualityMockCode("Gemini After Cooldown Skip"),
               },
             ],
           },
