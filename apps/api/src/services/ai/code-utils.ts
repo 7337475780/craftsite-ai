@@ -127,6 +127,65 @@ export function normalizeGeneratedCode(code: string): string {
   return cleaned;
 }
 
+/**
+ * Attempts to salvage a truncated component by closing unclosed JSX tags and
+ * braces. Returns the repaired string if it now passes validateGeneratedCode,
+ * or null if the output is too damaged to salvage.
+ */
+export function tryRepairTruncatedCode(raw: string): string | null {
+  let code = normalizeGeneratedCode(raw);
+
+  if (!code.includes("export default function GeneratedWebsite")) {
+    return null;
+  }
+
+  // Find the opening brace of the function body
+  const fnStart = code.indexOf("export default function GeneratedWebsite");
+  const bodyStart = code.indexOf("{", fnStart);
+  if (bodyStart === -1) return null;
+
+  // Count open/close braces (ignoring strings/comments) to detect how many
+  // closing braces are missing
+  let braceDepth = 0;
+  let inStr: '"' | "'" | "`" | null = null;
+  let escape = false;
+  let lineComment = false;
+  let blockComment = false;
+
+  for (let i = bodyStart; i < code.length; i++) {
+    const ch = code[i];
+    const nx = code[i + 1];
+
+    if (escape) { escape = false; continue; }
+    if (ch === "\\") { escape = true; continue; }
+    if (lineComment) { if (ch === "\n") lineComment = false; continue; }
+    if (blockComment) { if (ch === "*" && nx === "/") { blockComment = false; i++; } continue; }
+    if (inStr) { if (ch === inStr) inStr = null; continue; }
+
+    if (ch === "/" && nx === "/") { lineComment = true; i++; continue; }
+    if (ch === "/" && nx === "*") { blockComment = true; i++; continue; }
+    if (ch === '"' || ch === "'" || ch === "`") { inStr = ch as any; continue; }
+    if (ch === "{") braceDepth++;
+    else if (ch === "}") { braceDepth--; if (braceDepth === 0) break; }
+  }
+
+  if (braceDepth <= 0) {
+    // Already balanced or over-closed — no patch needed
+    return validateGeneratedCode(code) ? code : null;
+  }
+
+  // Trim the trailing incomplete JSX (find last complete closing tag or element)
+  // Strategy: cut at the last occurrence of either ); or </...> followed by whitespace
+  const trimPoints = [...code.matchAll(/(<\/\w[\w.]*>|;\s*\n|\}\s*\n)/g)].map(m => m.index! + m[0].length);
+  const lastSafePoint = trimPoints.length > 0 ? trimPoints[trimPoints.length - 1] : code.length;
+  code = code.slice(0, lastSafePoint).trimEnd();
+
+  // Close any remaining open braces
+  code += "\n" + "  );\n".repeat(Math.max(0, braceDepth - 1)) + "}";
+
+  return validateGeneratedCode(code) ? code : null;
+}
+
 function normalizeNewLinesInsideStrings(code: string): string {
   let output = "";
   let insideDoubleQuote = false;

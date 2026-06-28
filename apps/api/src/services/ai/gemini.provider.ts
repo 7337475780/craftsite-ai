@@ -7,7 +7,7 @@ import type {
 import { AIProviderError, AIProviderErrorType } from "./ai-provider.js";
 import { buildWebsiteGenerationPrompt } from "./prompts.js";
 import { buildWebsiteEditPrompt } from "./edit-prompts.js";
-import { normalizeGeneratedCode } from "./code-utils.js";
+import { normalizeGeneratedCode, tryRepairTruncatedCode } from "./code-utils.js";
 
 type GeminiResponse = {
   candidates?: Array<{
@@ -225,6 +225,16 @@ export class GeminiProvider implements AIProvider {
     }
 
     if (finishReason === "MAX_TOKENS" || finishReason === "length") {
+      // Try to salvage the partial output before hard-failing
+      const part = candidate.content?.parts?.[0];
+      const partialRaw = part?.text || "";
+      if (partialRaw) {
+        const salvaged = tryRepairTruncatedCode(partialRaw);
+        if (salvaged) {
+          console.warn(`[Gemini] Output truncated but salvaged successfully.`);
+          return salvaged;
+        }
+      }
       throw new AIProviderError(
         "Gemini response was truncated due to output limit",
         "gemini",

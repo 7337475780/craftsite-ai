@@ -109,8 +109,8 @@ export function Navbar() {
                   type="button"
                   onClick={() => scrollToSection(item.targetId)}
                   className={`group relative overflow-hidden rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 ${isActive
-                      ? "text-violet-700 dark:text-cyan-200"
-                      : "text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
+                    ? "text-violet-700 dark:text-cyan-200"
+                    : "text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
                     }`}
                 >
                   {/* Active pill */}

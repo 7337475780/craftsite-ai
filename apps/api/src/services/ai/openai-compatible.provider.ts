@@ -7,7 +7,7 @@ import {
   AIProviderError,
   AIProviderErrorType,
 } from "./ai-provider.js";
-import { normalizeGeneratedCode } from "./code-utils.js";
+import { normalizeGeneratedCode, tryRepairTruncatedCode } from "./code-utils.js";
 import { buildWebsiteGenerationPrompt } from "./prompts.js";
 import { buildWebsiteEditPrompt } from "./edit-prompts.js";
 
@@ -252,6 +252,17 @@ export class OpenAICompatibleProvider implements AIProvider {
     }
 
     if (finishReason === "length") {
+      // Attempt to salvage partial output before hard-failing
+      const salvaged = tryRepairTruncatedCode(rawContent);
+      if (salvaged) {
+        console.warn(`[${this.name}] Output truncated but salvaged successfully.`);
+        return {
+          generatedCode: salvaged,
+          provider: this.name,
+          model: this.activeModel,
+          isFallback: false,
+        };
+      }
       throw new AIProviderError(
         "Output was truncated due to token limit constraints",
         this.name,
@@ -297,6 +308,16 @@ export class OpenAICompatibleProvider implements AIProvider {
     }
 
     if (finishReason === "length") {
+      const salvaged = tryRepairTruncatedCode(rawContent);
+      if (salvaged) {
+        console.warn(`[${this.name}] Edit output truncated but salvaged successfully.`);
+        return {
+          generatedCode: salvaged,
+          provider: this.name,
+          model: this.activeModel,
+          isFallback: false,
+        };
+      }
       throw new AIProviderError(
         "Edit output was truncated due to token limit constraints",
         this.name,
