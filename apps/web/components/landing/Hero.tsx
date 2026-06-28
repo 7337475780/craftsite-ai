@@ -1,24 +1,90 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  CheckCircle2,
-  Command,
+  Bot,
+  Check,
+  Code2,
+  Eye,
+  FolderOpen,
+  Globe2,
+  Grid3X3,
+  LayoutDashboard,
+  Lock,
+  Menu,
+  Monitor,
+  MousePointer2,
+  Rocket,
+  Settings,
   Sparkles,
   Wand2,
   Zap,
 } from "lucide-react";
 
 const promptExamples = [
-  "AI SaaS landing page",
-  "Developer portfolio",
-  "Startup waitlist page",
-  "Analytics dashboard site",
+  "SaaS landing page",
+  "Portfolio website",
+  "Restaurant website",
+  "AI startup landing page",
 ];
 
-const trustItems = ["No code needed", "Export-ready", "Responsive", "Live preview"];
+const builderSteps = [
+  { label: "AI is generating website...", active: true, done: false },
+  { label: "Analyzing prompt", active: false, done: true },
+  { label: "Planning structure", active: false, done: true },
+  { label: "Designing layout", active: true, done: true },
+  { label: "Generating content", active: false, done: false },
+  { label: "Building pages", active: false, done: false },
+  { label: "Finalizing", active: false, done: false },
+];
+
+const sideNavItems = [
+  { label: "Home", icon: Sparkles, active: true },
+  { label: "Dashboard", icon: LayoutDashboard },
+  { label: "Templates", icon: Grid3X3 },
+  { label: "AI Assistant", icon: Wand2 },
+  { label: "Projects", icon: FolderOpen },
+  { label: "Domains", icon: Globe2 },
+  { label: "Team", icon: Bot },
+  { label: "Settings", icon: Settings },
+];
+
+const featureItems = [
+  {
+    icon: Sparkles,
+    title: "AI Generation",
+    desc: "Generate entire websites from natural language prompts.",
+  },
+  {
+    icon: Eye,
+    title: "Live Preview",
+    desc: "See your website come to life in real time as AI builds it.",
+  },
+  {
+    icon: Grid3X3,
+    title: "Edit & Customize",
+    desc: "Edit sections or content using AI or adjust manually.",
+  },
+  {
+    icon: Rocket,
+    title: "Export & Deploy",
+    desc: "Deploy to one click with SEO, performance and analytics.",
+  },
+  {
+    icon: Bot,
+    title: "Smart Sections",
+    desc: "AI understands your needs and creates perfect sections.",
+  },
+  {
+    icon: Monitor,
+    title: "Fully Responsive",
+    desc: "Every website is responsive and looks perfect anywhere.",
+  },
+];
+
+const trustedBy = ["Vercel", "Framer", "Webflow", "Relume", "Spline", "Tailwind CSS"];
 
 export function Hero() {
   const [prompt, setPrompt] = useState("");
@@ -27,16 +93,17 @@ export function Hero() {
 
   const resizeTextarea = () => {
     if (!textareaRef.current) return;
+
     textareaRef.current.style.height = "auto";
     textareaRef.current.style.height = `${Math.min(
       textareaRef.current.scrollHeight,
-      190
+      150
     )}px`;
   };
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(event.target.value);
-    resizeTextarea();
+    requestAnimationFrame(resizeTextarea);
   };
 
   const goToGenerate = (value?: string) => {
@@ -75,197 +142,309 @@ export function Hero() {
   };
 
   return (
-    <section className="relative isolate flex min-h-[100svh] w-full items-center overflow-hidden px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:px-8 lg:pt-36">
+    <section className="relative isolate min-h-[100svh] overflow-hidden bg-slate-50 text-slate-950 dark:bg-[#02030d] dark:text-white">
       {/* Background */}
-      <div className="absolute inset-0 -z-30 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.28),transparent_34%),radial-gradient(circle_at_top_right,rgba(34,211,238,0.20),transparent_30%),linear-gradient(180deg,#020617_0%,#070719_48%,#020617_100%)]" />
-      <div className="absolute inset-0 -z-20 bg-[linear-gradient(to_right,rgba(255,255,255,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.055)_1px,transparent_1px)] bg-[size:72px_72px] opacity-25 [mask-image:radial-gradient(circle_at_center,black,transparent_75%)]" />
+      <div className="absolute inset-0 -z-30 bg-[radial-gradient(circle_at_80%_25%,rgba(124,58,237,0.16),transparent_24%),radial-gradient(circle_at_50%_0%,rgba(14,165,233,0.12),transparent_35%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[radial-gradient(circle_at_80%_25%,rgba(84,58,255,0.28),transparent_24%),radial-gradient(circle_at_50%_0%,rgba(29,78,216,0.16),transparent_35%),linear-gradient(180deg,#02030d_0%,#030514_45%,#02030d_100%)]" />
 
-      {/* Glow orbs */}
-      <div className="pointer-events-none absolute -left-32 top-12 -z-10 h-72 w-72 rounded-full bg-violet-600/30 blur-[90px] sm:h-[28rem] sm:w-[28rem]" />
-      <div className="pointer-events-none absolute -right-32 bottom-10 -z-10 h-72 w-72 rounded-full bg-cyan-400/20 blur-[90px] sm:h-[25rem] sm:w-[25rem]" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/10 blur-[110px]" />
+      <div className="absolute inset-0 -z-20 opacity-45 [background-image:radial-gradient(rgba(15,23,42,0.18)_1px,transparent_1px)] [background-size:34px_34px] [mask-image:radial-gradient(circle_at_center,black,transparent_78%)] dark:[background-image:radial-gradient(rgba(255,255,255,0.5)_1px,transparent_1px)]" />
 
-      <div className="mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14">
-        {/* Left Content */}
-        <div className="mx-auto flex max-w-3xl flex-col items-center text-center lg:items-start lg:text-left">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-2xl shadow-violet-500/10 backdrop-blur-xl sm:text-sm">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-400/15 text-cyan-200">
-              <Sparkles size={13} />
-            </span>
-            AI website builder for modern creators
+      <div className="absolute -right-32 top-28 -z-10 h-[34rem] w-[34rem] rounded-full border border-violet-400/20 bg-[radial-gradient(circle_at_35%_35%,rgba(139,92,246,0.28),rgba(37,99,235,0.15)_38%,rgba(255,255,255,0)_70%)] shadow-[0_0_140px_rgba(99,102,241,0.24)] blur-[1px] dark:bg-[radial-gradient(circle_at_35%_35%,rgba(139,92,246,0.55),rgba(37,99,235,0.28)_38%,rgba(2,6,23,0)_70%)] dark:shadow-[0_0_140px_rgba(99,102,241,0.45)]" />
+
+      <div className="absolute -bottom-40 left-0 right-0 -z-10 h-80 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.22),transparent_58%)] blur-3xl dark:bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.45),transparent_58%)]" />
+
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
+
+      {/* Left Decorative Sidebar */}
+      <aside className="pointer-events-none absolute left-0 top-20 z-20 hidden h-[calc(100svh-8rem)] w-16 rounded-r-3xl border border-l-0 border-slate-900/10 bg-white/55 shadow-[0_0_50px_rgba(79,70,229,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] dark:shadow-[0_0_50px_rgba(79,70,229,0.25)] xl:block">
+        <div className="flex h-full flex-col items-center py-5">
+          <div className="mb-6 flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-500 text-white shadow-lg shadow-violet-500/40">
+            <Sparkles size={16} />
           </div>
 
-          <h1 className="max-w-5xl text-balance text-4xl font-black tracking-[-0.045em] text-white sm:text-5xl md:text-6xl lg:text-7xl">
-            Craft stunning websites with a{" "}
-            <span className="bg-gradient-to-r from-violet-300 via-cyan-200 to-blue-300 bg-clip-text text-transparent">
+          <div className="flex flex-1 flex-col items-center gap-4">
+            {sideNavItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.label}
+                  className={`group relative flex h-9 w-9 items-center justify-center rounded-2xl transition ${item.active
+                    ? "bg-violet-500/15 text-violet-700 shadow-[0_0_24px_rgba(139,92,246,0.28)] dark:bg-violet-500/20 dark:text-cyan-200 dark:shadow-[0_0_24px_rgba(139,92,246,0.45)]"
+                    : "text-slate-500 dark:text-white/50"
+                    }`}
+                >
+                  <Icon size={15} />
+                  {item.active && (
+                    <span className="absolute -right-3 h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_16px_rgba(34,211,238,0.8)]" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/90 to-blue-500/90 text-white shadow-lg shadow-violet-500/40">
+            <MousePointer2 size={16} />
+          </div>
+        </div>
+      </aside>
+
+      <div className="mx-auto flex min-h-[100svh] w-full max-w-[1500px] flex-col px-4 pb-12 pt-24 sm:px-6 lg:px-8 lg:pt-28">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-900/10 bg-white/70 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700 shadow-2xl shadow-violet-500/10 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300 dark:shadow-violet-950/40">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-500/15 text-violet-600 dark:bg-violet-500/20 dark:text-cyan-200">
+              <Sparkles size={12} />
+            </span>
+            AI website builder for the future
+          </div>
+
+          <h1 className="max-w-5xl text-balance text-4xl font-black leading-[0.98] tracking-[-0.055em] text-slate-950 dark:text-white sm:text-5xl md:text-6xl lg:text-7xl">
+            Build stunning websites
+            <br className="hidden sm:block" /> with a{" "}
+            <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent dark:from-cyan-300 dark:via-blue-400 dark:to-violet-400">
               single prompt.
             </span>
           </h1>
 
-          <p className="mt-6 max-w-2xl text-pretty text-base leading-8 text-slate-300 sm:text-lg">
-            CraftSite AI turns your ideas into premium, responsive websites with
-            live preview, editable sections, clean code, export-ready layouts,
-            and production-focused design.
+          <p className="mt-5 max-w-2xl text-pretty text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-base md:text-lg">
+            CraftSite AI creates modern, responsive websites in seconds. No
+            coding. No limits. Just your imagination.
           </p>
 
-          {/* Prompt Box */}
-          <div className="mt-9 w-full rounded-[2rem] border border-white/10 bg-white/[0.07] p-3 shadow-[0_28px_90px_rgba(15,23,42,0.55)] backdrop-blur-2xl sm:p-4">
-            <form onSubmit={handleGenerate}>
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-3 shadow-inner shadow-black/20 sm:p-4">
-                <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  <Wand2 size={14} className="text-cyan-300" />
-                  Describe your website
-                </div>
-
+          {/* Prompt Bar */}
+          <form
+            onSubmit={handleGenerate}
+            className="mt-8 w-full max-w-4xl rounded-3xl border border-violet-500/20 bg-white/80 p-2 shadow-[0_22px_70px_rgba(79,70,229,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl dark:border-violet-400/30 dark:bg-[#080b1d]/80 dark:shadow-[0_0_50px_rgba(124,58,237,0.28),inset_0_1px_0_rgba(255,255,255,0.08)]"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex min-h-14 flex-1 items-start gap-3 rounded-2xl border border-slate-900/10 bg-white/75 px-4 py-3 shadow-inner shadow-slate-900/5 dark:border-white/5 dark:bg-black/20 sm:items-center">
+                <Sparkles
+                  size={18}
+                  className="mt-1 shrink-0 text-violet-600 dark:text-violet-300 sm:mt-0"
+                />
                 <textarea
                   ref={textareaRef}
                   value={prompt}
                   onChange={handleInput}
                   onKeyDown={handleKeyDown}
-                  placeholder="Build a premium SaaS website for an AI analytics platform with hero, pricing, testimonials, dashboard mockup, and CTA..."
-                  rows={3}
-                  className="max-h-48 min-h-28 w-full resize-none bg-transparent text-base leading-7 text-white outline-none placeholder:text-slate-500 sm:text-lg"
+                  rows={1}
+                  placeholder="Describe the website you want to build..."
+                  className="max-h-36 min-h-7 w-full resize-none bg-transparent text-sm leading-7 text-slate-950 outline-none placeholder:text-slate-500 dark:text-white dark:placeholder:text-slate-500 sm:text-base"
                 />
               </div>
 
-              <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-wrap gap-2">
-                  {promptExamples.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => handleExampleClick(item)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/10 hover:text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 sm:text-sm"
-                    >
-                      <span className="text-cyan-300">+</span>
-                      {item}
-                    </button>
-                  ))}
-                </div>
+              <button
+                type="submit"
+                className="group inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 px-6 text-sm font-extrabold text-white shadow-[0_18px_40px_rgba(79,70,229,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(14,165,233,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 active:scale-[0.98] dark:from-violet-600 dark:via-purple-500 dark:to-blue-500 dark:shadow-[0_0_32px_rgba(124,58,237,0.45)] dark:hover:shadow-[0_0_42px_rgba(59,130,246,0.45)] dark:focus-visible:ring-cyan-300/70 sm:w-auto"
+              >
+                Generate
+                <ArrowRight
+                  size={16}
+                  className="transition group-hover:translate-x-0.5"
+                />
+              </button>
+            </div>
+          </form>
 
-                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
-                  <span className="hidden items-center gap-1.5 text-xs font-medium text-slate-400 sm:inline-flex">
-                    <Command size={13} />
-                    Enter to generate
-                  </span>
+          <div className="mt-4 flex w-full max-w-4xl flex-wrap justify-center gap-2.5">
+            {promptExamples.map((example) => (
+              <button
+                key={example}
+                type="button"
+                onClick={() => handleExampleClick(example)}
+                className="rounded-xl border border-slate-900/10 bg-white/75 px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-lg shadow-slate-900/5 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-violet-500/30 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 dark:border-white/10 dark:bg-[#070b1d]/80 dark:text-slate-300 dark:shadow-black/20 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10 dark:hover:text-white"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
 
-                  <button
-                    type="submit"
-                    className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-400 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-cyan-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60 active:scale-[0.98] sm:w-auto"
-                  >
-                    <Sparkles size={17} />
-                    Generate Website
-                    <ArrowRight
-                      size={17}
-                      className="transition group-hover:translate-x-0.5"
-                    />
-                  </button>
-                </div>
+        {/* Main Website Preview */}
+        <div className="relative mx-auto mt-8 w-full max-w-6xl sm:mt-10">
+          {/* AI progress card */}
+          <div className="absolute -left-3 top-24 z-20 hidden w-56 rounded-3xl border border-slate-900/10 bg-white/85 p-4 shadow-[0_24px_80px_rgba(15,23,42,0.15)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#050815]/85 dark:shadow-[0_24px_80px_rgba(0,0,0,0.5)] lg:block xl:-left-14">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-700 dark:bg-violet-500/20 dark:text-violet-200">
+                <Bot size={14} />
               </div>
-            </form>
+              <p className="text-xs font-bold text-slate-950 dark:text-white">
+                AI is generating website...
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {builderSteps.map((step, index) => (
+                <div key={step.label} className="flex items-center gap-3">
+                  <div
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border ${step.active
+                      ? "border-violet-500 bg-violet-600 text-white shadow-[0_0_18px_rgba(139,92,246,0.45)]"
+                      : step.done
+                        ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                        : "border-slate-900/10 bg-slate-100 text-slate-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/25"
+                      }`}
+                  >
+                    {step.done ? (
+                      <Check size={11} />
+                    ) : (
+                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    )}
+                  </div>
+                  <span
+                    className={`text-[11px] ${step.active
+                      ? "font-semibold text-slate-950 dark:text-white"
+                      : step.done
+                        ? "text-slate-600 dark:text-slate-300"
+                        : "text-slate-400 dark:text-slate-500"
+                      }`}
+                  >
+                    {step.label}
+                  </span>
+                  {index < 3 && step.done && (
+                    <Check size={12} className="ml-auto text-emerald-500 dark:text-emerald-300" />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Trust Row */}
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-            {trustItems.map((item) => (
+          <div className="overflow-hidden rounded-[1.75rem] border border-violet-500/25 bg-white/85 shadow-[0_30px_90px_rgba(79,70,229,0.18)] backdrop-blur-2xl dark:border-violet-400/40 dark:bg-[#030615]/90 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_35px_110px_rgba(59,130,246,0.28)] sm:rounded-[2rem]">
+            {/* Browser top */}
+            <div className="flex items-center justify-between border-b border-slate-900/10 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-black/30 sm:px-5">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-pink-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+                <span className="h-2.5 w-2.5 rounded-full bg-cyan-300" />
+              </div>
+
+              <div className="hidden items-center gap-2 rounded-full border border-slate-900/10 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 sm:flex">
+                <Lock size={11} />
+                Live preview
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="hidden rounded-full bg-slate-950 px-3 py-1.5 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950 sm:inline-flex">
+                  Get Started
+                </span>
+                <Menu size={16} className="text-slate-500 dark:text-white/60 sm:hidden" />
+              </div>
+            </div>
+
+            {/* Website mockup content */}
+            <div className="relative overflow-hidden px-4 py-8 sm:px-8 md:px-12 lg:px-16">
+              <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_72%_35%,rgba(14,165,233,0.16),transparent_35%),radial-gradient(circle_at_35%_20%,rgba(139,92,246,0.14),transparent_34%)] dark:bg-[radial-gradient(circle_at_72%_35%,rgba(14,165,233,0.28),transparent_35%),radial-gradient(circle_at_35%_20%,rgba(139,92,246,0.22),transparent_34%)]" />
+
+              <div className="mx-auto max-w-4xl text-center">
+                <div className="mb-5 inline-flex rounded-full border border-slate-900/10 bg-white/70 px-3 py-1.5 text-[11px] font-bold text-violet-700 dark:border-white/10 dark:bg-white/[0.06] dark:text-cyan-100">
+                  Introducing TechNova
+                </div>
+
+                <h2 className="mx-auto max-w-2xl text-3xl font-black tracking-[-0.04em] text-slate-950 dark:text-white sm:text-4xl md:text-5xl">
+                  The future of{" "}
+                  <span className="bg-gradient-to-r from-violet-600 to-cyan-500 bg-clip-text text-transparent dark:from-cyan-300 dark:to-violet-400">
+                    AI collaboration
+                  </span>
+                </h2>
+
+                <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-400 sm:text-base">
+                  All-in-one platform to build, deploy and scale AI solutions
+                  with your team.
+                </p>
+
+                <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                  <button className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-violet-500/30">
+                    Start for free
+                  </button>
+                  <button className="rounded-xl border border-slate-900/10 bg-white/70 px-5 py-3 text-xs font-bold text-slate-800 dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
+                    Watch demo
+                  </button>
+                </div>
+
+                <div className="mt-10 grid grid-cols-2 gap-4 border-t border-slate-900/10 pt-8 dark:border-white/10 sm:grid-cols-4">
+                  {[
+                    ["10K+", "Active Users"],
+                    ["50+", "Integrations"],
+                    ["99.9%", "Uptime"],
+                    ["24/7", "Support"],
+                  ].map(([value, label]) => (
+                    <div key={label} className="text-center">
+                      <p className="text-xl font-black text-slate-950 dark:text-white sm:text-2xl">
+                        {value}
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500 sm:text-xs">
+                        {label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Preview controls */}
+            <div className="flex items-center justify-center gap-2 border-t border-slate-900/10 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-black/25">
+              {[Code2, Monitor, Globe2].map((Icon, index) => (
+                <button
+                  key={index}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-900/10 bg-white/80 text-slate-500 transition hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/50 dark:hover:text-white"
+                >
+                  <Icon size={14} />
+                </button>
+              ))}
+              <button className="ml-2 rounded-lg border border-slate-900/10 bg-white/80 px-4 py-2 text-[11px] font-semibold text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+                Preview
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Trusted row */}
+        <div className="mx-auto mt-10 w-full max-w-5xl text-center">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-500">
+            Trusted by 10,000+ builders & teams worldwide
+          </p>
+
+          <div className="mt-5 grid grid-cols-2 gap-4 text-sm font-bold text-slate-600 dark:text-slate-400 sm:grid-cols-3 lg:grid-cols-6">
+            {trustedBy.map((brand) => (
               <div
-                key={item}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-300 backdrop-blur-xl"
+                key={brand}
+                className="rounded-2xl border border-slate-900/10 bg-white/70 px-4 py-3 shadow-sm backdrop-blur dark:border-white/5 dark:bg-white/[0.025]"
               >
-                <CheckCircle2 size={14} className="text-cyan-300" />
-                {item}
+                {brand}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right Mockup */}
-        <div className="relative mx-auto hidden w-full max-w-xl lg:block">
-          <div className="absolute -inset-8 -z-10 rounded-[3rem] bg-gradient-to-r from-violet-600/20 via-cyan-400/10 to-blue-500/20 blur-3xl" />
+        {/* Feature icons */}
+        <div className="mx-auto mt-8 grid w-full max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {featureItems.map((item) => {
+            const Icon = item.icon;
 
-          <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 bg-slate-950/70 px-5 py-4">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-red-400" />
-                <span className="h-3 w-3 rounded-full bg-amber-400" />
-                <span className="h-3 w-3 rounded-full bg-emerald-400" />
-              </div>
-              <div className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-xs font-semibold text-slate-300">
-                craftsite.ai/preview
-              </div>
-            </div>
-
-            <div className="grid gap-4 p-5">
-              <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-violet-500/20 via-blue-500/10 to-cyan-400/20 p-5">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <div className="h-3 w-24 rounded-full bg-white/25" />
-                    <div className="mt-3 h-8 w-56 rounded-full bg-white/80" />
-                  </div>
-                  <div className="rounded-2xl bg-cyan-300/15 p-3 text-cyan-200">
-                    <Zap size={20} />
-                  </div>
+            return (
+              <div
+                key={item.title}
+                className="group rounded-3xl border border-slate-900/10 bg-white/75 p-4 text-center shadow-lg shadow-slate-900/5 backdrop-blur-xl transition hover:-translate-y-1 hover:border-violet-500/30 hover:bg-violet-50 dark:border-white/10 dark:bg-white/[0.035] dark:shadow-black/20 dark:hover:border-violet-400/40 dark:hover:bg-violet-500/10"
+              >
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-500/25 bg-violet-500/10 text-violet-700 shadow-[0_0_30px_rgba(139,92,246,0.16)] transition group-hover:text-violet-800 dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-200 dark:shadow-[0_0_30px_rgba(139,92,246,0.22)] dark:group-hover:text-cyan-200">
+                  <Icon size={18} />
                 </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  {[72, 48, 88].map((height, index) => (
-                    <div
-                      key={index}
-                      className="rounded-2xl border border-white/10 bg-slate-950/35 p-3"
-                    >
-                      <div className="h-2 w-14 rounded-full bg-white/20" />
-                      <div
-                        className="mt-8 rounded-xl bg-gradient-to-t from-cyan-300/70 to-violet-400/70"
-                        style={{ height }}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-sm font-black text-slate-950 dark:text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-500">
+                  {item.desc}
+                </p>
               </div>
+            );
+          })}
+        </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {["AI layout", "Clean code", "SEO ready", "Responsive"].map(
-                  (item) => (
-                    <div
-                      key={item}
-                      className="rounded-3xl border border-white/10 bg-slate-950/45 p-4"
-                    >
-                      <div className="mb-4 h-9 w-9 rounded-2xl bg-gradient-to-br from-violet-400/30 to-cyan-300/20" />
-                      <div className="h-3 w-24 rounded-full bg-white/25" />
-                      <p className="mt-3 text-sm font-semibold text-white">
-                        {item}
-                      </p>
-                    </div>
-                  )
-                )}
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-slate-950/45 p-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="h-3 w-28 rounded-full bg-white/25" />
-                  <div className="h-7 w-20 rounded-full bg-cyan-300/20" />
-                </div>
-                <div className="space-y-3">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-2xl bg-white/10" />
-                      <div className="flex-1">
-                        <div className="h-2.5 w-3/4 rounded-full bg-white/20" />
-                        <div className="mt-2 h-2 w-1/2 rounded-full bg-white/10" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+        <div className="mx-auto mt-8 flex flex-col items-center gap-2 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/30 bg-violet-500/15 text-violet-700 shadow-[0_0_30px_rgba(139,92,246,0.2)] dark:border-violet-400/40 dark:bg-violet-500/20 dark:text-violet-200 dark:shadow-[0_0_30px_rgba(139,92,246,0.35)]">
+            <ArrowRight size={16} className="rotate-90" />
           </div>
-
-          <div className="absolute -bottom-5 -left-5 rounded-3xl border border-white/10 bg-white/[0.08] p-4 shadow-2xl backdrop-blur-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Generated
-            </p>
-            <p className="mt-1 text-2xl font-black text-white">4.8s</p>
-          </div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-500">
+            Scroll to explore
+          </p>
         </div>
       </div>
     </section>
