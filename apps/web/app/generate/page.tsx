@@ -324,18 +324,6 @@ function GeneratePageContent() {
     }
   };
 
-  const providerLabel =
-    providerInfo?.provider === "openrouter"
-      ? `OpenRouter (${providerInfo.model || "Unknown"})`
-      : providerInfo?.provider === "gemini"
-        ? `Gemini (${providerInfo.model || "Unknown"})`
-        : providerInfo?.provider === "groq"
-          ? `Groq (${providerInfo.model || "Unknown"})`
-          : providerInfo?.provider === "together"
-            ? `Together (${providerInfo.model || "Unknown"})`
-            : providerInfo?.provider === "mistral"
-              ? `Mistral (${providerInfo.model || "Unknown"})`
-              : "Safe Fallback (Mock)";
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden craftsite-bg">
@@ -382,25 +370,7 @@ function GeneratePageContent() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-3">
-            {/* Provider badge */}
-            <AnimatePresence>
-              {providerInfo && !isGenerating && (
-                <motion.div
-                  key="provider"
-                  initial={{ opacity: 0, scale: 0.85, x: 12 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.85, x: 12 }}
-                  transition={{ duration: 0.3 }}
-                  className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide sm:flex ${providerInfo.isFallback
-                      ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
-                      : "border-emerald-400/25 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                    }`}
-                >
-                  <Cpu size={11} />
-                  {providerLabel}
-                </motion.div>
-              )}
-            </AnimatePresence>
+
 
             {/* Save Project button */}
             <AnimatePresence>
@@ -576,49 +546,16 @@ function GeneratePageContent() {
 
               {/* Status banners */}
               <AnimatePresence mode="popLayout">
-                {providerInfo && !isGenerating && (
+                {providerInfo?.isFallback && !isGenerating && (
                   <motion.div
-                    key="provider-banner"
+                    key="fallback-banner"
                     initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                     animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
                     exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    className={`flex flex-col gap-2 overflow-hidden rounded-xl border p-3.5 text-xs font-semibold ${providerInfo.isFallback
-                        ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
-                        : "border-emerald-400/25 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                      }`}
+                    className="flex items-center gap-2 overflow-hidden rounded-xl border border-orange-400/25 bg-orange-50 p-3.5 text-xs font-semibold text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
                   >
-                    <div className="flex items-center gap-2">
-                      <Cpu size={12} className="shrink-0" />
-                      <span className="flex-1">
-                        {providerInfo.isFallback
-                          ? "Safe fallback was used because real AI providers were temporarily unavailable."
-                          : `Powered by ${providerInfo.provider.toUpperCase()} (${providerInfo.model || ""})`}
-                      </span>
-                      {providerInfo.providerAttempts && providerInfo.providerAttempts.length > 0 && (user?.role === "admin" || process.env.NODE_ENV !== "production") && (
-                        <button
-                          onClick={() => setShowDebugDetails(!showDebugDetails)}
-                          className="rounded bg-black/5 px-2 py-1 text-[10px] font-bold hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20"
-                        >
-                          {showDebugDetails ? "Hide details" : "Show details"}
-                        </button>
-                      )}
-                    </div>
-
-                    {showDebugDetails && (user?.role === "admin" || process.env.NODE_ENV !== "production") && providerInfo.providerAttempts && (
-                      <div className="mt-2.5 rounded-lg border border-black/5 bg-black/[0.02] p-2.5 font-mono text-[10px] leading-relaxed dark:border-white/5 dark:bg-white/[0.02]">
-                        <p className="font-bold border-b border-black/5 pb-1 mb-1.5 dark:border-white/5">Provider Attempts Log:</p>
-                        <div className="space-y-1">
-                          {providerInfo.providerAttempts.map((attempt: any, idx: number) => (
-                            <div key={idx} className="flex justify-between gap-4">
-                              <span>{idx + 1}. {attempt.provider} ({attempt.model})</span>
-                              <span className={attempt.success ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}>
-                                {attempt.success ? "Success" : `Failed (${attempt.errorType || "error"})`} - {attempt.durationMs || attempt.duration}ms
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <Cpu size={12} className="shrink-0" />
+                    <span>Safe fallback was used — real AI providers were temporarily unavailable.</span>
                   </motion.div>
                 )}
 
@@ -728,9 +665,9 @@ function GeneratePageContent() {
                   <button
                     onClick={() => setStyle(style === "modern" ? "premium" : "modern")}
                     disabled={isGenerating}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${style === "modern"
-                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
-                        : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${style === "modern"
+                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/40 dark:bg-violet-500/15 dark:text-violet-200"
+                        : "border-black/10 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 dark:border-white/12 dark:bg-white/8 dark:text-white/65 dark:hover:border-white/20 dark:hover:bg-white/12 dark:hover:text-white"
                       }`}
                   >
                     <Palette size={11} />
@@ -743,8 +680,8 @@ function GeneratePageContent() {
                     }
                     disabled={isGenerating}
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${websiteType === "responsive"
-                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
-                        : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
+                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/40 dark:bg-violet-500/15 dark:text-violet-200"
+                        : "border-black/10 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 dark:border-white/12 dark:bg-white/8 dark:text-white/65 dark:hover:border-white/20 dark:hover:bg-white/12 dark:hover:text-white"
                       }`}
                   >
                     <MonitorSmartphone size={11} />
@@ -755,8 +692,8 @@ function GeneratePageContent() {
                     onClick={() => setShowAdvanced(!showAdvanced)}
                     disabled={isGenerating}
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${showAdvanced
-                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/10 dark:text-violet-300"
-                        : "border-black/10 bg-white/60 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800 dark:border-white/10 dark:bg-black/20 dark:text-white/50 dark:hover:text-white"
+                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/40 dark:bg-violet-500/15 dark:text-violet-200"
+                        : "border-black/10 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 dark:border-white/12 dark:bg-white/8 dark:text-white/65 dark:hover:border-white/20 dark:hover:bg-white/12 dark:hover:text-white"
                       }`}
                   >
                     <Cpu size={11} />
@@ -981,44 +918,52 @@ function GeneratePageContent() {
 
                 <div className="flex items-center gap-2">
                   {/* Preview / Code tabs */}
-                  <div className="flex rounded-full border border-black/10 bg-slate-100 p-1 dark:border-white/10 dark:bg-black/30">
+                  <div className="relative flex rounded-full border border-black/10 bg-slate-100 p-0.5 dark:border-white/10 dark:bg-black/30">
                     {(["preview", "code"] as const).map((mode) => (
                       <button
                         key={mode}
                         onClick={() => setViewMode(mode)}
-                        className={`relative rounded-full px-4 py-1.5 text-xs font-bold capitalize transition-all duration-200 ${viewMode === mode
-                            ? "bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md dark:from-white dark:to-white dark:text-slate-950"
-                            : "text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white"
-                          }`}
+                        className="relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors duration-150"
                       >
-                        {mode === "preview" ? (
-                          <span className="flex items-center gap-1.5">
-                            <Monitor size={11} />
-                            Preview
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5">
-                            <Code2 size={11} />
-                            Code
-                          </span>
+                        {viewMode === mode && (
+                          <motion.span
+                            layoutId="canvas-tab-pill"
+                            className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-600 to-blue-500 shadow-md dark:from-white dark:to-white"
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
                         )}
+                        <span className={`relative flex items-center gap-1.5 capitalize ${
+                          viewMode === mode
+                            ? "text-white dark:text-slate-950"
+                            : "text-slate-500 hover:text-slate-800 dark:text-white/50 dark:hover:text-white"
+                        }`}>
+                          {mode === "preview" ? <Monitor size={11} /> : <Code2 size={11} />}
+                          {mode === "preview" ? "Preview" : "Code"}
+                        </span>
                       </button>
                     ))}
                   </div>
 
                   {/* Copy when in code view */}
-                  {viewMode === "code" && generatedCode && (
-                    <button
-                      onClick={handleCopy}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white/80 text-slate-600 transition-all hover:bg-white hover:shadow-sm dark:border-white/10 dark:bg-white/[0.05] dark:text-white/60 dark:hover:bg-white/10"
-                    >
-                      {copied ? (
-                        <CheckCheck size={13} className="text-emerald-500" />
-                      ) : (
-                        <Copy size={13} />
-                      )}
-                    </button>
-                  )}
+                  <AnimatePresence>
+                    {viewMode === "code" && generatedCode && (
+                      <motion.button
+                        key="copy-btn"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                        onClick={handleCopy}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white/80 text-slate-600 transition-all hover:bg-white hover:shadow-sm dark:border-white/10 dark:bg-white/[0.05] dark:text-white/60 dark:hover:bg-white/10"
+                      >
+                        {copied ? (
+                          <CheckCheck size={13} className="text-emerald-500" />
+                        ) : (
+                          <Copy size={13} />
+                        )}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
