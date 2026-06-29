@@ -167,8 +167,8 @@ export class GeminiProvider implements AIProvider {
         clearTimeout(timeoutId);
 
         if (err.name === "AbortError" || err.message?.includes("abort")) {
-          if (attempts <= maxRetries) {
-            console.warn(`[Gemini] Timeout. Retrying (Attempt ${attempts} of ${maxRetries})...`);
+          if (attempts <= maxRetries5xx) {
+            console.warn(`[Gemini] Timeout. Retrying (Attempt ${attempts} of ${maxRetries5xx})...`);
             continue;
           }
           throw new AIProviderError(
@@ -185,8 +185,8 @@ export class GeminiProvider implements AIProvider {
           throw err;
         }
 
-        if (attempts <= maxRetries) {
-          console.warn(`[Gemini] Network error: ${err.message}. Retrying (Attempt ${attempts} of ${maxRetries})...`);
+        if (attempts <= maxRetries5xx) {
+          console.warn(`[Gemini] Network error: ${err.message}. Retrying (Attempt ${attempts} of ${maxRetries5xx})...`);
           await new Promise((resolve) => setTimeout(resolve, 1000));
           continue;
         }
