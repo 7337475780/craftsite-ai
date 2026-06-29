@@ -167,9 +167,15 @@ export function LivePreview({ code }: LivePreviewProps) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [viewport, setViewport] = useState<Viewport>("desktop");
+  const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   const { appCode, isInvalid } = useMemo(() => {
@@ -223,9 +229,7 @@ ${safeCode}
                 key={vp}
                 onClick={() => setViewport(vp)}
                 className="relative z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors duration-150"
-                style={{ color: isActive ? undefined : undefined }}
               >
-                {/* Sliding active pill */}
                 {isActive && (
                   <motion.span
                     layoutId="viewport-pill"
@@ -242,7 +246,7 @@ ${safeCode}
           })}
         </div>
 
-        {/* Dimension hint */}
+        {/* Dimension hint — animates on viewport change */}
         <AnimatePresence mode="wait">
           <motion.span
             key={viewport}
@@ -291,87 +295,87 @@ button { font-family: inherit; }
       >
         <SandpackLayout style={{ height: "100%" }} className="flex-1 min-h-0 border-none bg-transparent">
           {/* File explorer — xl only */}
-          <div className="hidden h-full border-r border-black/10 dark:border-white/10 xl:block">
-            <SandpackFileExplorer />
-          </div>
+          {isDesktop && (
+            <div className="hidden h-full border-r border-black/10 dark:border-white/10 xl:block" style={{ width: 160, flexShrink: 0 }}>
+              <SandpackFileExplorer />
+            </div>
+          )}
 
-          {/* Code editor — hidden on mobile, visible md+ */}
-          <div className="hidden h-full md:block md:flex-1" style={{ minWidth: 0 }}>
+          {/* Code editor — only on md+ screens (direct child of SandpackLayout so Sandpack CSS works) */}
+          {isDesktop && (
             <SandpackCodeEditor
               showTabs
               showLineNumbers
               wrapContent
               closableTabs={false}
-              style={{ height: "100%", minWidth: 0 }}
+              style={{ height: "100%", minWidth: 0, flex: 1 }}
             />
-          </div>
+          )}
 
-          {/* Live preview with viewport animation */}
-          <div className="flex h-full flex-1 items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60 p-2 sm:p-5">
-            <AnimatePresence mode="wait">
+          {/* Live preview — viewport width controlled via CSS transition, NO AnimatePresence (avoids iframe remount) */}
+          <div className="relative flex h-full items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60"
+            style={{ flex: viewport === "desktop" ? 1 : "0 0 auto", padding: viewport === "desktop" ? "0" : "12px" }}
+          >
+            {/* Desktop: full bleed */}
+            {viewport === "desktop" && (
+              <div className="h-full w-full overflow-hidden">
+                <SandpackPreview
+                  showOpenInCodeSandbox={false}
+                  showRefreshButton
+                  showSandpackErrorOverlay={false}
+                  style={{ height: "100%", width: "100%", minHeight: "100%" }}
+                />
+              </div>
+            )}
+
+            {/* Tablet / Mobile: device frame, smooth width transition */}
+            {viewport !== "desktop" && (
               <motion.div
-                key={viewport}
-                initial={{ opacity: 0, scale: 0.97, y: 8 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96, y: -8 }}
-                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                className="h-full overflow-hidden"
+                key="device-frame"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className="flex h-full flex-col overflow-hidden rounded-[20px] border-[3px] shadow-2xl transition-all duration-300"
                 style={{
-                  width: viewport === "desktop" ? "100%" : undefined,
-                  maxWidth: viewport === "desktop" ? "100%" : cfg.width,
-                  minWidth: viewport === "desktop" ? 0 : undefined,
-                  flex: viewport === "desktop" ? 1 : undefined,
+                  width: cfg.width,
+                  borderColor: resolvedTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+                  background: resolvedTheme === "dark" ? "#0f172a" : "#ffffff",
                 }}
               >
-                {/* Device frame for tablet/mobile */}
-                {viewport !== "desktop" ? (
-                  <div className="flex h-full flex-col overflow-hidden rounded-[24px] border-[3px] border-slate-300 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.25)] dark:border-slate-600 dark:bg-slate-900">
-                    {/* Device top bar */}
-                    <div className={`flex flex-none items-center justify-center border-b border-black/5 dark:border-white/5 ${viewport === "mobile" ? "h-7" : "h-6"}`}>
-                      {viewport === "mobile" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="h-1 w-12 rounded-full bg-slate-300 dark:bg-slate-600" />
-                          <span className="h-2.5 w-2.5 rounded-full border border-slate-300 dark:border-slate-600" />
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-400/70" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-yellow-400/70" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
-                        </div>
-                      )}
+                {/* Device chrome top */}
+                <div className={`flex flex-none items-center justify-center border-b border-black/8 dark:border-white/8 ${viewport === "mobile" ? "h-7" : "h-6"}`}>
+                  {viewport === "mobile" ? (
+                    <div className="flex items-center gap-2">
+                      <span className="h-1 w-12 rounded-full bg-slate-300 dark:bg-slate-600" />
+                      <span className="h-2.5 w-2.5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
                     </div>
-
-                    {/* Preview inside device */}
-                    <div className="min-h-0 flex-1 overflow-hidden">
-                      <SandpackPreview
-                        showOpenInCodeSandbox={false}
-                        showRefreshButton
-                        showSandpackErrorOverlay={false}
-                        style={{ height: "100%", width: "100%", minHeight: "100%" }}
-                      />
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-red-400/80" />
+                      <span className="h-2 w-2 rounded-full bg-yellow-400/80" />
+                      <span className="h-2 w-2 rounded-full bg-emerald-400/80" />
                     </div>
+                  )}
+                </div>
 
-                    {/* Device bottom bar */}
-                    {viewport === "mobile" && (
-                      <div className="flex flex-none items-center justify-center border-t border-black/5 py-2 dark:border-white/5">
-                        <span className="h-1 w-24 rounded-full bg-slate-300 dark:bg-slate-600" />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Desktop — full bleed, no frame */
-                  <div className="h-full w-full overflow-hidden rounded-xl border border-black/10 bg-white shadow-lg dark:border-white/10 dark:bg-slate-900">
-                    <SandpackPreview
-                      showOpenInCodeSandbox={false}
-                      showRefreshButton
-                      showSandpackErrorOverlay={false}
-                      style={{ height: "100%", width: "100%", minHeight: "100%" }}
-                    />
+                {/* Preview inside device */}
+                <div className="min-h-0 flex-1 overflow-hidden">
+                  <SandpackPreview
+                    showOpenInCodeSandbox={false}
+                    showRefreshButton={false}
+                    showSandpackErrorOverlay={false}
+                    style={{ height: "100%", width: "100%", minHeight: "100%" }}
+                  />
+                </div>
+
+                {/* Mobile home indicator */}
+                {viewport === "mobile" && (
+                  <div className="flex flex-none items-center justify-center border-t border-black/5 dark:border-white/5 py-1.5">
+                    <span className="h-1 w-20 rounded-full bg-slate-300 dark:bg-slate-600" />
                   </div>
                 )}
               </motion.div>
-            </AnimatePresence>
+            )}
           </div>
         </SandpackLayout>
       </SandpackProvider>
