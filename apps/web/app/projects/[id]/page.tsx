@@ -1463,15 +1463,16 @@ export default function ProjectDetailPage() {
           {/* ── Right Canvas Area ── */}
           <AnimatePresence mode="popLayout">
             {isCompact && (
-              <motion.div
-                layout
-                key="canvas"
-                initial={{ opacity: 0, x: 40, scale: 0.97 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 40, scale: 0.97 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="flex min-h-0 flex-1 flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] overflow-hidden"
-              >
+              <div className="flex flex-1 min-h-0 min-w-0 gap-4">
+                <motion.div
+                  layout
+                  key="canvas"
+                  initial={{ opacity: 0, x: 40, scale: 0.97 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 40, scale: 0.97 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex min-h-0 flex-1 flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] overflow-hidden"
+                >
                 {/* Real-time Update Warning Banner */}
                 <AnimatePresence>
                   {showRefreshBanner && (
@@ -1701,7 +1702,19 @@ export default function ProjectDetailPage() {
                   </AnimatePresence>
                 </div>
               </motion.div>
-            )}
+
+              {commentsOpen && (
+                <div className="hidden lg:block shrink-0 w-80 rounded-[1.75rem] border border-black/[0.09] dark:border-white/10 overflow-hidden bg-white dark:bg-[#0f172a] shadow-lg">
+                  <ProjectComments
+                    projectId={project.id}
+                    workspaceId={null}
+                    projectOwnerId={project.userId}
+                    onClose={() => setCommentsOpen(false)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
           </AnimatePresence>
         </div>
       </main>
