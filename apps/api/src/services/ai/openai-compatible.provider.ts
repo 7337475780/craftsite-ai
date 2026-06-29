@@ -36,7 +36,7 @@ export class OpenAICompatibleProvider implements AIProvider {
 
     const mapModelSlug = (model: string): string => {
       if (config.name === "openrouter") {
-        if (model === "deepseek/deepseek-chat-v3.1:free") return "deepseek/deepseek-chat-v3.1";
+        // Remap deprecated or renamed model IDs to their current equivalents
         if (model === "google/gemini-2.0-flash-exp:free") return "google/gemma-4-31b-it:free";
         if (model === "meta-llama/llama-3.1-8b-instruct:free") return "meta-llama/llama-3.3-70b-instruct:free";
       }
@@ -70,7 +70,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     // Safe default fallbacks if none are configured in env
     if (list.length === 0) {
       if (this.name === "openrouter") {
-        list.push("deepseek/deepseek-chat-v3.1");
+        list.push("deepseek/deepseek-chat-v3.1:free");
         list.push("qwen/qwen3-coder:free");
         list.push("meta-llama/llama-3.3-70b-instruct:free");
       }
@@ -176,7 +176,20 @@ export class OpenAICompatibleProvider implements AIProvider {
           );
         }
 
-        const data = await response.json();
+        let data: any;
+        try {
+          data = await response.json();
+        } catch (parseErr: any) {
+          // Provider truncated the response body (e.g. OpenRouter free-tier rate limit)
+          throw new AIProviderError(
+            `${this.name} returned a truncated/invalid JSON response (possibly rate-limited or out of credits)`,
+            this.name,
+            this.activeModel,
+            "invalid_response",
+            undefined,
+            true
+          );
+        }
         return data;
       } catch (err: any) {
         clearTimeout(timeoutId);
