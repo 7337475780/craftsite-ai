@@ -11,6 +11,7 @@ import {
   FolderOpen,
   Globe2,
   Grid3X3,
+  Home,
   LayoutDashboard,
   Lock,
   Menu,
@@ -41,7 +42,7 @@ const builderSteps = [
 ];
 
 const sideNavItems = [
-  { label: "Home", icon: Sparkles, active: true },
+  { label: "Home", icon: Home, active: true },
   { label: "Dashboard", icon: LayoutDashboard },
   { label: "Templates", icon: Grid3X3 },
   { label: "AI Assistant", icon: Wand2 },

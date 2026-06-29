@@ -48,13 +48,8 @@
     transition: all var(--transition);
   }
 
-  a:not([class*="text-"]) {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  a:not([class*="text-"]):hover {
-    color: var(--accent-2);
+  a {
+    color: inherit;
     text-decoration: none;
   }
 
