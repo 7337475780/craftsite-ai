@@ -50,8 +50,20 @@ export class GeminiProvider implements AIProvider {
     }
     if (list.length === 0) {
       list.push("gemini-2.5-flash");
+      list.push("gemini-2.0-flash");
     }
     return list;
+  }
+
+  /** Remap invalid or renamed Gemini model slugs to valid current equivalents */
+  private mapModelSlug(model: string): string {
+    const aliases: Record<string, string> = {
+      "gemini-2.5-flash-lite": "gemini-2.0-flash-lite",
+      "gemini-2.5-flash-8b": "gemini-2.0-flash-lite",
+      "gemini-pro": "gemini-1.5-pro",
+      "gemini-flash": "gemini-2.0-flash",
+    };
+    return aliases[model] ?? model;
   }
 
   private async callWithTimeoutAndRetry(
@@ -70,10 +82,24 @@ export class GeminiProvider implements AIProvider {
     }
 
     let attempts = 0;
-    const maxRetries = process.env.AI_MAX_RETRIES ? parseInt(process.env.AI_MAX_RETRIES) : 1;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.activeModel}:generateContent?key=${this.apiKey}`;
+    // 429 rate-limit: retry up to 2× with backoff (service is alive, just busy)
+    // 5xx overload:   retry up to 2× with backoff (transient)
+    // Other errors:   no retry (bad key, bad model name, etc.)
+    const maxRetries429 = 2;
+    const maxRetries5xx = 2;
+    const resolvedModel = this.mapModelSlug(this.activeModel);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${resolvedModel}:generateContent?key=${this.apiKey}`;
 
-    while (attempts <= maxRetries) {
+    // Build generation config — for gemini-2.5 models cap thinking budget so
+    // it doesn't consume the whole output token window.
+    const is25Model = resolvedModel.includes("gemini-2.5");
+    const generationConfig: Record<string, unknown> = {
+      temperature: 0.3,
+      maxOutputTokens: 32768,
+      ...(is25Model ? { thinkingConfig: { thinkingBudget: 2048 } } : {}),
+    };
+
+    while (true) {
       attempts++;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -81,24 +107,10 @@ export class GeminiProvider implements AIProvider {
       try {
         const response = await fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    text: promptText,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 8192,
-            },
+            contents: [{ role: "user", parts: [{ text: promptText }] }],
+            generationConfig,
           }),
           signal: controller.signal,
         });
@@ -114,7 +126,6 @@ export class GeminiProvider implements AIProvider {
           } catch {}
 
           let errorType: AIProviderErrorType = "unknown";
-          let retryable = false;
 
           if (response.status === 401 || response.status === 403) {
             errorType = "invalid_api_key";
@@ -122,16 +133,22 @@ export class GeminiProvider implements AIProvider {
             errorType = "quota_exceeded";
           } else if (response.status === 429) {
             errorType = "rate_limited";
-            retryable = true;
+            if (attempts <= maxRetries429) {
+              const backoffMs = Math.min(1000 * Math.pow(2, attempts - 1), 8000);
+              console.warn(`[Gemini] Rate limited (429). Retrying attempt ${attempts}/${maxRetries429} in ${backoffMs}ms...`);
+              await new Promise((r) => setTimeout(r, backoffMs));
+              continue;
+            }
           } else if (response.status >= 500) {
             errorType = "model_unavailable";
-            retryable = true;
-          }
-
-          if (retryable && attempts <= maxRetries) {
-            console.warn(`[Gemini] Transient error ${response.status}. Retrying (Attempt ${attempts} of ${maxRetries})...`);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            continue;
+            // Don't retry if the error message suggests the model name is wrong
+            const isModelNotFound = /not found|does not exist|invalid model|unknown model/i.test(errorMessage);
+            if (!isModelNotFound && attempts <= maxRetries5xx) {
+              const backoffMs = Math.min(1000 * Math.pow(2, attempts - 1), 8000);
+              console.warn(`[Gemini] Transient error ${response.status}. Retrying attempt ${attempts}/${maxRetries5xx} in ${backoffMs}ms...`);
+              await new Promise((r) => setTimeout(r, backoffMs));
+              continue;
+            }
           }
 
           throw new AIProviderError(
@@ -140,7 +157,7 @@ export class GeminiProvider implements AIProvider {
             this.activeModel,
             errorType,
             response.status,
-            retryable
+            false
           );
         }
 
