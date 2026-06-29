@@ -182,16 +182,7 @@ export default function DashboardPage() {
                         <span className="font-bold text-slate-950 dark:text-white truncate max-w-[200px] sm:max-w-xs">
                           {project.title}
                         </span>
-                        {project.isFallback ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-orange-400/20 bg-orange-500/10 px-2 py-0.5 text-[9px] font-bold text-orange-400 uppercase tracking-wide">
-                            Fallback
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold text-emerald-400 uppercase tracking-wide">
-                            <Cpu size={8} />
-                            {project.provider === "openrouter" ? "OpenRouter" : "Gemini"}
-                          </span>
-                        )}
+
                         {project.isPublished && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-0.5 text-[9px] font-bold text-violet-400 uppercase tracking-wide">
                             <Globe size={8} />

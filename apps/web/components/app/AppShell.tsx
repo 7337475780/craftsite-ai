@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   BarChart3,
   ChevronRight,
   Cpu,
+  CreditCard,
   Crown,
   FolderOpen,
   GalleryVerticalEnd,
@@ -333,22 +334,96 @@ function UserAvatar({
   name?: string | null;
   email?: string | null;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth();
+  const router = useRouter();
   const fallback = email?.charAt(0).toUpperCase() || name?.charAt(0) || "U";
 
-  if (image) {
-    return (
-      <img
-        src={image}
-        alt={name || "Avatar"}
-        className="hidden h-9 w-9 shrink-0 rounded-full border border-violet-500/20 object-cover shadow-sm min-[380px]:block dark:border-cyan-300/20"
-        referrerPolicy="no-referrer"
-      />
-    );
-  }
+  const handleLogout = async () => {
+    setIsOpen(false);
+    await logout();
+  };
+
+  const handleNavigate = (path: string) => {
+    setIsOpen(false);
+    router.push(path);
+  };
 
   return (
-    <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-violet-500/20 bg-violet-600/10 text-sm font-black text-violet-700 shadow-sm dark:border-cyan-300/20 dark:bg-cyan-400/10 dark:text-cyan-300 min-[380px]:flex">
-      {fallback}
+    <div className="hidden min-[380px]:block relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-9 w-9 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-violet-500/60 cursor-pointer overflow-hidden border border-violet-500/20 shadow-sm dark:border-cyan-300/20"
+      >
+        {image ? (
+          <img
+            src={image}
+            alt={name || "Avatar"}
+            className="h-full w-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-violet-600/10 text-sm font-black text-violet-700 dark:bg-cyan-400/10 dark:text-cyan-300">
+            {fallback}
+          </div>
+        )}
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="absolute right-0 top-full mt-2 w-56 p-1 rounded-xl bg-white dark:bg-zinc-900 border border-slate-900/10 dark:border-white/10 shadow-xl z-50">
+            {/* Header info */}
+            <div className="px-3 py-2.5 border-b border-slate-900/5 dark:border-white/5">
+              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                {name || "User"}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
+                {email || ""}
+              </p>
+            </div>
+
+            {/* Menu options */}
+            <div className="p-1">
+              <button
+                onClick={() => handleNavigate("/dashboard")}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left text-slate-700 hover:bg-slate-900/5 hover:text-slate-950 dark:text-zinc-300 dark:hover:bg-white/5 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <LayoutDashboard className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                Dashboard
+              </button>
+              <button
+                onClick={() => handleNavigate("/settings")}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left text-slate-700 hover:bg-slate-900/5 hover:text-slate-950 dark:text-zinc-300 dark:hover:bg-white/5 dark:hover:text-white transition-colors mt-0.5 cursor-pointer"
+              >
+                <Settings className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                Settings
+              </button>
+              <button
+                onClick={() => handleNavigate("/billing")}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left text-slate-700 hover:bg-slate-900/5 hover:text-slate-950 dark:text-zinc-300 dark:hover:bg-white/5 dark:hover:text-white transition-colors mt-0.5 cursor-pointer"
+              >
+                <CreditCard className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                Billing & Plan
+              </button>
+            </div>
+
+            <div className="h-px bg-slate-900/10 dark:bg-white/10 my-1 mx-2" />
+
+            <div className="p-1">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                Log out
+              </button>
+            </div>
+          </div>
+          
+          {/* Overlay to close on click outside */}
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+        </>
+      )}
     </div>
   );
 }

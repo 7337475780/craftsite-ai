@@ -683,25 +683,7 @@ export default function ProjectDetailPage() {
 
             {/* Right actions */}
             <div className="flex items-center gap-3">
-              {/* Provider badge */}
-              <AnimatePresence>
-                {providerInfo && !isGenerating && !isEditing && (
-                  <motion.div
-                    key="provider"
-                    initial={{ opacity: 0, scale: 0.85, x: 12 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.85, x: 12 }}
-                    className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide sm:flex ${
-                      providerInfo.isFallback
-                        ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
-                        : "border-emerald-400/25 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                    }`}
-                  >
-                    <Cpu size={11} />
-                    {providerLabel}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
 
               {/* Save Project button */}
               <AnimatePresence>
@@ -885,24 +867,7 @@ export default function ProjectDetailPage() {
 
                 {/* Status banners */}
                 <AnimatePresence mode="popLayout">
-                  {providerInfo && !isGenerating && !isEditing && (
-                    <motion.div
-                      key="provider-banner"
-                      initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                      animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
-                      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                      className={`flex items-center gap-2 overflow-hidden rounded-xl border px-3.5 py-2.5 text-xs font-semibold ${
-                        providerInfo.isFallback
-                          ? "border-orange-400/25 bg-orange-50 text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300"
-                          : "border-emerald-400/25 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                      }`}
-                    >
-                      <Cpu size={12} className="shrink-0" />
-                      {providerInfo.isFallback
-                        ? "AI providers were busy. Showing safe fallback preview."
-                        : `Powered by ${providerLabel}`}
-                    </motion.div>
-                  )}
+
 
                   {saveSuccess && (
                     <motion.div
@@ -1070,15 +1035,7 @@ export default function ProjectDetailPage() {
                     </div>
                   </button>
 
-                  <AnimatePresence>
                     {publishPanelOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden"
-                      >
                         <div className="px-5 pb-5 pt-1 border-t border-black/6 dark:border-white/6">
                           {publishError && (
                             <div className="mb-4 overflow-hidden rounded-xl border border-red-400/25 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300">
@@ -1164,9 +1121,7 @@ export default function ProjectDetailPage() {
                             </div>
                           )}
                         </div>
-                      </motion.div>
                     )}
-                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1213,15 +1168,7 @@ export default function ProjectDetailPage() {
                     </div>
                   </button>
 
-                  <AnimatePresence>
                     {editPanelOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden"
-                      >
                         <div className="px-5 pb-4 border-t border-black/6 dark:border-white/6">
                           {/* Edit error */}
                           <AnimatePresence>
@@ -1326,9 +1273,7 @@ export default function ProjectDetailPage() {
                             </span>
                           </button>
                         </div>
-                      </motion.div>
                     )}
-                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1374,15 +1319,7 @@ export default function ProjectDetailPage() {
                     )}
                   </button>
 
-                  <AnimatePresence>
                     {versionsOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden"
-                      >
                         <div className="border-t border-black/6 dark:border-white/6">
                           {versionsLoading ? (
                             <div className="flex items-center justify-center gap-2 py-8 text-xs text-slate-400 dark:text-white/30">
@@ -1463,9 +1400,7 @@ export default function ProjectDetailPage() {
                             </div>
                           )}
                         </div>
-                      </motion.div>
                     )}
-                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>

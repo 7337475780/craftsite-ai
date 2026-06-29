@@ -24,30 +24,7 @@ import {
 } from "lucide-react";
 import { exportProjectAsZip } from "@/lib/export-project";
 
-function ProviderBadge({ provider, isFallback }: { provider: string; isFallback: boolean }) {
-  const label =
-    provider === "openrouter"
-      ? "OpenRouter"
-      : provider === "gemini"
-        ? "Gemini Flash"
-        : "Mock";
 
-  if (isFallback) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-400/25 bg-orange-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-700 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300">
-        <AlertTriangle size={9} />
-        Fallback
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300">
-      <Cpu size={9} />
-      {label}
-    </span>
-  );
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -208,10 +185,6 @@ export default function ProjectsPage() {
                         <Wand2 size={18} />
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        <ProviderBadge
-                          provider={project.provider}
-                          isFallback={project.isFallback}
-                        />
                         {project.isPublished && (
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/25 bg-violet-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300">
                             <Globe size={9} />

@@ -142,19 +142,7 @@ export default function SharePage() {
 
           {/* Right: CTA */}
           <div className="flex items-center gap-3">
-            {/* Provider badge */}
-            <AnimatePresence>
-              {!project.isFallback && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="hidden items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300 sm:flex"
-                >
-                  <Cpu size={10} />
-                  {providerLabel}
-                </motion.span>
-              )}
-            </AnimatePresence>
+
 
             <Link
               href="/generate"

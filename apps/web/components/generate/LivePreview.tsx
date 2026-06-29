@@ -317,15 +317,21 @@ button { font-family: inherit; }
             style={{ padding: viewport === "desktop" ? "0" : "12px" }}
           >
             <motion.div
-              layout
-              className="flex h-full flex-col overflow-hidden transition-all duration-300"
-              style={{
+              animate={{
                 width: viewport === "desktop" ? "100%" : cfg.width,
+                borderRadius: viewport === "desktop" ? 0 : 20,
+                borderWidth: viewport === "desktop" ? 0 : 3,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                mass: 0.8,
+              }}
+              className="flex h-full flex-col overflow-hidden bg-white dark:bg-[#0f172a]"
+              style={{
                 maxWidth: "100%",
-                borderRadius: viewport === "desktop" ? "0px" : "20px",
-                borderWidth: viewport === "desktop" ? "0px" : "3px",
                 borderColor: resolvedTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
-                background: resolvedTheme === "dark" ? "#0f172a" : "#ffffff",
                 boxShadow: viewport === "desktop" ? "none" : "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
               }}
             >
