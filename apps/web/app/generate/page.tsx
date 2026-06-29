@@ -976,14 +976,14 @@ function GeneratePageContent() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950"
+                      className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950"
                     >
                       <div className="relative mb-10">
-                        <div className="absolute inset-0 animate-ping rounded-full bg-violet-500/20 blur-2xl" />
-                        <div className="absolute -inset-4 animate-pulse rounded-full bg-cyan-400/10 blur-3xl" />
-                        <div className="animate-float relative flex h-24 w-24 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-[0_0_60px_rgba(124,58,237,0.35)] backdrop-blur-xl">
+                        <div className="absolute inset-0 animate-ping rounded-full bg-violet-500/10 blur-2xl dark:bg-violet-500/20" />
+                        <div className="absolute -inset-4 animate-pulse rounded-full bg-cyan-400/5 blur-3xl dark:bg-cyan-400/10" />
+                        <div className="animate-float relative flex h-24 w-24 items-center justify-center rounded-2xl border border-slate-900/10 bg-white/55 shadow-[0_12px_40px_rgba(124,58,237,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-white/5 dark:shadow-[0_0_60px_rgba(124,58,237,0.35)]">
                           <div className="animate-glow-pulse">
-                            <Zap className="h-10 w-10 text-cyan-300" />
+                            <Zap className="h-10 w-10 text-violet-600 dark:text-cyan-300" />
                           </div>
                         </div>
                       </div>
@@ -1007,14 +1007,14 @@ function GeneratePageContent() {
                               opacity: i === loadingStep ? 1 : i < loadingStep ? 0.5 : 0.25,
                             }}
                             className={`rounded-full ${i === loadingStep
-                                ? "h-2.5 w-2.5 bg-cyan-400"
-                                : "h-2 w-2 bg-white/30"
+                                ? "h-2.5 w-2.5 bg-violet-600 dark:bg-cyan-400"
+                                : "h-2 w-2 bg-black/20 dark:bg-white/30"
                               }`}
                           />
                         ))}
                       </div>
 
-                      <p className="mt-4 max-w-xs text-center text-sm leading-relaxed text-white/40">
+                      <p className="mt-4 max-w-xs text-center text-sm leading-relaxed text-slate-500 dark:text-white/40">
                         Hang tight — crafting your fully responsive website from scratch.
                       </p>
                     </motion.div>

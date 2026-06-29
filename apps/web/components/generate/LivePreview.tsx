@@ -294,15 +294,15 @@ button { font-family: inherit; }
         }}
       >
         <SandpackLayout style={{ height: "100%" }} className="flex-1 min-h-0 border-none bg-transparent">
-          {/* File explorer — xl only, shown for tablet/mobile viewports */}
-          {isDesktop && viewport !== "desktop" && (
+          {/* File explorer — xl only, shown only for mobile viewport */}
+          {isDesktop && viewport === "mobile" && (
             <div className="hidden h-full border-r border-black/10 dark:border-white/10 xl:block" style={{ width: 160, flexShrink: 0 }}>
               <SandpackFileExplorer />
             </div>
           )}
 
-          {/* Code editor — only on md+ screens for tablet/mobile viewports (direct child of SandpackLayout so Sandpack CSS works) */}
-          {isDesktop && viewport !== "desktop" && (
+          {/* Code editor — only on md+ screens for mobile viewport (direct child of SandpackLayout so Sandpack CSS works) */}
+          {isDesktop && viewport === "mobile" && (
             <SandpackCodeEditor
               showTabs
               showLineNumbers
@@ -312,37 +312,25 @@ button { font-family: inherit; }
             />
           )}
 
-          {/* Live preview — viewport width controlled via CSS transition, NO AnimatePresence (avoids iframe remount) */}
-          <div className="relative flex h-full items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60"
-            style={{ flex: viewport === "desktop" ? 1 : "0 0 auto", padding: viewport === "desktop" ? "0" : "12px" }}
+          {/* Live preview — single SandpackPreview instance, width animated via parent container to avoid unmounting/remounting */}
+          <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60 transition-all duration-300"
+            style={{ padding: viewport === "desktop" ? "0" : "12px" }}
           >
-            {/* Desktop: full bleed */}
-            {viewport === "desktop" && (
-              <div className="h-full w-full overflow-hidden">
-                <SandpackPreview
-                  showOpenInCodeSandbox={false}
-                  showRefreshButton
-                  showSandpackErrorOverlay={false}
-                  style={{ height: "100%", width: "100%", minHeight: "100%" }}
-                />
-              </div>
-            )}
-
-            {/* Tablet / Mobile: device frame, smooth width transition */}
-            {viewport !== "desktop" && (
-              <motion.div
-                key="device-frame"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="flex h-full flex-col overflow-hidden rounded-[20px] border-[3px] shadow-2xl transition-all duration-300"
-                style={{
-                  width: cfg.width,
-                  borderColor: resolvedTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
-                  background: resolvedTheme === "dark" ? "#0f172a" : "#ffffff",
-                }}
-              >
-                {/* Device chrome top */}
+            <motion.div
+              layout
+              className="flex h-full flex-col overflow-hidden transition-all duration-300"
+              style={{
+                width: viewport === "desktop" ? "100%" : cfg.width,
+                maxWidth: "100%",
+                borderRadius: viewport === "desktop" ? "0px" : "20px",
+                borderWidth: viewport === "desktop" ? "0px" : "3px",
+                borderColor: resolvedTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+                background: resolvedTheme === "dark" ? "#0f172a" : "#ffffff",
+                boxShadow: viewport === "desktop" ? "none" : "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              }}
+            >
+              {/* Device chrome top (rendered only for tablet/mobile) */}
+              {viewport !== "desktop" && (
                 <div className={`flex flex-none items-center justify-center border-b border-black/8 dark:border-white/8 ${viewport === "mobile" ? "h-7" : "h-6"}`}>
                   {viewport === "mobile" ? (
                     <div className="flex items-center gap-2">
@@ -357,25 +345,25 @@ button { font-family: inherit; }
                     </div>
                   )}
                 </div>
+              )}
 
-                {/* Preview inside device */}
-                <div className="min-h-0 flex-1 overflow-hidden">
-                  <SandpackPreview
-                    showOpenInCodeSandbox={false}
-                    showRefreshButton={false}
-                    showSandpackErrorOverlay={false}
-                    style={{ height: "100%", width: "100%", minHeight: "100%" }}
-                  />
+              {/* Preview inside device/desktop frame */}
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <SandpackPreview
+                  showOpenInCodeSandbox={false}
+                  showRefreshButton={viewport === "desktop"}
+                  showSandpackErrorOverlay={false}
+                  style={{ height: "100%", width: "100%", minHeight: "100%" }}
+                />
+              </div>
+
+              {/* Mobile home indicator */}
+              {viewport === "mobile" && (
+                <div className="flex flex-none items-center justify-center border-t border-black/5 dark:border-white/5 py-1.5">
+                  <span className="h-1 w-20 rounded-full bg-slate-300 dark:bg-slate-600" />
                 </div>
-
-                {/* Mobile home indicator */}
-                {viewport === "mobile" && (
-                  <div className="flex flex-none items-center justify-center border-t border-black/5 dark:border-white/5 py-1.5">
-                    <span className="h-1 w-20 rounded-full bg-slate-300 dark:bg-slate-600" />
-                  </div>
-                )}
-              </motion.div>
-            )}
+              )}
+            </motion.div>
           </div>
         </SandpackLayout>
       </SandpackProvider>
