@@ -506,7 +506,7 @@ function GeneratePageContent() {
       </AnimatePresence>
 
       {/* ── Main Workspace Body ── */}
-      <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 overflow-hidden p-4 lg:flex-row lg:p-5">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-4 lg:overflow-hidden lg:flex-row lg:p-5">
 
         {/* Left Command Panel */}
         <motion.div
@@ -515,7 +515,7 @@ function GeneratePageContent() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
           className={`flex flex-col gap-4 transition-all duration-500 ${isCompact
-              ? "lg:w-[320px] xl:w-[380px]"
+              ? "lg:w-[320px] xl:w-[380px] max-h-[52vh] overflow-y-auto lg:max-h-none lg:overflow-visible"
               : "mx-auto w-full max-w-2xl justify-center lg:w-[600px]"
             }`}
         >
@@ -895,7 +895,7 @@ function GeneratePageContent() {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 40, scale: 0.97 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="flex min-h-0 flex-1 flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)]"
+              className="flex min-h-[55vh] flex-1 flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] lg:min-h-0"
             >
               {/* Canvas navbar */}
               <div className="flex flex-none items-center justify-between border-b border-black/6 px-5 py-3 dark:border-white/6">

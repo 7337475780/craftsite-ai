@@ -295,17 +295,19 @@ button { font-family: inherit; }
             <SandpackFileExplorer />
           </div>
 
-          {/* Code editor */}
-          <SandpackCodeEditor
-            showTabs
-            showLineNumbers
-            wrapContent
-            closableTabs={false}
-            style={{ height: "100%", minWidth: 0, flex: 1 }}
-          />
+          {/* Code editor — hidden on mobile, visible md+ */}
+          <div className="hidden h-full md:block md:flex-1" style={{ minWidth: 0 }}>
+            <SandpackCodeEditor
+              showTabs
+              showLineNumbers
+              wrapContent
+              closableTabs={false}
+              style={{ height: "100%", minWidth: 0 }}
+            />
+          </div>
 
           {/* Live preview with viewport animation */}
-          <div className="flex h-full flex-1 items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60 p-3 sm:p-5">
+          <div className="flex h-full flex-1 items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60 p-2 sm:p-5">
             <AnimatePresence mode="wait">
               <motion.div
                 key={viewport}
