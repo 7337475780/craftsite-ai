@@ -833,7 +833,7 @@ export default function ProjectDetailPage() {
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className={`flex flex-col gap-4 overflow-y-auto transition-all duration-500 ${
+            className={`flex flex-col gap-4 overflow-y-auto min-h-0 lg:h-full transition-all duration-500 ${
               isCompact
                 ? "lg:w-[340px] xl:w-[400px]"
                 : "mx-auto w-full max-w-2xl justify-center lg:w-[600px]"
@@ -990,6 +990,7 @@ export default function ProjectDetailPage() {
             <AnimatePresence>
               {isCompact && !isGenerating && (
                 <motion.div
+                  layout
                   key="publish-panel"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1126,6 +1127,7 @@ export default function ProjectDetailPage() {
             <AnimatePresence>
               {isCompact && !isGenerating && (
                 <motion.div
+                  layout
                   key="edit-panel"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1274,6 +1276,7 @@ export default function ProjectDetailPage() {
             <AnimatePresence>
               {isCompact && !isGenerating && (
                 <motion.div
+                  layout
                   key="version-panel"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
