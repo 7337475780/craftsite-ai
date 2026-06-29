@@ -294,15 +294,15 @@ button { font-family: inherit; }
         }}
       >
         <SandpackLayout style={{ height: "100%" }} className="flex-1 min-h-0 border-none bg-transparent">
-          {/* File explorer — xl only */}
-          {isDesktop && (
+          {/* File explorer — xl only, shown for tablet/mobile viewports */}
+          {isDesktop && viewport !== "desktop" && (
             <div className="hidden h-full border-r border-black/10 dark:border-white/10 xl:block" style={{ width: 160, flexShrink: 0 }}>
               <SandpackFileExplorer />
             </div>
           )}
 
-          {/* Code editor — only on md+ screens (direct child of SandpackLayout so Sandpack CSS works) */}
-          {isDesktop && (
+          {/* Code editor — only on md+ screens for tablet/mobile viewports (direct child of SandpackLayout so Sandpack CSS works) */}
+          {isDesktop && viewport !== "desktop" && (
             <SandpackCodeEditor
               showTabs
               showLineNumbers
