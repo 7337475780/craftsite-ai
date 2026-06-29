@@ -122,10 +122,17 @@ router.get(
         where: { id },
       });
 
-      if (!project || project.userId !== userId) {
+      if (!project) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });
+        return;
+      }
+
+      if (project.userId !== userId) {
+        res
+          .status(403)
+          .json({ success: false, message: "Access denied" });
         return;
       }
 
@@ -205,7 +212,21 @@ router.delete(
         where: { id },
       });
 
-      if (!project || project.userId !== userId || project.workspaceId !== null) {
+      if (!project) {
+        res
+          .status(404)
+          .json({ success: false, message: "Project not found" });
+        return;
+      }
+
+      if (project.userId !== userId) {
+        res
+          .status(403)
+          .json({ success: false, message: "Access denied" });
+        return;
+      }
+
+      if (project.workspaceId !== null) {
         res
           .status(404)
           .json({ success: false, message: "Project not found" });

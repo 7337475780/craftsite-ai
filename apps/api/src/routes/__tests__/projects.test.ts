@@ -27,7 +27,7 @@ describe('Projects Routes', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.length).toBe(1);
       expect(prismaMock.project.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { userId: 'user-1' }
+        where: { userId: 'user-1', workspaceId: null }
       }));
     });
   });

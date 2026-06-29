@@ -858,7 +858,7 @@ export default function ProjectDetailPage() {
             {/* Prompt Card */}
             <motion.div
               layout
-              className={`flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl transition-shadow duration-300 hover:shadow-[0_12px_50px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_12px_60px_rgba(0,0,0,0.4)] ${
+              className={`flex flex-col flex-none rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_8px_40px_rgba(15,23,42,0.1)] backdrop-blur-3xl transition-shadow duration-300 hover:shadow-[0_12px_50px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_50px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_12px_60px_rgba(0,0,0,0.4)] ${
                 !isCompact ? "glow-border" : ""
               }`}
             >
@@ -995,7 +995,7 @@ export default function ProjectDetailPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 12 }}
                   transition={{ duration: 0.3 }}
-                  className="flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
+                  className="flex flex-col flex-none rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
                 >
                   <button
                     onClick={() => setPublishPanelOpen((o) => !o)}
@@ -1027,11 +1027,7 @@ export default function ProjectDetailPage() {
                           Live
                         </span>
                       )}
-                      {publishPanelOpen ? (
-                        <ChevronUp size={14} className="text-slate-400 dark:text-white/30" />
-                      ) : (
-                        <ChevronDown size={14} className="text-slate-400 dark:text-white/30" />
-                      )}
+                      <ChevronDown size={14} className={`text-slate-400 dark:text-white/30 transition-transform duration-200 ${publishPanelOpen ? "rotate-180" : ""}`} />
                     </div>
                   </button>
 
@@ -1135,7 +1131,7 @@ export default function ProjectDetailPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 12 }}
                   transition={{ duration: 0.3, delay: 0.05 }}
-                  className="flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
+                  className="flex flex-col flex-none rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
                 >
                   {/* Edit panel header */}
                   <button
@@ -1160,11 +1156,7 @@ export default function ProjectDetailPage() {
                           Applied!
                         </span>
                       )}
-                      {editPanelOpen ? (
-                        <ChevronUp size={14} className="text-slate-400 dark:text-white/30" />
-                      ) : (
-                        <ChevronDown size={14} className="text-slate-400 dark:text-white/30" />
-                      )}
+                      <ChevronDown size={14} className={`text-slate-400 dark:text-white/30 transition-transform duration-200 ${editPanelOpen ? "rotate-180" : ""}`} />
                     </div>
                   </button>
 
@@ -1287,7 +1279,7 @@ export default function ProjectDetailPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 12 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
-                  className="flex flex-col rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
+                  className="flex flex-col flex-none rounded-[1.75rem] border border-black/[0.09] bg-white shadow-[0_4px_24px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_4px_30px_rgba(0,0,0,0.25)] overflow-hidden"
                 >
                   {/* Version panel header */}
                   <button
@@ -1312,11 +1304,7 @@ export default function ProjectDetailPage() {
                         </p>
                       </div>
                     </div>
-                    {versionsOpen ? (
-                      <ChevronUp size={14} className="text-slate-400 dark:text-white/30" />
-                    ) : (
-                      <ChevronDown size={14} className="text-slate-400 dark:text-white/30" />
-                    )}
+                    <ChevronDown size={14} className={`text-slate-400 dark:text-white/30 transition-transform duration-200 ${versionsOpen ? "rotate-180" : ""}`} />
                   </button>
 
                     {versionsOpen && (
@@ -1660,43 +1648,15 @@ export default function ProjectDetailPage() {
                           Applying your edit — preserving the original as a version.
                         </p>
                       </motion.div>
-                    ) : viewMode === "preview" ? (
+                    ) : (
                       <motion.div
-                        key="preview"
+                        key="canvas-container"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0"
                       >
-                        <LivePreview code={generatedCode} />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="code"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex flex-col bg-slate-950"
-                      >
-                        <div className="flex flex-none items-center gap-3 border-b border-white/8 px-5 py-3.5">
-                          <div className="flex gap-1.5">
-                            <span className="h-3 w-3 rounded-full bg-red-400/70" />
-                            <span className="h-3 w-3 rounded-full bg-yellow-400/70" />
-                            <span className="h-3 w-3 rounded-full bg-emerald-400/70" />
-                          </div>
-                          <div className="flex items-center gap-2 text-white/50">
-                            <Code2 size={13} className="text-cyan-400" />
-                            <span className="text-xs font-mono">GeneratedWebsite.tsx</span>
-                          </div>
-                        </div>
-                        <div className="flex-1 overflow-auto p-6">
-                          <pre className="text-xs leading-relaxed text-cyan-100/85">
-                            <code>
-                              {generatedCode ||
-                                "// Generate a website to see the React + Tailwind code here."}
-                            </code>
-                          </pre>
-                        </div>
+                        <LivePreview code={generatedCode} viewMode={viewMode} />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1708,7 +1668,7 @@ export default function ProjectDetailPage() {
                   <ProjectComments
                     projectId={project.id}
                     workspaceId={null}
-                    projectOwnerId={project.userId}
+                    projectOwnerId={user?.id}
                     onClose={() => setCommentsOpen(false)}
                   />
                 </div>

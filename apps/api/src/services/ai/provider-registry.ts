@@ -9,11 +9,11 @@ import { env } from "../../config/env.js";
 import { isModelCoolingDown, getCooldownRemainingMs } from "./model-cooldown.js";
 
 const MODE_CHAINS: Record<AIMode, AIProviderName[]> = {
-  balanced: ["gemini", "openrouter", "groq", "together", "mistral", "mock"],
+  balanced: ["openrouter", "gemini", "groq", "together", "mistral", "mock"],
   fast: ["groq", "gemini", "openrouter", "mock"],
   quality: ["gemini", "openrouter", "mistral", "together", "mock"],
   free: ["openrouter", "gemini", "mock"],
-  code: ["gemini", "openrouter", "together", "mistral", "mock"],
+  code: ["openrouter", "together", "gemini", "mistral", "mock"],
 };
 
 export function getProvider(name: AIProviderName, selectedModel?: string): AIProvider {

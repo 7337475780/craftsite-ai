@@ -14,6 +14,7 @@ import { Monitor, Tablet, Smartphone } from "lucide-react";
 
 type LivePreviewProps = {
   code: string;
+  viewMode?: "preview" | "code";
 };
 
 type Viewport = "desktop" | "tablet" | "mobile";
@@ -163,7 +164,7 @@ function cleanPreviewCode(code: string) {
   return normalized.trim();
 }
 
-export function LivePreview({ code }: LivePreviewProps) {
+export function LivePreview({ code, viewMode = "preview" }: LivePreviewProps) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [viewport, setViewport] = useState<Viewport>("desktop");
@@ -179,8 +180,8 @@ export function LivePreview({ code }: LivePreviewProps) {
   }, []);
 
   const { appCode, isInvalid } = useMemo(() => {
-    const rawCode = code || fallbackCode;
-    const cleanedCode = cleanPreviewCode(rawCode);
+    const raw = code || fallbackCode;
+    const cleanedCode = cleanPreviewCode(raw);
     const invalid = Boolean(code) && isProbablyIncomplete(cleanedCode);
     const safeCode = invalid ? invalidFallbackCode : cleanedCode;
 
@@ -209,14 +210,15 @@ ${safeCode}
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-black/10 bg-white/75 shadow-[0_22px_70px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] dark:shadow-[0_24px_90px_rgba(0,0,0,0.38)]">
-      {isInvalid && (
+      {isInvalid && viewMode === "preview" && (
         <div className="border-b border-red-500/20 bg-red-500/10 px-5 py-2.5 text-xs font-semibold text-red-700 dark:text-red-300">
           The generated code looked incomplete — CraftSite protected the live preview. Use the Code tab to inspect it or generate again.
         </div>
       )}
 
-      {/* Viewport toolbar */}
-      <div className="flex flex-none items-center gap-3 border-b border-black/8 bg-white/60 px-4 py-2.5 dark:border-white/8 dark:bg-black/20">
+      {/* Viewport toolbar — only shown in preview mode */}
+      {viewMode === "preview" && (
+        <div className="flex flex-none items-center gap-3 border-b border-black/8 bg-white/60 px-4 py-2.5 dark:border-white/8 dark:bg-black/20">
         <span className="hidden text-[11px] font-semibold text-slate-400 dark:text-white/35 sm:block">
           Viewport:
         </span>
@@ -260,6 +262,7 @@ ${safeCode}
           </motion.span>
         </AnimatePresence>
       </div>
+      )}
 
       <SandpackProvider
         template="react"
@@ -294,15 +297,15 @@ button { font-family: inherit; }
         }}
       >
         <SandpackLayout style={{ height: "100%" }} className="flex-1 min-h-0 border-none bg-transparent">
-          {/* File explorer — xl only, shown only for mobile viewport */}
-          {isDesktop && viewport === "mobile" && (
-            <div className="hidden h-full border-r border-black/10 dark:border-white/10 xl:block" style={{ width: 160, flexShrink: 0 }}>
+          {/* File explorer — shown if viewMode is code, OR if viewport is mobile in preview mode on desktop screen */}
+          {(viewMode === "code" || (viewMode === "preview" && isDesktop && viewport === "mobile")) && (
+            <div className="h-full border-r border-black/10 dark:border-white/10 block" style={{ width: 160, flexShrink: 0 }}>
               <SandpackFileExplorer />
             </div>
           )}
 
-          {/* Code editor — only on md+ screens for mobile viewport (direct child of SandpackLayout so Sandpack CSS works) */}
-          {isDesktop && viewport === "mobile" && (
+          {/* Code editor — shown if viewMode is code, OR if viewport is mobile in preview mode on desktop screen */}
+          {(viewMode === "code" || (viewMode === "preview" && isDesktop && viewport === "mobile")) && (
             <SandpackCodeEditor
               showTabs
               showLineNumbers
@@ -312,65 +315,67 @@ button { font-family: inherit; }
             />
           )}
 
-          {/* Live preview — single SandpackPreview instance, width animated via parent container to avoid unmounting/remounting */}
-          <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60 transition-all duration-300"
-            style={{ padding: viewport === "desktop" ? "0" : "12px" }}
-          >
-            <motion.div
-              animate={{
-                width: viewport === "desktop" ? "100%" : cfg.width,
-                borderRadius: viewport === "desktop" ? 0 : 20,
-                borderWidth: viewport === "desktop" ? 0 : 3,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-                mass: 0.8,
-              }}
-              className="flex h-full flex-col overflow-hidden bg-white dark:bg-[#0f172a]"
-              style={{
-                maxWidth: "100%",
-                borderColor: resolvedTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
-                boxShadow: viewport === "desktop" ? "none" : "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              }}
+          {/* Live preview — only shown in preview mode */}
+          {viewMode === "preview" && (
+            <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-slate-100/80 dark:bg-slate-950/60 transition-all duration-300"
+              style={{ padding: viewport === "desktop" ? "0" : "12px" }}
             >
-              {/* Device chrome top (rendered only for tablet/mobile) */}
-              {viewport !== "desktop" && (
-                <div className={`flex flex-none items-center justify-center border-b border-black/8 dark:border-white/8 ${viewport === "mobile" ? "h-7" : "h-6"}`}>
-                  {viewport === "mobile" ? (
-                    <div className="flex items-center gap-2">
-                      <span className="h-1 w-12 rounded-full bg-slate-300 dark:bg-slate-600" />
-                      <span className="h-2.5 w-2.5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-red-400/80" />
-                      <span className="h-2 w-2 rounded-full bg-yellow-400/80" />
-                      <span className="h-2 w-2 rounded-full bg-emerald-400/80" />
-                    </div>
-                  )}
-                </div>
-              )}
+              <motion.div
+                animate={{
+                  width: viewport === "desktop" ? "100%" : cfg.width,
+                  borderRadius: viewport === "desktop" ? 0 : 20,
+                  borderWidth: viewport === "desktop" ? 0 : 3,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  mass: 0.8,
+                }}
+                className="flex h-full flex-col overflow-hidden bg-white dark:bg-[#0f172a]"
+                style={{
+                  maxWidth: "100%",
+                  borderColor: resolvedTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.18)",
+                  boxShadow: viewport === "desktop" ? "none" : "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                }}
+              >
+                {/* Device chrome top (rendered only for tablet/mobile) */}
+                {viewport !== "desktop" && (
+                  <div className={`flex flex-none items-center justify-center border-b border-black/8 dark:border-white/8 ${viewport === "mobile" ? "h-7" : "h-6"}`}>
+                    {viewport === "mobile" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="h-1 w-12 rounded-full bg-slate-300 dark:bg-slate-600" />
+                        <span className="h-2.5 w-2.5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-red-400/80" />
+                        <span className="h-2 w-2 rounded-full bg-yellow-400/80" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-400/80" />
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {/* Preview inside device/desktop frame */}
-              <div className="min-h-0 flex-1 overflow-hidden">
-                <SandpackPreview
-                  showOpenInCodeSandbox={false}
-                  showRefreshButton={viewport === "desktop"}
-                  showSandpackErrorOverlay={false}
-                  style={{ height: "100%", width: "100%", minHeight: "100%" }}
-                />
-              </div>
-
-              {/* Mobile home indicator */}
-              {viewport === "mobile" && (
-                <div className="flex flex-none items-center justify-center border-t border-black/5 dark:border-white/5 py-1.5">
-                  <span className="h-1 w-20 rounded-full bg-slate-300 dark:bg-slate-600" />
+                {/* Preview inside device/desktop frame */}
+                <div className="min-h-0 flex-1 overflow-hidden">
+                  <SandpackPreview
+                    showOpenInCodeSandbox={false}
+                    showRefreshButton={viewport === "desktop"}
+                    showSandpackErrorOverlay={false}
+                    style={{ height: "100%", width: "100%", minHeight: "100%" }}
+                  />
                 </div>
-              )}
-            </motion.div>
-          </div>
+
+                {/* Mobile home indicator */}
+                {viewport === "mobile" && (
+                  <div className="flex flex-none items-center justify-center border-t border-black/5 dark:border-white/5 py-1.5">
+                    <span className="h-1 w-20 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          )}
         </SandpackLayout>
       </SandpackProvider>
     </div>

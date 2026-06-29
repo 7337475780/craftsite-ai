@@ -1018,43 +1018,15 @@ function GeneratePageContent() {
                         Hang tight — crafting your fully responsive website from scratch.
                       </p>
                     </motion.div>
-                  ) : viewMode === "preview" ? (
+                  ) : (
                     <motion.div
-                      key="preview"
+                      key="canvas-container"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       className="absolute inset-0"
                     >
-                      <LivePreview code={generatedCode} />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="code"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 flex flex-col bg-slate-950"
-                    >
-                      <div className="flex flex-none items-center gap-3 border-b border-white/8 px-5 py-3.5">
-                        <div className="flex gap-1.5">
-                          <span className="h-3 w-3 rounded-full bg-red-400/70" />
-                          <span className="h-3 w-3 rounded-full bg-yellow-400/70" />
-                          <span className="h-3 w-3 rounded-full bg-emerald-400/70" />
-                        </div>
-                        <div className="flex items-center gap-2 text-white/50">
-                          <Code2 size={13} className="text-cyan-400" />
-                          <span className="text-xs font-mono">GeneratedWebsite.tsx</span>
-                        </div>
-                      </div>
-                      <div className="flex-1 overflow-auto p-6">
-                        <pre className="text-xs leading-relaxed text-cyan-100/85">
-                          <code>
-                            {generatedCode ||
-                              "// Generate a website to see the React + Tailwind code here."}
-                          </code>
-                        </pre>
-                      </div>
+                      <LivePreview code={generatedCode} viewMode={viewMode} />
                     </motion.div>
                   )}
                 </AnimatePresence>

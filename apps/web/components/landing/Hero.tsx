@@ -155,39 +155,6 @@ export function Hero() {
 
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
 
-      {/* Left Decorative Sidebar */}
-      <aside className="pointer-events-none absolute left-0 top-20 z-20 hidden h-[calc(100svh-8rem)] w-16 rounded-r-3xl border border-l-0 border-slate-900/10 bg-white/55 shadow-[0_0_50px_rgba(79,70,229,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035] dark:shadow-[0_0_50px_rgba(79,70,229,0.25)] xl:block">
-        <div className="flex h-full flex-col items-center py-5">
-          <div className="mb-6 flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-500 text-white shadow-lg shadow-violet-500/40">
-            <Sparkles size={16} />
-          </div>
-
-          <div className="flex flex-1 flex-col items-center gap-4">
-            {sideNavItems.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div
-                  key={item.label}
-                  className={`group relative flex h-9 w-9 items-center justify-center rounded-2xl transition ${item.active
-                    ? "bg-violet-500/15 text-violet-700 shadow-[0_0_24px_rgba(139,92,246,0.28)] dark:bg-violet-500/20 dark:text-cyan-200 dark:shadow-[0_0_24px_rgba(139,92,246,0.45)]"
-                    : "text-slate-500 dark:text-white/50"
-                    }`}
-                >
-                  <Icon size={15} />
-                  {item.active && (
-                    <span className="absolute -right-3 h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_16px_rgba(34,211,238,0.8)]" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-5 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/90 to-blue-500/90 text-white shadow-lg shadow-violet-500/40">
-            <MousePointer2 size={16} />
-          </div>
-        </div>
-      </aside>
 
       <div className="mx-auto flex min-h-[100svh] w-full max-w-[1500px] flex-col px-4 pb-12 pt-24 sm:px-6 lg:px-8 lg:pt-28">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
@@ -397,23 +364,6 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Trusted row */}
-        <div className="mx-auto mt-10 w-full max-w-5xl text-center">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-500">
-            Trusted by 10,000+ builders & teams worldwide
-          </p>
-
-          <div className="mt-5 grid grid-cols-2 gap-4 text-sm font-bold text-slate-600 dark:text-slate-400 sm:grid-cols-3 lg:grid-cols-6">
-            {trustedBy.map((brand) => (
-              <div
-                key={brand}
-                className="rounded-2xl border border-slate-900/10 bg-white/70 px-4 py-3 shadow-sm backdrop-blur dark:border-white/5 dark:bg-white/[0.025]"
-              >
-                {brand}
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Feature icons */}
         <div className="mx-auto mt-8 grid w-full max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

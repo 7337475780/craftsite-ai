@@ -13,14 +13,24 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 
 // Mock razorpay service
 vi.mock('../../services/payment.service.js', () => ({
-  PaymentService: {
-    createOrder: vi.fn().mockResolvedValue({
-      id: 'order_test123',
+  createRazorpayOrder: vi.fn().mockResolvedValue({
+    orderId: 'order_test123',
+    amount: 9900,
+    currency: 'INR',
+    plan: 'pro',
+    razorpayKeyId: 'test_key'
+  }),
+  markPaymentSuccess: vi.fn().mockResolvedValue({
+    success: true,
+    message: 'Payment verified successfully',
+    payment: {
+      id: 'pay_1',
+      userId: 'user-1',
+      status: 'paid',
       amount: 9900,
-      currency: 'INR'
-    }),
-    verifyPayment: vi.fn().mockReturnValue(true)
-  }
+      plan: 'pro'
+    }
+  })
 }));
 
 describe('Billing Routes', () => {
