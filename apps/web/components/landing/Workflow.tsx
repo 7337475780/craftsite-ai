@@ -355,11 +355,11 @@ export function Workflow() {
                 return (
                   <div
                     key={step.id}
-                    className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-3 py-3 text-sm font-black transition-all duration-300 ${isActive
-                      ? "bg-white text-blue-700 shadow-[0_10px_30px_rgba(59,130,246,0.16)] dark:bg-white/[0.08] dark:text-cyan-200"
+                    className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-black transition-all duration-300 ${isActive
+                      ? "bg-white text-violet-700 shadow-sm border border-slate-200 dark:border-white/10 dark:bg-white/10 dark:text-cyan-200"
                       : isReached
-                        ? "text-cyan-600 dark:text-cyan-200"
-                        : "text-slate-500 dark:text-slate-400"
+                        ? "bg-slate-50 text-slate-600 border border-slate-100 hover:bg-slate-100 dark:bg-[#090b16] dark:border-white/5 dark:text-slate-300 dark:hover:bg-[#111428]"
+                        : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100 dark:bg-[#090b16] dark:border-white/5 dark:text-slate-500 dark:hover:bg-[#111428] dark:hover:text-slate-300"
                       }`}
                   >
                     <Icon size={18} />

@@ -218,7 +218,7 @@ export function Pricing() {
                 transition={{ duration: 0.55, ease: "easeOut" }}
                 whileHover={{ y: -8, scale: 1.015 }}
                 className={`group relative overflow-hidden rounded-[2rem] border p-6 backdrop-blur-2xl transition sm:p-8 ${plan.popular
-                  ? "border-violet-500/40 bg-slate-950 text-white shadow-[0_30px_100px_rgba(79,70,229,0.24)] dark:border-violet-400/50 dark:bg-white/[0.06] dark:shadow-[0_30px_110px_rgba(124,58,237,0.24)]"
+                  ? "border-violet-500/60 bg-white/90 text-slate-950 shadow-[0_30px_100px_rgba(124,58,237,0.18)] dark:border-violet-400/50 dark:bg-white/[0.06] dark:text-white dark:shadow-[0_30px_110px_rgba(124,58,237,0.24)]"
                   : "border-slate-900/10 bg-white/75 text-slate-950 shadow-[0_22px_70px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:shadow-[0_24px_90px_rgba(0,0,0,0.36)]"
                   }`}
               >
@@ -239,8 +239,8 @@ export function Pricing() {
                 <div className="relative z-10 flex h-full flex-col">
                   <div
                     className={`mb-7 flex h-14 w-14 items-center justify-center rounded-2xl border ${plan.popular
-                      ? "border-white/10 bg-white text-cyan-200 shadow-[0_0_35px_rgba(56,189,248,0.18)]"
-                      : "border-violet-500/20 bg-violet-500/10 text-violet-700 shadow-[0_18px_40px_rgba(124,58,237,0.12)] dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-cyan-200"
+                      ? "border-violet-500/20 bg-violet-500/10 text-violet-700 shadow-sm dark:border-white/10 dark:bg-white dark:text-slate-950"
+                      : "border-violet-500/20 bg-violet-500/10 text-violet-700 shadow-sm dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-cyan-200"
                       }`}
                   >
                     <Icon size={24} />
@@ -252,7 +252,7 @@ export function Pricing() {
 
                   <p
                     className={`mt-3 min-h-[5.25rem] text-sm leading-7 sm:text-base ${plan.popular
-                      ? "text-white/70"
+                      ? "text-slate-600 dark:text-white/70"
                       : "text-slate-600 dark:text-slate-400"
                       }`}
                   >
@@ -265,7 +265,7 @@ export function Pricing() {
                     </p>
                     <p
                       className={`pb-2 text-sm ${plan.popular
-                        ? "text-white/50"
+                        ? "text-slate-500 dark:text-white/50"
                         : "text-slate-500 dark:text-slate-500"
                         }`}
                     >
@@ -310,7 +310,7 @@ export function Pricing() {
 
                   <div
                     className={`my-8 h-px w-full ${plan.popular
-                      ? "bg-gradient-to-r from-transparent via-white/15 to-transparent"
+                      ? "bg-gradient-to-r from-transparent via-slate-900/10 to-transparent dark:via-white/15"
                       : "bg-gradient-to-r from-transparent via-slate-900/10 to-transparent dark:via-white/10"
                       }`}
                   />
@@ -320,7 +320,7 @@ export function Pricing() {
                       <div key={feature} className="flex items-start gap-3">
                         <div
                           className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${plan.popular
-                            ? "bg-emerald-400/15 text-emerald-300"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-300"
                             : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                             }`}
                         >
@@ -329,7 +329,7 @@ export function Pricing() {
 
                         <span
                           className={`text-sm leading-6 ${plan.popular
-                            ? "text-white/75"
+                            ? "text-slate-600 dark:text-white/75"
                             : "text-slate-600 dark:text-slate-400"
                             }`}
                         >

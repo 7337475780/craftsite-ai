@@ -140,7 +140,7 @@ function SidebarLink({
             "absolute inset-0 rounded-2xl",
             variant === "admin"
               ? "bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 dark:from-cyan-300 dark:via-blue-300 dark:to-violet-300"
-              : "bg-gradient-to-r from-slate-950 via-violet-950 to-blue-950 dark:from-white dark:via-cyan-100 dark:to-blue-100"
+              : "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 dark:from-white dark:via-cyan-100 dark:to-blue-100"
           )}
           transition={{
             type: "spring",
