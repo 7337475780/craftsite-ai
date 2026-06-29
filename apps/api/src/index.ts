@@ -17,7 +17,7 @@ prisma.$connect()
       console.log(`CraftSite API running on http://localhost:${PORT}`);
     });
   })
-  .catch((err) => {
+  .catch((err: unknown) => {
     console.error("Failed to connect to database:", err);
     process.exit(1);
   });
