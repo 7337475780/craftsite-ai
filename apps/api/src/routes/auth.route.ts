@@ -171,6 +171,20 @@ router.post("/logout", (req: Request, res: Response) => {
   clearAuthCookie(res);
   res.json({ success: true, message: "Logged out successfully" });
 });
+// DELETE /api/auth/me
+router.delete("/me", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.auth!.userId;
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+    clearAuthCookie(res);
+    res.json({ success: true, message: "Account deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 // GET /api/auth/me
 router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
@@ -216,6 +230,7 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
 
 const profileSchema = z.object({
   name: z.string().max(100).optional(),
+  image: z.string().optional(),
 });
 
 // PATCH /api/auth/profile
@@ -232,7 +247,10 @@ router.patch("/profile", requireAuth, async (req: Request, res: Response) => {
 
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { name: name || null },
+      data: { 
+        name: name || null,
+        ...(parsed.data.image !== undefined && { image: parsed.data.image })
+      },
     });
 
     res.json({ success: true, data: getSafeUser(user) });

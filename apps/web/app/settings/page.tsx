@@ -3,7 +3,7 @@
 import { AppShell } from "@/components/app/AppShell";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEffect, useState } from "react";
-import { apiPatch } from "@/lib/api-client";
+import { apiPatch, apiDelete } from "@/lib/api-client";
 import { Loader2, Shield, User, Palette, Server, Lock, AlertTriangle, LayoutDashboard, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,6 +31,8 @@ export default function SettingsPage() {
   // Preferences State
   const [defaultStyle, setDefaultStyle] = useState("modern");
   const [showClearDraftsConfirm, setShowClearDraftsConfirm] = useState(false);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const { addToast } = useRealtime();
 
   useEffect(() => {
@@ -100,6 +102,22 @@ export default function SettingsPage() {
     setShowClearDraftsConfirm(false);
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      const res = await apiDelete("/api/auth/me");
+      if (res.success) {
+        addToast({ title: "Account Deleted", message: "Your account has been permanently deleted.", type: "success" });
+        window.location.href = "/";
+      }
+    } catch (err: any) {
+      addToast({ title: "Error", message: err.message || "Failed to delete account.", type: "error" });
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteAccountConfirm(false);
+    }
+  };
+
   return (
     <AppShell>
       <div className="mx-auto max-w-4xl px-2 pb-20 pt-8">
@@ -155,13 +173,21 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">Profile Picture URL</label>
+                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">Profile Picture</label>
                 <input
-                  type="url"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://example.com/avatar.png"
-                  className="w-full max-w-md rounded-xl border border-black/10 bg-white/50 p-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setAvatarUrl(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full max-w-md rounded-xl border border-black/10 bg-white/50 p-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white file:mr-4 file:rounded-full file:border-0 file:bg-violet-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-500/20 dark:file:text-violet-300"
                 />
               </div>
               <button
@@ -314,10 +340,10 @@ export default function SettingsPage() {
                   <p className="mt-1 text-sm text-slate-500 dark:text-white/50">Permanently delete your account and all projects.</p>
                 </div>
                 <button
-                  disabled
-                  className="shrink-0 rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white cursor-not-allowed"
+                  onClick={() => setShowDeleteAccountConfirm(true)}
+                  className="shrink-0 rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700"
                 >
-                  Coming Soon
+                  Delete Account
                 </button>
               </div>
             </div>
@@ -356,10 +382,23 @@ export default function SettingsPage() {
       <ConfirmDialog
         isOpen={showClearDraftsConfirm}
         title="Clear Local Drafts"
-        message="Are you sure you want to clear all local drafts? Database projects will NOT be deleted."
+        message="Are you sure you want to clear all un-saved local drafts? This action cannot be undone."
         confirmText="Clear Drafts"
+        cancelText="Cancel"
         onConfirm={handleClearDrafts}
         onCancel={() => setShowClearDraftsConfirm(false)}
+        isDestructive={true}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteAccountConfirm}
+        title="Delete Account"
+        message="Are you absolutely sure you want to delete your account? This action is permanent and will delete all your projects, workspaces, and data."
+        confirmText={isDeletingAccount ? "Deleting..." : "Delete Account"}
+        cancelText="Cancel"
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setShowDeleteAccountConfirm(false)}
+        isDestructive={true}
       />
     </AppShell>
   );
