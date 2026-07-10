@@ -14,7 +14,8 @@ export const sectionTemplates: Partial<Record<BuilderSectionType, Omit<BuilderSe
       },
       styles: {
         alignment: "center",
-      }
+      },
+      components: []
     }
   ],
   features: [
@@ -29,7 +30,8 @@ export const sectionTemplates: Partial<Record<BuilderSectionType, Omit<BuilderSe
           { title: "Secure", description: "Enterprise-grade security", icon: "shield" },
           { title: "Scalable", description: "Grows with your business", icon: "trending-up" },
         ]
-      }
+      },
+      components: []
     }
   ],
   pricing: [
@@ -44,7 +46,8 @@ export const sectionTemplates: Partial<Record<BuilderSectionType, Omit<BuilderSe
           { name: "Pro", price: "$29", features: ["Unlimited Projects", "Priority Support", "Custom Domain"], popular: true },
           { name: "Enterprise", price: "Custom", features: ["SLA", "Dedicated Manager"] },
         ]
-      }
+      },
+      components: []
     }
   ],
   cta: [
@@ -55,7 +58,8 @@ export const sectionTemplates: Partial<Record<BuilderSectionType, Omit<BuilderSe
         title: "Ready to get started?",
         description: "Join thousands of developers building the future.",
         buttonText: "Start Building Now",
-      }
+      },
+      components: []
     }
   ],
   navbar: [
@@ -68,7 +72,8 @@ export const sectionTemplates: Partial<Record<BuilderSectionType, Omit<BuilderSe
           { label: "Features", href: "#features" },
           { label: "Pricing", href: "#pricing" },
         ]
-      }
+      },
+      components: []
     }
   ],
   footer: [
@@ -83,7 +88,8 @@ export const sectionTemplates: Partial<Record<BuilderSectionType, Omit<BuilderSe
           { title: "Product", links: [{ label: "Features", href: "#" }, { label: "Pricing", href: "#" }] },
           { title: "Company", links: [{ label: "About", href: "#" }, { label: "Contact", href: "#" }] },
         ]
-      }
+      },
+      components: []
     }
   ]
 };
