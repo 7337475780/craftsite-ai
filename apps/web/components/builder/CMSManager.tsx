@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useBuilderStore } from "@/stores/builder-store";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import { Plus, Database, List, Trash2 } from "lucide-react";
 import { BuilderCollection } from "@craftsite/shared";
 

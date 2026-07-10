@@ -248,16 +248,16 @@ export default function RootLayout({
   
   if (pages.length === 0) {
     // Fallback if legacy project
-    files["app/page.tsx"] = `import React from 'react';\n\nexport default function Home() {\n  return (\n    <div className="min-h-screen">\n${project.sections.map(s => compileSection(s, project.theme)).join("\\n\\n")}\n    </div>\n  );\n}`;
+    files["app/page.tsx"] = `import React from 'react';\n\nexport default function Home() {\n  return (\n    <div className="min-h-screen">\n${project.sections.map((s: any) => compileSection(s, project.theme)).join("\\n\\n")}\n    </div>\n  );\n}`;
   } else {
-    pages.forEach((page) => {
+    pages.forEach((page: any) => {
       // Determine file path based on slug and isHome
       const filePath = page.isHome ? "app/page.tsx" : `app/${page.slug.replace(/^\//, "")}/page.tsx`;
       
       const pageSectionsHtml = page.sections
-        .filter(s => s.visible)
-        .sort((a, b) => a.order - b.order)
-        .map(s => compileSection(s, project.theme))
+        .filter((s: any) => s.visible)
+        .sort((a: any, b: any) => a.order - b.order)
+        .map((s: any) => compileSection(s, project.theme))
         .join("\\n\\n");
         
       files[filePath] = `import React from 'react';\n\nexport default function Page() {\n  return (\n    <main className="flex-grow">\n${pageSectionsHtml}\n    </main>\n  );\n}`;
@@ -266,7 +266,7 @@ export default function RootLayout({
 
   // Generate dynamic routing for CMS collections if defined
   if (project.collections && project.collections.length > 0) {
-    project.collections.forEach(collection => {
+    project.collections.forEach((collection: any) => {
       const collectionPath = `app/${collection.slug.replace(/^\//, "")}/[slug]/page.tsx`;
       files[collectionPath] = `import React from 'react';\n\nexport default function DynamicCollectionPage({ params }: { params: { slug: string } }) {\n  return (\n    <main className="container mx-auto py-24">\n      <h1 className="text-4xl font-bold mb-8">Item: {params.slug}</h1>\n      <p>This is a dynamic route for the ${collection.name} collection.</p>\n    </main>\n  );\n}`;
     });

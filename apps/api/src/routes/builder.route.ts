@@ -184,8 +184,8 @@ router.get("/export", async (req: any, res: any) => {
     await prisma.analyticsEvent.create({
       data: {
         event: "project_exported",
-        metadata: { type: "app_router", projectId },
-        userId: req.user?.id
+        metadata: { type: "app_router" },
+        userId: req.auth?.userId || req.user?.id
       }
     });
 

@@ -31,7 +31,7 @@ export function cleanCode(code: string): string {
 }
 
 export function buildExportFiles({ title, prompt, generatedCode }: ExportOptions): Record<string, string> {
-  const code = cleanCode(generatedCode);
+  const code = cleanCode(generatedCode || "");
   
   const packageJson = JSON.stringify({
     name: sanitizeFileName(title),

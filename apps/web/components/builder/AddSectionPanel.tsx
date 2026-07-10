@@ -2,7 +2,7 @@ import React from "react";
 import { useBuilderStore } from "@/stores/builder-store";
 import { sectionTemplates } from "@/lib/builder/section-templates";
 import { BuilderSectionType } from "@craftsite/shared";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 
 export default function AddSectionPanel() {
   const { addSection } = useBuilderStore();

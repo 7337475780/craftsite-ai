@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useBuilderStore } from "@/stores/builder-store";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import { Plus, FileText, Home, MoreVertical, Trash2, Edit } from "lucide-react";
 import { BuilderPage } from "@craftsite/shared";
 import NavigationEditor from "./NavigationEditor";

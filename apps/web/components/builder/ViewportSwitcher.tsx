@@ -1,7 +1,7 @@
 import React from "react";
 import { useBuilderStore } from "@/stores/builder-store";
 import { Monitor, Smartphone, Tablet, Maximize } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 
 export default function ViewportSwitcher() {
   const { viewport, setViewport } = useBuilderStore();

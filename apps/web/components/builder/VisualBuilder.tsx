@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useBuilderStore } from "@/stores/builder-store";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import BuilderCanvas from "./BuilderCanvas";
 import SectionList from "./SectionList";
 import ThemePanel from "./ThemePanel";

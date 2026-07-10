@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { BuilderPage } from "@craftsite/shared";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 
 interface PageSettingsModalProps {
   page: BuilderPage;
