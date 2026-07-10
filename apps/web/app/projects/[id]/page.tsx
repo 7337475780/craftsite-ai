@@ -646,8 +646,9 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <ProtectedRoute>
-      <main className="flex h-[100dvh] flex-col overflow-hidden craftsite-bg">
+    <>
+      <ProtectedRoute>
+        <main className="flex h-[100dvh] flex-col overflow-hidden craftsite-bg">
         {/* ── Premium Workspace Navbar ── */}
         <motion.header
           initial={{ opacity: 0, y: -12 }}
