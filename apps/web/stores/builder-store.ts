@@ -4,6 +4,7 @@ import { BuilderProject, BuilderSection, BuilderTheme } from '@craftsite/shared'
 interface BuilderState {
   projectId: string | null;
   builderData: BuilderProject | null;
+  activePageId: string | null;
   selectedSectionId: string | null;
   viewport: 'desktop' | 'tablet' | 'mobile' | 'full';
   dirty: boolean;
@@ -15,6 +16,7 @@ interface BuilderState {
 
   setProjectId: (id: string) => void;
   setBuilderData: (data: BuilderProject) => void;
+  setActivePageId: (id: string | null) => void;
   selectSection: (id: string | null) => void;
   setViewport: (viewport: 'desktop' | 'tablet' | 'mobile' | 'full') => void;
   setPreviewMode: (mode: boolean) => void;
@@ -46,9 +48,24 @@ const pushHistory = (state: BuilderState, newData: BuilderProject) => {
   };
 };
 
+const updateSections = (state: BuilderState, updater: (sections: BuilderSection[]) => BuilderSection[]) => {
+  if (!state.builderData) return state.builderData;
+  const newData = { ...state.builderData };
+  
+  if (state.activePageId && newData.pages) {
+    newData.pages = newData.pages.map(p => 
+      p.id === state.activePageId ? { ...p, sections: updater(p.sections) } : p
+    );
+  } else {
+    newData.sections = updater(newData.sections);
+  }
+  return newData;
+};
+
 export const useBuilderStore = create<BuilderState>((set, get) => ({
   projectId: null,
   builderData: null,
+  activePageId: null,
   selectedSectionId: null,
   viewport: 'desktop',
   dirty: false,
@@ -67,6 +84,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     dirty: false
   }),
 
+  setActivePageId: (id) => set({ activePageId: id, selectedSectionId: null }),
   selectSection: (id) => set({ selectedSectionId: id }),
   setViewport: (viewport) => set({ viewport }),
   setPreviewMode: (mode) => set({ previewMode: mode }),
@@ -82,101 +100,100 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   updateSectionProps: (id, props) => set((state) => {
     if (!state.builderData) return state;
-    const newData = {
-      ...state.builderData,
-      sections: state.builderData.sections.map(s => 
-        s.id === id ? { ...s, props: { ...s.props, ...props } } : s
-      )
-    };
-    return pushHistory(state, newData);
+    const newData = updateSections(state, sections => 
+      sections.map(s => s.id === id ? { ...s, props: { ...s.props, ...props } } : s)
+    );
+    return pushHistory(state, newData as BuilderProject);
   }),
 
   updateSectionStyles: (id, styles) => set((state) => {
     if (!state.builderData) return state;
-    const newData = {
-      ...state.builderData,
-      sections: state.builderData.sections.map(s => 
-        s.id === id ? { ...s, styles: { ...s.styles, ...styles } } : s
-      )
-    };
-    return pushHistory(state, newData);
+    const newData = updateSections(state, sections => 
+      sections.map(s => s.id === id ? { ...s, styles: { ...s.styles, ...styles } } : s)
+    );
+    return pushHistory(state, newData as BuilderProject);
   }),
 
   addSection: (sectionTemplate, afterId) => set((state) => {
     if (!state.builderData) return state;
-    const newSection: BuilderSection = {
-      ...sectionTemplate,
-      id: crypto.randomUUID(),
-      order: 0
-    };
     
-    let newSections = [...state.builderData.sections];
-    if (afterId) {
-      const idx = newSections.findIndex(s => s.id === afterId);
-      if (idx !== -1) {
-        newSections.splice(idx + 1, 0, newSection);
+    const newData = updateSections(state, sections => {
+      const newSection: BuilderSection = {
+        ...sectionTemplate,
+        id: crypto.randomUUID(),
+        order: 0
+      };
+      
+      let newSections = [...sections];
+      if (afterId) {
+        const idx = newSections.findIndex(s => s.id === afterId);
+        if (idx !== -1) {
+          newSections.splice(idx + 1, 0, newSection);
+        } else {
+          newSections.push(newSection);
+        }
       } else {
         newSections.push(newSection);
       }
-    } else {
-      newSections.push(newSection);
-    }
-    
-    // Re-order sequentially
-    newSections = newSections.map((s, i) => ({ ...s, order: i }));
+      return newSections.map((s, i) => ({ ...s, order: i }));
+    });
 
-    return pushHistory(state, { ...state.builderData, sections: newSections });
+    return pushHistory(state, newData as BuilderProject);
   }),
 
   duplicateSection: (id) => set((state) => {
     if (!state.builderData) return state;
-    const idx = state.builderData.sections.findIndex(s => s.id === id);
-    if (idx === -1) return state;
     
-    const original = state.builderData.sections[idx];
-    const duplicate: BuilderSection = {
-      ...original,
-      id: crypto.randomUUID(),
-    };
+    const newData = updateSections(state, sections => {
+      const idx = sections.findIndex(s => s.id === id);
+      if (idx === -1) return sections;
+      
+      const original = sections[idx];
+      const duplicate: BuilderSection = {
+        ...original,
+        id: crypto.randomUUID(),
+      };
+      
+      const newSections = [...sections];
+      newSections.splice(idx + 1, 0, duplicate);
+      return newSections.map((s, i) => ({ ...s, order: i }));
+    });
     
-    const newSections = [...state.builderData.sections];
-    newSections.splice(idx + 1, 0, duplicate);
-    
-    // Re-order sequentially
-    const orderedSections = newSections.map((s, i) => ({ ...s, order: i }));
-    return pushHistory(state, { ...state.builderData, sections: orderedSections });
+    return pushHistory(state, newData as BuilderProject);
   }),
 
   removeSection: (id) => set((state) => {
     if (!state.builderData) return state;
-    const newSections = state.builderData.sections.filter(s => s.id !== id).map((s, i) => ({ ...s, order: i }));
-    return pushHistory(state, { ...state.builderData, sections: newSections });
+    const newData = updateSections(state, sections => 
+      sections.filter(s => s.id !== id).map((s, i) => ({ ...s, order: i }))
+    );
+    return pushHistory(state, newData as BuilderProject);
   }),
 
   reorderSections: (activeId, overId) => set((state) => {
     if (!state.builderData) return state;
-    const oldIndex = state.builderData.sections.findIndex(s => s.id === activeId);
-    const newIndex = state.builderData.sections.findIndex(s => s.id === overId);
     
-    if (oldIndex === -1 || newIndex === -1) return state;
+    const newData = updateSections(state, sections => {
+      const oldIndex = sections.findIndex(s => s.id === activeId);
+      const newIndex = sections.findIndex(s => s.id === overId);
+      
+      if (oldIndex === -1 || newIndex === -1) return sections;
+      
+      const newSections = [...sections];
+      const [moved] = newSections.splice(oldIndex, 1);
+      newSections.splice(newIndex, 0, moved);
+      return newSections.map((s, i) => ({ ...s, order: i }));
+    });
     
-    const newSections = [...state.builderData.sections];
-    const [moved] = newSections.splice(oldIndex, 1);
-    newSections.splice(newIndex, 0, moved);
-    
-    const orderedSections = newSections.map((s, i) => ({ ...s, order: i }));
-    return pushHistory(state, { ...state.builderData, sections: orderedSections });
+    return pushHistory(state, newData as BuilderProject);
   }),
 
   toggleVisibility: (id) => set((state) => {
     if (!state.builderData) return state;
-    const newData = {
-      ...state.builderData,
-      sections: state.builderData.sections.map(s => 
-        s.id === id ? { ...s, visible: !s.visible } : s
-      )
-    };
-    return pushHistory(state, newData);
+    const newData = updateSections(state, sections => 
+      sections.map(s => s.id === id ? { ...s, visible: !s.visible } : s)
+    );
+    return pushHistory(state, newData as BuilderProject);
   }),
 
   undo: () => set((state) => {

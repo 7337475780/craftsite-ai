@@ -3,7 +3,8 @@ import JSZip from "jszip";
 interface ExportOptions {
   title: string;
   prompt?: string;
-  generatedCode: string;
+  generatedCode?: string; // Optional now, since we might pass 'files'
+  files?: Record<string, string>;
 }
 
 export function sanitizeFileName(name: string): string {
@@ -159,12 +160,12 @@ npm run build
 }
 
 export async function exportProjectAsZip(options: ExportOptions): Promise<void> {
-  if (!options.generatedCode) {
-    throw new Error("No generated code available to export.");
+  if (!options.generatedCode && !options.files) {
+    throw new Error("No code or files available to export.");
   }
 
   const zip = new JSZip();
-  const files = buildExportFiles(options);
+  const files = options.files || buildExportFiles(options as any);
 
   // Add files to zip
   Object.entries(files).forEach(([path, content]) => {

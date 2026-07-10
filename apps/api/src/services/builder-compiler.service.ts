@@ -165,14 +165,112 @@ function compileFooter(section: BuilderSection, theme: any) {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-1 md:col-span-1">
-              <div className="font-bold text-xl mb-4">${brand}</div>
-              <p className="text-[${theme.mutedTextColor}]">${description}</p>
+              <div className="font-bold text-xl mb-4">{brand}</div>
+              <p className="text-[${theme.mutedTextColor}]">{description}</p>
             </div>
 ${columnsHtml}
           </div>
           <div className="pt-8 border-t text-center text-[${theme.mutedTextColor}]">
-            ${copyright}
+            {copyright}
           </div>
         </div>
       </footer>`;
+}
+
+// Phase 27: Multi-Page App Router Compiler
+export function compileProjectToAppRouter(project: BuilderProject): Record<string, string> {
+  const files: Record<string, string> = {};
+
+  // 1. package.json
+  files["package.json"] = JSON.stringify({
+    name: "craftsite-export",
+    version: "0.1.0",
+    private: true,
+    scripts: {
+      dev: "next dev",
+      build: "next build",
+      start: "next start"
+    },
+    dependencies: {
+      "next": "14.1.0",
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "lucide-react": "^0.344.0"
+    }
+  }, null, 2);
+
+  // 2. tailwind & postcss config (standard)
+  files["tailwind.config.ts"] = `import type { Config } from 'tailwindcss'
+export default {
+  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}"],
+  theme: { extend: {} },
+  plugins: [],
+} satisfies Config;`;
+
+  files["postcss.config.mjs"] = `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};`;
+
+  // 3. app/globals.css
+  files["app/globals.css"] = `@tailwind base;
+@tailwind components;
+@tailwind utilities;`;
+
+  // 4. app/layout.tsx
+  const themeClasses = project.theme ? `bg-[${project.theme.backgroundColor}] text-[${project.theme.textColor}] font-sans` : "bg-white text-black font-sans";
+  files["app/layout.tsx"] = `import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "CraftSite Generated Website",
+  description: "Built with CraftSite AI",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="${themeClasses} min-h-screen flex flex-col">
+        {children}
+      </body>
+    </html>
+  );
+}`;
+
+  // 5. Generate Pages
+  const pages = project.pages || [];
+  
+  if (pages.length === 0) {
+    // Fallback if legacy project
+    files["app/page.tsx"] = `import React from 'react';\n\nexport default function Home() {\n  return (\n    <div className="min-h-screen">\n${project.sections.map(s => compileSection(s, project.theme)).join("\\n\\n")}\n    </div>\n  );\n}`;
+  } else {
+    pages.forEach((page) => {
+      // Determine file path based on slug and isHome
+      const filePath = page.isHome ? "app/page.tsx" : `app/${page.slug.replace(/^\//, "")}/page.tsx`;
+      
+      const pageSectionsHtml = page.sections
+        .filter(s => s.visible)
+        .sort((a, b) => a.order - b.order)
+        .map(s => compileSection(s, project.theme))
+        .join("\\n\\n");
+        
+      files[filePath] = `import React from 'react';\n\nexport default function Page() {\n  return (\n    <main className="flex-grow">\n${pageSectionsHtml}\n    </main>\n  );\n}`;
+    });
+  }
+
+  // Generate dynamic routing for CMS collections if defined
+  if (project.collections && project.collections.length > 0) {
+    project.collections.forEach(collection => {
+      const collectionPath = `app/${collection.slug.replace(/^\//, "")}/[slug]/page.tsx`;
+      files[collectionPath] = `import React from 'react';\n\nexport default function DynamicCollectionPage({ params }: { params: { slug: string } }) {\n  return (\n    <main className="container mx-auto py-24">\n      <h1 className="text-4xl font-bold mb-8">Item: {params.slug}</h1>\n      <p>This is a dynamic route for the ${collection.name} collection.</p>\n    </main>\n  );\n}`;
+    });
+  }
+
+  return files;
 }

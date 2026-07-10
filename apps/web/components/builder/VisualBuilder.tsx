@@ -8,11 +8,15 @@ import SectionList from "./SectionList";
 import ThemePanel from "./ThemePanel";
 import AddSectionPanel from "./AddSectionPanel";
 import ViewportSwitcher from "./ViewportSwitcher";
-import { Undo, Redo, Save, Eye, Code, ChevronLeft, Download, Globe } from "lucide-react";
+import PageManager from "./PageManager";
+import CMSManager from "./CMSManager";
+import { Undo, Redo, Save, Eye, Code, ChevronLeft, Download, Globe, Loader2 } from "lucide-react";
+import { exportProjectAsZip } from "@/lib/export-project";
 
 export default function VisualBuilder() {
-  const { dirty, saving, lastSavedAt, undo, redo, previewMode, setPreviewMode } = useBuilderStore();
-  const [activeTab, setActiveTab] = useState<"layers" | "add">("layers");
+  const { dirty, saving, lastSavedAt, undo, redo, previewMode, setPreviewMode, projectId, builderData } = useBuilderStore();
+  const [activeTab, setActiveTab] = useState<"pages" | "layers" | "add" | "cms">("pages");
+  const [exporting, setExporting] = useState(false);
 
   const handleSave = async () => {
     const { builderData, projectId, setSaving, markSaved } = useBuilderStore.getState();
@@ -32,6 +36,25 @@ export default function VisualBuilder() {
       console.error(e);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!projectId || !builderData) return;
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/builder/export`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        await exportProjectAsZip({
+          title: "My CraftSite Project",
+          files: json.data
+        });
+      }
+    } catch (e) {
+      console.error("Export failed", e);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -68,8 +91,9 @@ export default function VisualBuilder() {
           <Button variant="default" size="sm" onClick={handleSave} disabled={!dirty || saving}>
             <Save className="w-4 h-4 mr-2" /> {saving ? "Saving..." : "Save"}
           </Button>
-          <Button variant="outline" size="sm" className="border-zinc-700">
-            <Download className="w-4 h-4 mr-2" /> Export
+          <Button variant="outline" size="sm" className="border-zinc-700" onClick={handleExport} disabled={exporting}>
+            {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />} 
+            {exporting ? "Exporting..." : "Export"}
           </Button>
           <Button variant="default" size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">
             <Globe className="w-4 h-4 mr-2" /> Publish
@@ -82,10 +106,18 @@ export default function VisualBuilder() {
         {/* Left Sidebar */}
         {!previewMode && (
           <aside className="w-72 border-r border-zinc-800 bg-zinc-900/30 flex flex-col shrink-0">
-            <div className="flex border-b border-zinc-800 p-2 gap-2">
+            <div className="flex border-b border-zinc-800 p-2 gap-1 overflow-x-auto">
+              <Button 
+                variant={activeTab === "pages" ? "secondary" : "ghost"} 
+                className="flex-shrink-0 justify-center text-xs px-2" 
+                size="sm"
+                onClick={() => setActiveTab("pages")}
+              >
+                Pages
+              </Button>
               <Button 
                 variant={activeTab === "layers" ? "secondary" : "ghost"} 
-                className="flex-1 justify-center text-xs" 
+                className="flex-shrink-0 justify-center text-xs px-2" 
                 size="sm"
                 onClick={() => setActiveTab("layers")}
               >
@@ -93,15 +125,26 @@ export default function VisualBuilder() {
               </Button>
               <Button 
                 variant={activeTab === "add" ? "secondary" : "ghost"} 
-                className="flex-1 justify-center text-xs" 
+                className="flex-shrink-0 justify-center text-xs px-2" 
                 size="sm"
                 onClick={() => setActiveTab("add")}
               >
-                Add Section
+                Add
+              </Button>
+              <Button 
+                variant={activeTab === "cms" ? "secondary" : "ghost"} 
+                className="flex-shrink-0 justify-center text-xs px-2" 
+                size="sm"
+                onClick={() => setActiveTab("cms")}
+              >
+                CMS
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {activeTab === "layers" ? <SectionList /> : <AddSectionPanel />}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col">
+              {activeTab === "pages" && <PageManager />}
+              {activeTab === "layers" && <SectionList />}
+              {activeTab === "add" && <AddSectionPanel />}
+              {activeTab === "cms" && <CMSManager />}
             </div>
           </aside>
         )}

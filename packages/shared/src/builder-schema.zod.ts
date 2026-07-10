@@ -48,8 +48,66 @@ export const BuilderSectionSchema = z.object({
   styles: SectionStylesSchema.optional()
 });
 
+export type BuilderMenuItemZodType = z.ZodType<any>;
+export const BuilderMenuItemSchema: BuilderMenuItemZodType = z.lazy(() => 
+  z.object({
+    id: z.string(),
+    label: z.string(),
+    url: z.string().optional(),
+    isExternal: z.boolean(),
+    children: z.array(BuilderMenuItemSchema).optional()
+  })
+);
+
+export const BuilderNavigationSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  items: z.array(BuilderMenuItemSchema)
+});
+
+export const BuilderPageSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  slug: z.string(),
+  isHome: z.boolean(),
+  status: z.enum(["draft", "published"]),
+  seoMetadata: z.record(z.any()).optional(),
+  layoutId: z.string().optional(),
+  sections: z.array(BuilderSectionSchema),
+  order: z.number()
+});
+
+export const BuilderLayoutSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(["default", "landing", "blog"]),
+  sections: z.array(BuilderSectionSchema)
+});
+
+export const BuilderCollectionItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  slug: z.string(),
+  status: z.enum(["draft", "published"]),
+  featuredImage: z.string().optional(),
+  richText: z.string().optional(),
+  customData: z.record(z.any()).optional()
+});
+
+export const BuilderCollectionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  schema: z.record(z.any()),
+  items: z.array(BuilderCollectionItemSchema).optional()
+});
+
 export const BuilderProjectSchema = z.object({
   version: z.number(),
   theme: BuilderThemeSchema,
-  sections: z.array(BuilderSectionSchema)
+  sections: z.array(BuilderSectionSchema),
+  pages: z.array(BuilderPageSchema).optional(),
+  layouts: z.array(BuilderLayoutSchema).optional(),
+  navigation: z.array(BuilderNavigationSchema).optional(),
+  collections: z.array(BuilderCollectionSchema).optional()
 });

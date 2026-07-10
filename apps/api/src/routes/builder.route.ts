@@ -2,7 +2,7 @@ import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { BuilderProjectSchema } from "@craftsite/shared";
-import { compileBuilderToReact } from "../services/builder-compiler.service";
+import { compileBuilderToReact, compileProjectToAppRouter } from "../services/builder-compiler.service";
 
 const prisma = new PrismaClient();
 const router = Router({ mergeParams: true });
@@ -151,8 +151,47 @@ router.post("/compile", async (req: any, res: any) => {
     const parsedData = BuilderProjectSchema.parse(req.body.builderData);
     const generatedCode = compileBuilderToReact(parsedData as any);
     res.json({ generatedCode });
-  } catch (error) {
-    res.status(400).json({ error: "Invalid builder data", details: error });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get("/export", async (req: any, res: any) => {
+  try {
+    const { projectId } = req.params;
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        pages: true,
+        collections: { include: { items: true } },
+        navigations: { include: { items: true } }
+      }
+    });
+
+    if (!project) return res.status(404).json({ success: false, message: "Project not found" });
+
+    const builderData = project.builderData as any;
+    
+    const compilerData = {
+      ...builderData,
+      pages: project.pages,
+      collections: project.collections,
+      navigation: project.navigations
+    };
+
+    const files = compileProjectToAppRouter(compilerData);
+
+    await prisma.analyticsEvent.create({
+      data: {
+        event: "project_exported",
+        metadata: { type: "app_router", projectId },
+        userId: req.user?.id
+      }
+    });
+
+    res.json({ success: true, data: files });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

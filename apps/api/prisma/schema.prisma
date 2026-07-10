@@ -59,6 +59,14 @@ model Project {
   versions      ProjectVersion[]
   comments      ProjectComment[]
   activities    ProjectActivity[]
+  pages         Page[]
+  layouts       Layout[]
+  navigations   Navigation[]
+  collections   Collection[]
+  categories    Category[]
+  tags          Tag[]
+  authors       Author[]
+  media         Media[]
 
   @@index([userId])
   @@index([workspaceId])
@@ -260,4 +268,165 @@ model ProjectActivity {
 
   @@index([projectId])
   @@index([createdAt])
+}
+
+model Page {
+  id            String    @id @default(uuid())
+  projectId     String
+  layoutId      String?
+  title         String
+  slug          String
+  isHome        Boolean   @default(false)
+  status        String    @default("draft") // draft, published
+  seoMetadata   Json?
+  builderData   Json?
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  layout        Layout?   @relation(fields: [layoutId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+}
+
+model Layout {
+  id            String    @id @default(uuid())
+  projectId     String
+  name          String
+  type          String    @default("default") // default, landing, blog
+  builderData   Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  pages         Page[]
+
+  @@index([projectId])
+}
+
+model Navigation {
+  id            String    @id @default(uuid())
+  projectId     String
+  name          String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items         MenuItem[]
+
+  @@index([projectId])
+}
+
+model MenuItem {
+  id            String    @id @default(uuid())
+  navigationId  String
+  parentId      String?
+  label         String
+  url           String?
+  isExternal    Boolean   @default(false)
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  navigation    Navigation @relation(fields: [navigationId], references: [id], onDelete: Cascade)
+  parent        MenuItem?  @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children      MenuItem[] @relation("MenuHierarchy")
+
+  @@index([navigationId])
+  @@index([parentId])
+}
+
+model Collection {
+  id            String    @id @default(uuid())
+  projectId     String
+  name          String
+  slug          String
+  schema        Json?     // custom fields definition
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items         CollectionItem[]
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+}
+
+model CollectionItem {
+  id            String    @id @default(uuid())
+  collectionId  String
+  title         String
+  slug          String
+  status        String    @default("draft") // draft, published
+  featuredImage String?
+  richText      String?   @db.Text
+  customData    Json?     // matches Collection.schema
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  collection    Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, slug])
+  @@index([collectionId])
+}
+
+model Category {
+  id            String    @id @default(uuid())
+  projectId     String
+  name          String
+  slug          String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+}
+
+model Tag {
+  id            String    @id @default(uuid())
+  projectId     String
+  name          String
+  slug          String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+}
+
+model Author {
+  id            String    @id @default(uuid())
+  projectId     String
+  name          String
+  slug          String
+  bio           String?   @db.Text
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+}
+
+model Media {
+  id            String    @id @default(uuid())
+  projectId     String
+  name          String
+  url           String
+  type          String    // image, video, document
+  size          Int       // bytes
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }

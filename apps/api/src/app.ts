@@ -24,6 +24,9 @@ import { rateLimit } from "express-rate-limit";
 
 import builderRoutes from "./routes/builder.route";
 import aiBuilderRoutes from "./routes/ai-builder.route";
+import pagesRoutes from "./routes/pages.route";
+import navigationRoutes from "./routes/navigation.route";
+import cmsRoutes from "./routes/cms.route";
 
 const app = express();
 
@@ -76,6 +79,9 @@ app.use(express.json({ limit: "2mb" }));
 
 app.use("/api/projects/:projectId/builder", builderRoutes);
 app.use("/api/projects/:projectId/builder", aiBuilderRoutes);
+app.use("/api/projects/:projectId/pages", pagesRoutes);
+app.use("/api/projects/:projectId/navigation", navigationRoutes);
+app.use("/api/projects/:projectId/cms", cmsRoutes);
 
 app.get("/", (_req, res) => {
   res.json({

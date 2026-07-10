@@ -1,9 +1,7 @@
 import React from "react";
 import { useBuilderStore } from "@/stores/builder-store";
 import { BuilderTheme } from "@craftsite/shared";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+
 
 export default function ThemePanel() {
   const { builderData, updateTheme } = useBuilderStore();
@@ -17,11 +15,12 @@ export default function ThemePanel() {
 
   const ColorInput = ({ label, value, field }: { label: string, value: string, field: keyof BuilderTheme }) => (
     <div className="flex items-center justify-between mb-4">
-      <Label className="text-xs text-zinc-400">{label}</Label>
+      <label className="text-xs text-zinc-400">{label}</label>
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded-full border border-zinc-700" style={{ backgroundColor: value }} />
-        <Input 
-          className="w-24 h-8 text-xs bg-zinc-900 border-zinc-800"
+        <input 
+          type="text"
+          className="w-24 h-8 px-2 text-xs text-white bg-zinc-900 border border-zinc-800 rounded focus:outline-none focus:border-zinc-500"
           value={value}
           onChange={(e) => handleChange(field, e.target.value)}
         />
@@ -44,36 +43,34 @@ export default function ThemePanel() {
       <div>
         <h3 className="font-semibold mb-4 text-sm text-zinc-100 border-b border-zinc-800 pb-2">Typography</h3>
         <div className="mb-4">
-          <Label className="text-xs text-zinc-400 mb-2 block">Font Family</Label>
-          <Select value={theme.fontFamily} onValueChange={(val) => handleChange("fontFamily", val)}>
-            <SelectTrigger className="w-full h-8 text-xs bg-zinc-900 border-zinc-800">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Inter">Inter</SelectItem>
-              <SelectItem value="Roboto">Roboto</SelectItem>
-              <SelectItem value="system-ui">System Default</SelectItem>
-            </SelectContent>
-          </Select>
+          <label className="text-xs text-zinc-400 mb-2 block">Font Family</label>
+          <select 
+            className="w-full h-8 px-2 text-xs text-white bg-zinc-900 border border-zinc-800 rounded focus:outline-none focus:border-zinc-500"
+            value={theme.fontFamily} 
+            onChange={(e) => handleChange("fontFamily", e.target.value)}
+          >
+            <option value="Inter">Inter</option>
+            <option value="Roboto">Roboto</option>
+            <option value="system-ui">System Default</option>
+          </select>
         </div>
       </div>
 
       <div>
         <h3 className="font-semibold mb-4 text-sm text-zinc-100 border-b border-zinc-800 pb-2">Layout</h3>
         <div className="mb-4">
-          <Label className="text-xs text-zinc-400 mb-2 block">Border Radius</Label>
-          <Select value={theme.borderRadius} onValueChange={(val) => handleChange("borderRadius", val)}>
-            <SelectTrigger className="w-full h-8 text-xs bg-zinc-900 border-zinc-800">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="sm">Small</SelectItem>
-              <SelectItem value="md">Medium</SelectItem>
-              <SelectItem value="lg">Large</SelectItem>
-              <SelectItem value="xl">Extra Large</SelectItem>
-            </SelectContent>
-          </Select>
+          <label className="text-xs text-zinc-400 mb-2 block">Border Radius</label>
+          <select 
+            className="w-full h-8 px-2 text-xs text-white bg-zinc-900 border border-zinc-800 rounded focus:outline-none focus:border-zinc-500"
+            value={theme.borderRadius} 
+            onChange={(e) => handleChange("borderRadius", e.target.value as any)}
+          >
+            <option value="none">None</option>
+            <option value="sm">Small</option>
+            <option value="md">Medium</option>
+            <option value="lg">Large</option>
+            <option value="xl">Extra Large</option>
+          </select>
         </div>
       </div>
     </div>

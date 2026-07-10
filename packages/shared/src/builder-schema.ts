@@ -49,4 +49,60 @@ export type BuilderProject = {
   version: number;
   theme: BuilderTheme;
   sections: BuilderSection[];
+  // Phase 27: Multi-Page support
+  pages?: BuilderPage[];
+  layouts?: BuilderLayout[];
+  navigation?: BuilderNavigation[];
+  collections?: BuilderCollection[];
+};
+
+export type BuilderPage = {
+  id: string;
+  title: string;
+  slug: string;
+  isHome: boolean;
+  status: "draft" | "published";
+  seoMetadata?: Record<string, any>;
+  layoutId?: string;
+  sections: BuilderSection[];
+  order: number;
+};
+
+export type BuilderLayout = {
+  id: string;
+  name: string;
+  type: "default" | "landing" | "blog";
+  sections: BuilderSection[];
+};
+
+export type BuilderMenuItem = {
+  id: string;
+  label: string;
+  url?: string;
+  isExternal: boolean;
+  children?: BuilderMenuItem[];
+};
+
+export type BuilderNavigation = {
+  id: string;
+  name: string;
+  items: BuilderMenuItem[];
+};
+
+export type BuilderCollection = {
+  id: string;
+  name: string;
+  slug: string;
+  schema: Record<string, any>;
+  items?: BuilderCollectionItem[];
+};
+
+export type BuilderCollectionItem = {
+  id: string;
+  title: string;
+  slug: string;
+  status: "draft" | "published";
+  featuredImage?: string;
+  richText?: string;
+  customData?: Record<string, any>;
 };

@@ -2,7 +2,7 @@ import React from "react";
 import { useBuilderStore } from "@/stores/builder-store";
 
 export default function BuilderCanvas() {
-  const { builderData, viewport, previewMode, selectedSectionId, selectSection } = useBuilderStore();
+  const { builderData, viewport, previewMode, selectedSectionId, selectSection, activePageId } = useBuilderStore();
 
   if (!builderData) return null;
 
@@ -20,7 +20,15 @@ export default function BuilderCanvas() {
       <div 
         className={`relative w-full ${widthMap[viewport]} bg-white min-h-[800px] shadow-2xl rounded-sm overflow-hidden ring-1 ring-zinc-800 transition-all duration-300 ${themeClasses}`}
       >
-        {builderData.sections.filter(s => s.visible).sort((a,b) => a.order - b.order).map(section => (
+        {(() => {
+          let sectionsToRender = builderData.sections;
+          if (activePageId && builderData.pages && builderData.pages.length > 0) {
+            const activePage = builderData.pages.find(p => p.id === activePageId);
+            if (activePage) {
+              sectionsToRender = activePage.sections;
+            }
+          }
+          return sectionsToRender.filter(s => s.visible).sort((a,b) => a.order - b.order).map(section => (
           <div 
             key={section.id}
             onClick={(e) => {
@@ -39,7 +47,8 @@ export default function BuilderCanvas() {
             {/* Render HTML content (mocked compiler for now) */}
             <div dangerouslySetInnerHTML={{ __html: renderSectionPreview(section, builderData.theme) }} />
           </div>
-        ))}
+          ))
+        })()}
         
         {!previewMode && (
           <div 
