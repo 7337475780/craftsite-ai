@@ -212,6 +212,9 @@ importers:
 
   packages/shared:
     dependencies:
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -219,9 +222,6 @@ importers:
       tsup:
         specifier: ^8.0.2
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.23.0)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
 
 packages:
 
