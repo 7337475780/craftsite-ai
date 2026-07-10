@@ -688,64 +688,6 @@ function GeneratePageContent() {
                     {websiteType === "responsive" ? "Responsive" : "SaaS"}
                   </button>
 
-                  <button
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                    disabled={isGenerating}
-                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${showAdvanced
-                        ? "border-violet-500/60 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-400/40 dark:bg-violet-500/15 dark:text-violet-200"
-                        : "border-black/10 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900 dark:border-white/12 dark:bg-white/8 dark:text-white/65 dark:hover:border-white/20 dark:hover:bg-white/12 dark:hover:text-white"
-                      }`}
-                  >
-                    <Cpu size={11} />
-                    Settings
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {showAdvanced && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="w-full grid gap-3 sm:grid-cols-2 border-t border-black/5 pt-4 mt-1 dark:border-white/5 overflow-hidden"
-                    >
-                      <div>
-                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/30 block mb-1">AI Provider</label>
-                        <select
-                          value={aiProvider}
-                          onChange={(e) => setAiProvider(e.target.value)}
-                          disabled={isGenerating}
-                          className="w-full rounded-xl border border-black/10 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
-                        >
-                          <option value="auto">Auto (Smart Fallback)</option>
-                          <option value="openrouter">OpenRouter</option>
-                          <option value="gemini">Gemini</option>
-                          <option value="groq">Groq</option>
-                          <option value="together">Together AI</option>
-                          <option value="mistral">Mistral AI</option>
-                          <option value="mock">Mock Fallback Only</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/30 block mb-1">AI Mode (Order Chain)</label>
-                        <select
-                          value={aiMode}
-                          onChange={(e) => setAiMode(e.target.value)}
-                          disabled={isGenerating || aiProvider !== "auto"}
-                          className="w-full rounded-xl border border-black/10 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white disabled:opacity-50"
-                        >
-                          <option value="balanced">Balanced</option>
-                          <option value="fast">Fast</option>
-                          <option value="quality">Quality</option>
-                          <option value="free">Free</option>
-                          <option value="code">Code</option>
-                        </select>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
                 {/* Generate button */}
                 <button
                   onClick={handleGenerate}

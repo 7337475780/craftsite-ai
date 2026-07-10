@@ -66,13 +66,11 @@ const cardVariants = {
     opacity: 0,
     y: 28,
     scale: 0.96,
-    filter: "blur(8px)",
   },
   show: {
     opacity: 1,
     y: 0,
     scale: 1,
-    filter: "blur(0px)",
   },
 };
 

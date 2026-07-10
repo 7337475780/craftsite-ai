@@ -16,6 +16,7 @@ export default function SettingsPage() {
 
   // Profile State
   const [name, setName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState({ text: "", type: "" });
 
@@ -31,6 +32,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       setName(user.name || "");
+      setAvatarUrl(user.image || "");
     }
     const savedStyle = localStorage.getItem("craftsite_default_style");
     if (savedStyle) {
@@ -53,7 +55,7 @@ export default function SettingsPage() {
     setIsSavingProfile(true);
     setProfileMsg({ text: "", type: "" });
     try {
-      const res = await apiPatch("/api/auth/profile", { name });
+      const res = await apiPatch("/api/auth/profile", { name, image: avatarUrl });
       if (res.success) {
         setProfileMsg({ text: "Profile updated successfully.", type: "success" });
         await refetchMe();
@@ -149,9 +151,19 @@ export default function SettingsPage() {
                   className="w-full max-w-md rounded-xl border border-black/10 bg-white/50 p-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                 />
               </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-300">Profile Picture URL</label>
+                <input
+                  type="url"
+                  value={avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value)}
+                  placeholder="https://example.com/avatar.png"
+                  className="w-full max-w-md rounded-xl border border-black/10 bg-white/50 p-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                />
+              </div>
               <button
                 type="submit"
-                disabled={isSavingProfile || name === user.name}
+                disabled={isSavingProfile || (name === user.name && avatarUrl === (user.image || ""))}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
               >
                 {isSavingProfile && <Loader2 size={16} className="animate-spin" />}
@@ -254,13 +266,13 @@ export default function SettingsPage() {
                   <select
                     value={defaultStyle}
                     onChange={(e) => handleStyleChange(e.target.value)}
-                    className="w-full rounded-xl border border-black/10 bg-white/50 p-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    className="w-full rounded-xl border border-black/10 bg-white/50 p-3 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                   >
-                    <option value="modern">Modern SaaS</option>
-                    <option value="minimal">Minimal / Clean</option>
-                    <option value="portfolio">Creative Portfolio</option>
-                    <option value="futuristic">Futuristic / Dark</option>
-                    <option value="startup">Startup Landing</option>
+                    <option value="modern" className="dark:bg-zinc-900">Modern SaaS</option>
+                    <option value="minimal" className="dark:bg-zinc-900">Minimal / Clean</option>
+                    <option value="portfolio" className="dark:bg-zinc-900">Creative Portfolio</option>
+                    <option value="futuristic" className="dark:bg-zinc-900">Futuristic / Dark</option>
+                    <option value="startup" className="dark:bg-zinc-900">Startup Landing</option>
                   </select>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-white/50">
@@ -293,7 +305,7 @@ export default function SettingsPage() {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-red-500/10 bg-white/50 p-5 dark:border-red-500/20 dark:bg-white/5 opacity-50 grayscale">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-red-500/10 bg-white/50 p-5 dark:border-red-500/20 dark:bg-white/5">
                 <div>
                   <p className="font-bold text-slate-900 dark:text-white">Delete Account</p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-white/50">Permanently delete your account and all projects.</p>

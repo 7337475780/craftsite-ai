@@ -138,7 +138,7 @@ export default function AdminAiSettingsPage() {
               return (
                 <div
                   key={provider.name}
-                  className="flex flex-col justify-between rounded-[2rem] border border-black/10 bg-white/70 p-6 shadow-sm backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04]"
+                  className="flex min-w-0 flex-col justify-between rounded-[2rem] border border-black/10 bg-white/70 p-6 shadow-sm backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04]"
                 >
                   <div>
                     {/* Header */}
@@ -220,7 +220,7 @@ export default function AdminAiSettingsPage() {
                       }`}>
                         <div className="flex items-start gap-1.5">
                           <Info size={14} className="mt-0.5 flex-shrink-0" />
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <p className="font-bold">{result.success ? "Connection OK" : "Connection Failed"}</p>
                             <p className="mt-0.5 leading-relaxed opacity-90">{result.message}</p>
                             {result.code && (

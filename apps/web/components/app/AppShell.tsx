@@ -153,7 +153,7 @@ function SidebarLink({
       )}
 
       {!active && (
-        <span className="absolute inset-y-2 left-0 w-1 rounded-full bg-gradient-to-b from-violet-500 to-cyan-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <span className="absolute inset-y-2 left-0 w-1 rounded-full bg-gradient-to-b from-violet-500 to-cyan-400 opacity-0 transition-opacity duration-300" />
       )}
 
       <span
@@ -638,8 +638,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-
-            <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="min-w-0 flex-1 relative z-[60]">
               <WorkspaceSwitcher />
             </div>
 

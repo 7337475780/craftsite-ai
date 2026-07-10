@@ -52,38 +52,38 @@ const sideNavItems = [
   { label: "Settings", icon: Settings },
 ];
 
-const featureItems = [
-  {
-    icon: Sparkles,
-    title: "AI Generation",
-    desc: "Generate entire websites from natural language prompts.",
-  },
-  {
-    icon: Eye,
-    title: "Live Preview",
-    desc: "See your website come to life in real time as AI builds it.",
-  },
-  {
-    icon: Grid3X3,
-    title: "Edit & Customize",
-    desc: "Edit sections or content using AI or adjust manually.",
-  },
-  {
-    icon: Rocket,
-    title: "Export & Deploy",
-    desc: "Deploy to one click with SEO, performance and analytics.",
-  },
-  {
-    icon: Bot,
-    title: "Smart Sections",
-    desc: "AI understands your needs and creates perfect sections.",
-  },
-  {
-    icon: Monitor,
-    title: "Fully Responsive",
-    desc: "Every website is responsive and looks perfect anywhere.",
-  },
-];
+// const featureItems = [
+//   {
+//     icon: Sparkles,
+//     title: "AI Generation",
+//     desc: "Generate entire websites from natural language prompts.",
+//   },
+//   {
+//     icon: Eye,
+//     title: "Live Preview",
+//     desc: "See your website come to life in real time as AI builds it.",
+//   },
+//   {
+//     icon: Grid3X3,
+//     title: "Edit & Customize",
+//     desc: "Edit sections or content using AI or adjust manually.",
+//   },
+//   {
+//     icon: Rocket,
+//     title: "Export & Deploy",
+//     desc: "Deploy to one click with SEO, performance and analytics.",
+//   },
+//   {
+//     icon: Bot,
+//     title: "Smart Sections",
+//     desc: "AI understands your needs and creates perfect sections.",
+//   },
+//   {
+//     icon: Monitor,
+//     title: "Fully Responsive",
+//     desc: "Every website is responsive and looks perfect anywhere.",
+//   },
+// ];
 
 const trustedBy = ["Vercel", "Framer", "Webflow", "Relume", "Spline", "Tailwind CSS"];
 
@@ -366,7 +366,7 @@ export function Hero() {
 
 
         {/* Feature icons */}
-        <div className="mx-auto mt-8 grid w-full max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* <div className="mx-auto mt-8 grid w-full max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {featureItems.map((item) => {
             const Icon = item.icon;
 
@@ -387,7 +387,7 @@ export function Hero() {
               </div>
             );
           })}
-        </div>
+        </div> */}
 
         <div className="mx-auto mt-8 flex flex-col items-center gap-2 text-center">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-500/30 bg-violet-500/15 text-violet-700 shadow-[0_0_30px_rgba(139,92,246,0.2)] dark:border-violet-400/40 dark:bg-violet-500/20 dark:text-violet-200 dark:shadow-[0_0_30px_rgba(139,92,246,0.35)]">
