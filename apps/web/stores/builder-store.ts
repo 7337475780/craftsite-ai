@@ -1,11 +1,13 @@
 import { create } from 'zustand';
-import { BuilderProject, BuilderSection, BuilderTheme } from '@craftsite/shared';
+import { BuilderProject, BuilderSection, BuilderTheme, BuilderNode } from '@craftsite/shared';
 
 interface BuilderState {
   projectId: string | null;
   builderData: BuilderProject | null;
   activePageId: string | null;
   selectedSectionId: string | null;
+  selectedNodeId: string | null;
+  hoveredNodeId: string | null;
   viewport: 'desktop' | 'tablet' | 'mobile' | 'full';
   dirty: boolean;
   saving: boolean;
@@ -18,6 +20,8 @@ interface BuilderState {
   setBuilderData: (data: BuilderProject) => void;
   setActivePageId: (id: string | null) => void;
   selectSection: (id: string | null) => void;
+  selectNode: (id: string | null) => void;
+  setHoveredNode: (id: string | null) => void;
   setViewport: (viewport: 'desktop' | 'tablet' | 'mobile' | 'full') => void;
   setPreviewMode: (mode: boolean) => void;
   
@@ -29,6 +33,11 @@ interface BuilderState {
   removeSection: (id: string) => void;
   reorderSections: (activeId: string, overId: string) => void;
   toggleVisibility: (id: string) => void;
+  
+  // Phase 28 Node operations
+  addNode: (node: BuilderNode, parentId?: string) => void;
+  updateNodeProps: (id: string, props: any) => void;
+  removeNode: (id: string) => void;
   
   undo: () => void;
   redo: () => void;
@@ -62,11 +71,25 @@ const updateSections = (state: BuilderState, updater: (sections: BuilderSection[
   return newData;
 };
 
+const updateNodes = (state: BuilderState, updater: (nodes: BuilderNode[]) => BuilderNode[]) => {
+  if (!state.builderData) return state.builderData;
+  const newData = { ...state.builderData };
+  
+  if (state.activePageId && newData.pages) {
+    newData.pages = newData.pages.map(p => 
+      p.id === state.activePageId ? { ...p, nodes: updater(p.nodes || []) } : p
+    );
+  }
+  return newData;
+};
+
 export const useBuilderStore = create<BuilderState>((set, get) => ({
   projectId: null,
   builderData: null,
   activePageId: null,
   selectedSectionId: null,
+  selectedNodeId: null,
+  hoveredNodeId: null,
   viewport: 'desktop',
   dirty: false,
   saving: false,
@@ -84,8 +107,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     dirty: false
   }),
 
-  setActivePageId: (id) => set({ activePageId: id, selectedSectionId: null }),
-  selectSection: (id) => set({ selectedSectionId: id }),
+  setActivePageId: (id) => set({ activePageId: id, selectedSectionId: null, selectedNodeId: null }),
+  selectSection: (id) => set({ selectedSectionId: id, selectedNodeId: null }),
+  selectNode: (id) => set({ selectedNodeId: id, selectedSectionId: null }),
+  setHoveredNode: (id) => set({ hoveredNodeId: id }),
   setViewport: (viewport) => set({ viewport }),
   setPreviewMode: (mode) => set({ previewMode: mode }),
 
@@ -193,6 +218,45 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     const newData = updateSections(state, sections => 
       sections.map(s => s.id === id ? { ...s, visible: !s.visible } : s)
     );
+    return pushHistory(state, newData as BuilderProject);
+  }),
+
+  addNode: (node, parentId) => set((state) => {
+    if (!state.builderData) return state;
+    const addRecursive = (nodes: BuilderNode[]): BuilderNode[] => {
+      if (!parentId) return [...nodes, node];
+      return nodes.map(n => 
+        n.id === parentId 
+          ? { ...n, children: [...n.children, node] }
+          : { ...n, children: addRecursive(n.children) }
+      );
+    };
+    const newData = updateNodes(state, addRecursive);
+    return pushHistory(state, newData as BuilderProject);
+  }),
+
+  updateNodeProps: (id, props) => set((state) => {
+    if (!state.builderData) return state;
+    const updateRecursive = (nodes: BuilderNode[]): BuilderNode[] => {
+      return nodes.map(n => 
+        n.id === id 
+          ? { ...n, props: { ...n.props, ...props } }
+          : { ...n, children: updateRecursive(n.children) }
+      );
+    };
+    const newData = updateNodes(state, updateRecursive);
+    return pushHistory(state, newData as BuilderProject);
+  }),
+
+  removeNode: (id) => set((state) => {
+    if (!state.builderData) return state;
+    const removeRecursive = (nodes: BuilderNode[]): BuilderNode[] => {
+      return nodes.filter(n => n.id !== id).map(n => ({
+        ...n,
+        children: removeRecursive(n.children)
+      }));
+    };
+    const newData = updateNodes(state, removeRecursive);
     return pushHistory(state, newData as BuilderProject);
   }),
 

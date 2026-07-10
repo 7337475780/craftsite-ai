@@ -1,11 +1,16 @@
 import { BuilderProject, BuilderSection } from "@craftsite/shared";
 
 export function compileBuilderToReact(builderData: BuilderProject): string {
-  const sectionsHtml = builderData.sections
-    .filter((s: BuilderSection) => s.visible)
-    .sort((a: BuilderSection, b: BuilderSection) => a.order - b.order)
-    .map((s: BuilderSection) => compileSection(s, builderData.theme))
-    .join("\n\n");
+  let sectionsHtml = "";
+  if (builderData.pages?.[0]?.nodes && builderData.pages[0].nodes.length > 0) {
+    sectionsHtml = builderData.pages[0].nodes.map(compileNode).join("\n");
+  } else {
+    sectionsHtml = builderData.sections
+      .filter((s: BuilderSection) => s.visible)
+      .sort((a: BuilderSection, b: BuilderSection) => a.order - b.order)
+      .map((s: BuilderSection) => compileSection(s, builderData.theme))
+      .join("\n\n");
+  }
 
   const { theme } = builderData;
   const themeClasses = `bg-[${theme.backgroundColor}] text-[${theme.textColor}] font-sans`;
@@ -254,11 +259,16 @@ export default function RootLayout({
       // Determine file path based on slug and isHome
       const filePath = page.isHome ? "app/page.tsx" : `app/${page.slug.replace(/^\//, "")}/page.tsx`;
       
-      const pageSectionsHtml = page.sections
-        .filter((s: any) => s.visible)
-        .sort((a: any, b: any) => a.order - b.order)
-        .map((s: any) => compileSection(s, project.theme))
-        .join("\\n\\n");
+      let pageSectionsHtml = "";
+      if (page.nodes && page.nodes.length > 0) {
+        pageSectionsHtml = page.nodes.map((n: any) => compileNode(n)).join("\\n");
+      } else {
+        pageSectionsHtml = page.sections
+          .filter((s: any) => s.visible)
+          .sort((a: any, b: any) => a.order - b.order)
+          .map((s: any) => compileSection(s, project.theme))
+          .join("\\n\\n");
+      }
         
       files[filePath] = `import React from 'react';\n\nexport default function Page() {\n  return (\n    <main className="flex-grow">\n${pageSectionsHtml}\n    </main>\n  );\n}`;
     });
@@ -273,4 +283,29 @@ export default function RootLayout({
   }
 
   return files;
+}
+
+function compileNode(node: any): string {
+  const p = node.props || {};
+  const childrenHtml = node.children ? node.children.map(compileNode).join('\\n') : '';
+  
+  switch (node.name) {
+    case 'heading': return `<h1 className="text-4xl font-extrabold tracking-tight">${p.text || 'Heading'}</h1>`;
+    case 'text': return `<p className="text-lg text-zinc-500">${p.text || 'Text block'}</p>`;
+    case 'button': return `<button className="px-6 py-2.5 rounded bg-violet-600 text-white font-medium hover:bg-violet-500 transition-colors">${p.label || 'Button'}</button>`;
+    case 'image': return `<img src="${p.src || ''}" alt="${p.alt || ''}" className="rounded-lg shadow-md max-w-full" />`;
+    case 'columns': return `<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">${childrenHtml}</div>`;
+    case 'hero': return `<section className="py-24 px-4 flex flex-col items-center justify-center text-center w-full">${childrenHtml}</section>`;
+    case 'section':
+    case 'navbar':
+    case 'footer':
+    case 'features':
+    case 'pricing':
+    case 'contact':
+    case 'faq':
+    case 'gallery':
+    case 'testimonials': return `<section className="py-16 px-4 w-full flex flex-col">${childrenHtml}</section>`;
+    case 'card': return `<div className="p-6 rounded-lg border shadow-sm bg-white flex flex-col">${childrenHtml}</div>`;
+    default: return `<div>${childrenHtml}</div>`;
+  }
 }

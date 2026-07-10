@@ -45,6 +45,16 @@ export type BuilderSection = {
   styles?: SectionStyles;
 };
 
+export type BuilderNode = {
+  id: string;
+  type: "section" | "component" | "element";
+  name: string;
+  props: Record<string, any>;
+  children: BuilderNode[];
+  parentId: string | null;
+  isGlobal?: boolean;
+};
+
 export type BuilderProject = {
   version: number;
   theme: BuilderTheme;
@@ -65,6 +75,7 @@ export type BuilderPage = {
   seoMetadata?: Record<string, any>;
   layoutId?: string;
   sections: BuilderSection[];
+  nodes?: BuilderNode[];
   order: number;
 };
 

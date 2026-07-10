@@ -10,11 +10,14 @@ import AddSectionPanel from "./AddSectionPanel";
 import ViewportSwitcher from "./ViewportSwitcher";
 import PageManager from "./PageManager";
 import CMSManager from "./CMSManager";
+import PropertyInspector from "./PropertyInspector";
 import { Undo, Redo, Save, Eye, Code, ChevronLeft, Download, Globe, Loader2 } from "lucide-react";
 import { exportProjectAsZip } from "@/lib/export-project";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { BuilderNode } from "@craftsite/shared";
 
 export default function VisualBuilder() {
-  const { dirty, saving, lastSavedAt, undo, redo, previewMode, setPreviewMode, projectId, builderData } = useBuilderStore();
+  const { dirty, saving, lastSavedAt, undo, redo, previewMode, setPreviewMode, projectId, builderData, selectedNodeId } = useBuilderStore();
   const [activeTab, setActiveTab] = useState<"pages" | "layers" | "add" | "cms">("pages");
   const [exporting, setExporting] = useState(false);
 
@@ -58,9 +61,26 @@ export default function VisualBuilder() {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.data.current?.isNew) {
+      const { addNode } = useBuilderStore.getState();
+      const newNode: BuilderNode = {
+        id: crypto.randomUUID(),
+        type: active.data.current.type as any,
+        name: active.data.current.templateId,
+        props: {},
+        children: [],
+        parentId: over.id === "canvas-root" ? null : String(over.id)
+      };
+      addNode(newNode, over.id === "canvas-root" ? undefined : String(over.id));
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Top Toolbar */}
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="flex flex-col h-full">
+        {/* Top Toolbar */}
       <header className="h-14 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur flex items-center justify-between px-4 z-50 shrink-0">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white" onClick={() => window.history.back()}>
@@ -157,10 +177,11 @@ export default function VisualBuilder() {
         {/* Right Sidebar */}
         {!previewMode && (
           <aside className="w-80 border-l border-zinc-800 bg-zinc-900/30 flex flex-col overflow-y-auto shrink-0">
-            <ThemePanel />
+            {selectedNodeId ? <PropertyInspector /> : <ThemePanel />}
           </aside>
         )}
       </main>
     </div>
+    </DndContext>
   );
 }

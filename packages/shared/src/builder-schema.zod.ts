@@ -48,6 +48,19 @@ export const BuilderSectionSchema = z.object({
   styles: SectionStylesSchema.optional()
 });
 
+export type BuilderNodeZodType = z.ZodType<any>;
+export const BuilderNodeSchema: BuilderNodeZodType = z.lazy(() => 
+  z.object({
+    id: z.string(),
+    type: z.enum(["section", "component", "element"]),
+    name: z.string(),
+    props: z.record(z.any()),
+    children: z.array(BuilderNodeSchema),
+    parentId: z.string().nullable(),
+    isGlobal: z.boolean().optional()
+  })
+);
+
 export type BuilderMenuItemZodType = z.ZodType<any>;
 export const BuilderMenuItemSchema: BuilderMenuItemZodType = z.lazy(() => 
   z.object({
@@ -74,6 +87,7 @@ export const BuilderPageSchema = z.object({
   seoMetadata: z.record(z.any()).optional(),
   layoutId: z.string().optional(),
   sections: z.array(BuilderSectionSchema),
+  nodes: z.array(BuilderNodeSchema).optional(),
   order: z.number()
 });
 
