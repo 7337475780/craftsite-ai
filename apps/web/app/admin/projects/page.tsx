@@ -3,6 +3,8 @@
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { AppShell } from "@/components/app/AppShell";
 import { apiGet, apiDelete } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { useEffect, useState } from "react";
 import { Loader2, Search, Trash2, Globe, ExternalLink } from "lucide-react";
 
@@ -11,6 +13,8 @@ export default function AdminProjectsPage() {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const { addToast } = useRealtime();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -30,22 +34,24 @@ export default function AdminProjectsPage() {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this project? This action cannot be undone.")) return;
+  const handleDelete = async () => {
+    if (!projectToDelete) return;
     
-    setIsDeletingId(id);
+    setIsDeletingId(projectToDelete);
     try {
-      const res = await apiDelete(`/api/admin/projects/${id}`);
+      const res = await apiDelete(`/api/admin/projects/${projectToDelete}`);
       if (res.success) {
-        setProjects(prev => prev.filter(p => p.id !== id));
+        setProjects(prev => prev.filter(p => p.id !== projectToDelete));
+        addToast({ title: "Deleted", message: "Project deleted successfully.", type: "success" });
       } else {
-        alert(res.message || "Failed to delete project");
+        addToast({ title: "Error", message: res.message || "Failed to delete project", type: "error" });
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to delete project");
+      addToast({ title: "Error", message: "Failed to delete project", type: "error" });
     } finally {
       setIsDeletingId(null);
+      setProjectToDelete(null);
     }
   };
 
@@ -134,7 +140,7 @@ export default function AdminProjectsPage() {
                               </a>
                             )}
                             <button
-                              onClick={() => handleDelete(p.id)}
+                              onClick={() => setProjectToDelete(p.id)}
                               disabled={isDeletingId === p.id}
                               className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-500 transition hover:bg-red-100 hover:text-red-700 disabled:opacity-50 dark:bg-red-500/10 dark:hover:bg-red-500/20"
                               title="Delete Project"
@@ -152,6 +158,15 @@ export default function AdminProjectsPage() {
           </div>
         </div>
       </AppShell>
+
+      <ConfirmDialog
+        isOpen={!!projectToDelete}
+        title="Delete Project"
+        message="Are you sure you want to permanently delete this project? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setProjectToDelete(null)}
+      />
     </AdminGuard>
   );
 }

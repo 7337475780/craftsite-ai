@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiGet, apiDelete } from "../../../../lib/api-client";
 import { useWorkspace } from "../../../../components/providers/WorkspaceProvider";
+import { useRealtime } from "../../../../components/providers/RealtimeProvider";
+import { ConfirmDialog } from "../../../../components/ui/ConfirmDialog";
 import { SavedProject } from "../../../../types/project";
 import { FolderKanban, Plus, MoreVertical, Trash2 } from "lucide-react";
 
@@ -11,7 +13,9 @@ export default function WorkspaceProjects() {
   const { workspaceId } = useParams() as { workspaceId: string };
   const { activeWorkspaceRole } = useWorkspace();
   const [projects, setProjects] = useState<SavedProject[]>([]);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const router = useRouter();
+  const { addToast } = useRealtime();
 
   const fetchProjects = async () => {
     try {
@@ -26,13 +30,16 @@ export default function WorkspaceProjects() {
     fetchProjects();
   }, [workspaceId]);
 
-  const handleDelete = async (projectId: string) => {
-    if (!confirm("Are you sure you want to delete this project? This cannot be undone.")) return;
+  const handleDelete = async () => {
+    if (!projectToDelete) return;
     try {
-      await apiDelete(`/api/workspaces/${workspaceId}/projects/${projectId}`);
+      await apiDelete(`/api/workspaces/${workspaceId}/projects/${projectToDelete}`);
       fetchProjects();
+      setProjectToDelete(null);
+      addToast({ title: "Project Deleted", message: "The project has been deleted.", type: "success" });
     } catch (e: any) {
-      alert(e.message);
+      addToast({ title: "Error", message: e.message || "Failed to delete project.", type: "error" });
+      setProjectToDelete(null);
     }
   };
 
@@ -76,10 +83,11 @@ export default function WorkspaceProjects() {
                   {canManage && (
                     <button
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        handleDelete(project.id);
+                        setProjectToDelete(project.id);
                       }}
-                      className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -104,6 +112,15 @@ export default function WorkspaceProjects() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!projectToDelete}
+        title="Delete Project"
+        message="Are you sure you want to delete this project? This action cannot be undone."
+        confirmText="Delete Project"
+        onConfirm={handleDelete}
+        onCancel={() => setProjectToDelete(null)}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useBuilderStore } from "@/stores/builder-store";
 import { Button } from "../ui/button";
 import { Plus, FileText, Home, MoreVertical, Trash2, Edit } from "lucide-react";
 import { BuilderPage } from "@craftsite/shared";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import NavigationEditor from "./NavigationEditor";
 import PageSettingsModal from "./PageSettingsModal";
 
@@ -11,6 +12,7 @@ export default function PageManager() {
   const [pages, setPages] = useState<BuilderPage[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingPage, setEditingPage] = useState<BuilderPage | null>(null);
+  const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -60,16 +62,17 @@ export default function PageManager() {
     }
   };
 
-  const deletePage = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this page?")) return;
+  const deletePage = async () => {
+    if (!pageToDelete) return;
     
     try {
-      await fetch(`/api/projects/${projectId}/pages/${id}`, { method: "DELETE" });
-      setPages(pages.filter(p => p.id !== id));
-      if (activePageId === id) setActivePageId(pages[0]?.id || null);
+      await fetch(`/api/projects/${projectId}/pages/${pageToDelete}`, { method: "DELETE" });
+      setPages(pages.filter(p => p.id !== pageToDelete));
+      if (activePageId === pageToDelete) setActivePageId(pages[0]?.id || null);
     } catch (e) {
       console.error("Failed to delete page", e);
+    } finally {
+      setPageToDelete(null);
     }
   };
 
@@ -120,7 +123,7 @@ export default function PageManager() {
                 <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-white" onClick={(e) => { e.stopPropagation(); setEditingPage(page); }}>
                   <Edit className="w-3 h-3" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-red-400" onClick={(e) => deletePage(page.id, e)}>
+                <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-red-400" onClick={(e) => { e.stopPropagation(); setPageToDelete(page.id); }}>
                   <Trash2 className="w-3 h-3" />
                 </Button>
               </div>
@@ -138,6 +141,15 @@ export default function PageManager() {
           onSave={(updates) => updatePage(editingPage.id, updates)} 
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!pageToDelete}
+        title="Delete Page"
+        message="Are you sure you want to delete this page? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={deletePage}
+        onCancel={() => setPageToDelete(null)}
+      />
     </div>
   );
 }

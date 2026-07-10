@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiGet, apiPatch, apiDelete } from "../../../../lib/api-client";
 import { Workspace } from "../../../../types/workspace";
 import { useWorkspace } from "../../../../components/providers/WorkspaceProvider";
+import { useRealtime } from "../../../../components/providers/RealtimeProvider";
 import { Trash2, AlertTriangle, Save } from "lucide-react";
 
 export default function WorkspaceSettings() {
@@ -17,6 +18,7 @@ export default function WorkspaceSettings() {
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const { addToast } = useRealtime();
 
   const fetchWorkspace = async () => {
     try {
@@ -52,9 +54,9 @@ export default function WorkspaceSettings() {
     try {
       await apiPatch(`/api/workspaces/${workspaceId}`, { name, description });
       await refreshWorkspaces();
-      alert("Settings saved successfully");
+      addToast({ title: "Settings Saved", message: "Workspace settings updated successfully.", type: "success" });
     } catch (e: any) {
-      alert(e.message);
+      addToast({ title: "Error", message: e.message || "Failed to save settings.", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -67,8 +69,9 @@ export default function WorkspaceSettings() {
       await refreshWorkspaces();
       localStorage.setItem("craftsite_active_workspace", "personal");
       router.push("/workspaces");
+      addToast({ title: "Workspace Deleted", message: "The workspace has been deleted.", type: "success" });
     } catch (e: any) {
-      alert(e.message);
+      addToast({ title: "Error", message: e.message || "Failed to delete workspace.", type: "error" });
     }
   };
 

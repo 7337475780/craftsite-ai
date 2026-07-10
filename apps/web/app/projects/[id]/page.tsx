@@ -4,6 +4,7 @@ import { LivePreview } from "@/components/generate/LivePreview";
 import { CraftSiteLogo } from "@/components/CraftSiteLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpgradeComingSoonModal } from "@/components/billing/UpgradeComingSoonModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -163,6 +164,8 @@ export default function ProjectDetailPage() {
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [publishPanelOpen, setPublishPanelOpen] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [publishPanelOpen, setPublishPanelOpen] = useState(true);
 
   // ── Realtime & Collaboration State ────────────────────────────────────────
@@ -436,8 +439,8 @@ export default function ProjectDetailPage() {
 
   const handleDelete = useCallback(async () => {
     if (!id) return;
-    if (!confirm("Are you sure you want to delete this project?")) return;
     setIsDeleting(true);
+    setShowDeleteConfirm(false);
     try {
       const result = await apiDelete(`/api/projects/${id}`);
       if (!result.success) {
@@ -1439,7 +1442,7 @@ export default function ProjectDetailPage() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
-                    onClick={handleDelete}
+                    onClick={() => setShowDeleteConfirm(true)}
                     disabled={isDeleting}
                     className="flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 cursor-pointer"
                   >
@@ -1682,5 +1685,15 @@ export default function ProjectDetailPage() {
         </div>
       </main>
     </ProtectedRoute>
+
+    <ConfirmDialog
+      isOpen={showDeleteConfirm}
+      title="Delete Project"
+      message="Are you sure you want to delete this project? This action cannot be undone."
+      confirmText="Delete Project"
+      onConfirm={handleDelete}
+      onCancel={() => setShowDeleteConfirm(false)}
+    />
+    </>
   );
 }

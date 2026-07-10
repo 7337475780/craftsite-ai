@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Globe, Plus, Settings, AlertCircle, CheckCircle2, Copy } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import Link from "next/link";
 import { apiGet, apiPost, apiDelete } from "@/lib/api-client";
 
@@ -25,6 +27,8 @@ export default function DomainsSettingsPage() {
   const [newDomain, setNewDomain] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [domainToDelete, setDomainToDelete] = useState<string | null>(null);
+  const { addToast } = useRealtime();
 
   const fetchDomains = async () => {
     try {
@@ -47,10 +51,10 @@ export default function DomainsSettingsPage() {
     try {
       await apiPost(`/api/projects/${projectId}/domains`, { hostname: newDomain });
       setNewDomain("");
-      alert("Domain added. Please configure your DNS settings.");
+      addToast({ title: "Domain Added", message: "Domain added. Please configure your DNS settings.", type: "success" });
       fetchDomains();
     } catch (e: any) {
-      alert(e.message || "Failed to add domain");
+      addToast({ title: "Error", message: e.message || "Failed to add domain", type: "error" });
     } finally {
       setIsAdding(false);
     }
@@ -60,29 +64,31 @@ export default function DomainsSettingsPage() {
     setVerifyingId(domainId);
     try {
       await apiPost(`/api/projects/${projectId}/domains/${domainId}/verify`, {});
-      alert("Domain verified and SSL provisioned!");
+      addToast({ title: "Verified", message: "Domain verified and SSL provisioned!", type: "success" });
       fetchDomains();
     } catch (e) {
-      alert("DNS records not detected yet. Please wait and try again.");
+      addToast({ title: "Verification Failed", message: "DNS records not detected yet. Please wait and try again.", type: "error" });
     } finally {
       setVerifyingId(null);
     }
   };
 
-  const handleDelete = async (domainId: string) => {
-    if (!confirm("Are you sure you want to remove this domain?")) return;
+  const handleDelete = async () => {
+    if (!domainToDelete) return;
     try {
-      await apiDelete(`/api/projects/${projectId}/domains/${domainId}`);
-      alert("Domain removed");
+      await apiDelete(`/api/projects/${projectId}/domains/${domainToDelete}`);
+      addToast({ title: "Domain Removed", message: "Domain removed successfully.", type: "success" });
       fetchDomains();
     } catch (e) {
-      alert("Failed to remove domain");
+      addToast({ title: "Error", message: "Failed to remove domain", type: "error" });
+    } finally {
+      setDomainToDelete(null);
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard");
+    addToast({ title: "Copied", message: "Copied to clipboard", type: "info" });
   };
 
   return (
@@ -163,7 +169,7 @@ export default function DomainsSettingsPage() {
                         {verifyingId === domain.id ? "Verifying..." : "Verify DNS"}
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(domain.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10">
+                    <Button variant="ghost" size="sm" onClick={() => setDomainToDelete(domain.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10">
                       Remove
                     </Button>
                   </div>
@@ -202,6 +208,15 @@ export default function DomainsSettingsPage() {
           </div>
         </main>
       </div>
+
+      <ConfirmDialog
+        isOpen={!!domainToDelete}
+        title="Remove Domain"
+        message="Are you sure you want to remove this domain?"
+        confirmText="Remove"
+        onConfirm={handleDelete}
+        onCancel={() => setDomainToDelete(null)}
+      />
     </ProtectedRoute>
   );
 }

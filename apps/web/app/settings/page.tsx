@@ -8,6 +8,8 @@ import { Loader2, Shield, User, Palette, Server, Lock, AlertTriangle, LayoutDash
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function SettingsPage() {
   const { user, refetchMe } = useAuth();
@@ -28,6 +30,8 @@ export default function SettingsPage() {
 
   // Preferences State
   const [defaultStyle, setDefaultStyle] = useState("modern");
+  const [showClearDraftsConfirm, setShowClearDraftsConfirm] = useState(false);
+  const { addToast } = useRealtime();
 
   useEffect(() => {
     if (user) {
@@ -91,10 +95,9 @@ export default function SettingsPage() {
   };
 
   const handleClearDrafts = () => {
-    if (confirm("Are you sure you want to clear all local drafts? Database projects will NOT be deleted.")) {
-      localStorage.removeItem("craftsite_saved_projects");
-      alert("Local drafts cleared.");
-    }
+    localStorage.removeItem("craftsite_saved_projects");
+    addToast({ title: "Drafts Cleared", message: "Local drafts cleared successfully.", type: "success" });
+    setShowClearDraftsConfirm(false);
   };
 
   return (
@@ -298,7 +301,7 @@ export default function SettingsPage() {
                   <p className="mt-1 text-sm text-slate-500 dark:text-white/50">Removes un-saved projects from this browser. Database projects are not affected.</p>
                 </div>
                 <button
-                  onClick={handleClearDrafts}
+                  onClick={() => setShowClearDraftsConfirm(true)}
                   className="shrink-0 rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-200 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30"
                 >
                   Clear Drafts
@@ -349,6 +352,15 @@ export default function SettingsPage() {
 
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showClearDraftsConfirm}
+        title="Clear Local Drafts"
+        message="Are you sure you want to clear all local drafts? Database projects will NOT be deleted."
+        confirmText="Clear Drafts"
+        onConfirm={handleClearDrafts}
+        onCancel={() => setShowClearDraftsConfirm(false)}
+      />
     </AppShell>
   );
 }

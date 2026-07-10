@@ -3,6 +3,8 @@
 import { AppShell } from "@/components/app/AppShell";
 import { getSavedProjects, deleteProject } from "@/lib/projects-storage";
 import { MigrationBanner } from "@/components/generate/MigrationBanner";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import type { SavedProject } from "@/types/project";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -44,6 +46,8 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<SavedProject[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const { addToast } = useRealtime();
 
   const { user } = useAuth();
 
@@ -68,23 +72,26 @@ export default function ProjectsPage() {
     }
   }, [user]);
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
-    setDeletingId(id);
+  const handleDelete = useCallback(async () => {
+    if (!projectToDelete) return;
+    setDeletingId(projectToDelete);
     try {
-      const result = await apiDelete(`/api/projects/${id}`);
+      const result = await apiDelete(`/api/projects/${projectToDelete}`);
       if (!result.success) {
         throw new Error(result.message || "Failed to delete project");
       }
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-    } catch (err) {
+      setProjects((prev) => prev.filter((p) => p.id !== projectToDelete));
+      addToast({ title: "Project Deleted", message: "Project successfully deleted.", type: "success" });
+    } catch (err: any) {
       console.warn("Cloud delete failed, attempting local delete", err);
-      deleteProject(id);
-      setProjects((prev) => prev.filter((p) => p.id !== id));
+      deleteProject(projectToDelete);
+      setProjects((prev) => prev.filter((p) => p.id !== projectToDelete));
+      addToast({ title: "Project Deleted Locally", message: "Project deleted from local drafts.", type: "success" });
     } finally {
       setDeletingId(null);
+      setProjectToDelete(null);
     }
-  }, []);
+  }, [projectToDelete, addToast]);
 
   return (
     <ProtectedRoute>
@@ -234,7 +241,10 @@ export default function ProjectsPage() {
                         <Download size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(project.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setProjectToDelete(project.id);
+                        }}
                         className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-slate-50 text-slate-400 transition-all hover:border-red-300/50 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/30 dark:hover:border-red-400/30 dark:hover:bg-red-500/10 dark:hover:text-red-400 cursor-pointer"
                         aria-label="Delete project"
                       >
@@ -248,7 +258,17 @@ export default function ProjectsPage() {
           </motion.div>
         )}
       </div>
-    </AppShell>
+
+      <ConfirmDialog
+        isOpen={!!projectToDelete}
+        title="Delete Project"
+        message="Are you sure you want to delete this project? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setProjectToDelete(null)}
+      />
+
+      </AppShell>
     </ProtectedRoute>
   );
 }

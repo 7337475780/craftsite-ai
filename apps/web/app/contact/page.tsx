@@ -4,15 +4,18 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import type { Metadata } from "next";
 import { Send, MapPin, Mail, Phone } from "lucide-react";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 
 // metadata cannot be exported from a client component, so we remove it or move it to layout.
 // For a simple fix, we just remove the exported metadata object since it's a client component now.
 
 export default function ContactPage() {
+  const { addToast } = useRealtime();
+
   return (
     <main className="min-h-screen w-full relative bg-slate-50 dark:bg-[#050816]">
       <Navbar />
-      
+
       <div className="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
         {/* Glow Effects */}
         <div className="pointer-events-none absolute left-1/2 top-0 -z-10 -translate-x-1/2 transform">
@@ -41,17 +44,14 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="font-medium text-slate-900 dark:text-white">Email</p>
-                      <p>support@craftsite.ai</p>
+                      <p>tharunlingala6@gmail.com</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400">
                       <Phone size={20} />
                     </div>
-                    <div>
-                      <p className="font-medium text-slate-900 dark:text-white">Phone</p>
-                      <p>+1 (555) 123-4567</p>
-                    </div>
+
                   </div>
                   <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
@@ -59,7 +59,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="font-medium text-slate-900 dark:text-white">Office</p>
-                      <p>123 Innovation Drive<br />San Francisco, CA 94105</p>
+                      <p>Ongole<br />Andhra Pradesh, India</p>
                     </div>
                   </div>
                 </div>
@@ -67,11 +67,11 @@ export default function ContactPage() {
             </div>
 
             {/* Form */}
-            <form className="space-y-6 rounded-[2rem] bg-white/60 dark:bg-white/[0.02] border border-black/5 dark:border-white/5 p-8 shadow-xl backdrop-blur-xl" onSubmit={(e) => { e.preventDefault(); alert("Thanks for contacting us! We'll be in touch soon."); }}>
+            <form className="space-y-6 rounded-[2rem] bg-white/60 dark:bg-white/[0.02] border border-black/5 dark:border-white/5 p-8 shadow-xl backdrop-blur-xl" onSubmit={(e) => { e.preventDefault(); addToast({ title: "Message Sent", message: "Thanks for contacting us! We'll be in touch soon.", type: "success" }); }}>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   className="w-full rounded-xl border border-black/10 bg-white/50 p-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                   placeholder="John Doe"
@@ -79,8 +79,8 @@ export default function ContactPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Email</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   className="w-full rounded-xl border border-black/10 bg-white/50 p-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                   placeholder="john@example.com"
@@ -88,14 +88,14 @@ export default function ContactPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Message</label>
-                <textarea 
+                <textarea
                   required
                   rows={4}
                   className="w-full rounded-xl border border-black/10 bg-white/50 p-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                   placeholder="How can we help you?"
                 />
               </div>
-              <button 
+              <button
                 type="submit"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
               >
@@ -106,7 +106,7 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </main>
   );

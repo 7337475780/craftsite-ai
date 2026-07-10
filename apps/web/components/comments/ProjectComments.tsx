@@ -5,6 +5,7 @@ import { useAuth } from "../providers/AuthProvider";
 import { useRealtime } from "../providers/RealtimeProvider";
 import { REALTIME_EVENTS } from "@/types/realtime";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { MessageSquare, Check, RotateCcw, Trash2, Edit2, Send } from "lucide-react";
 
 interface UserInfo {
@@ -66,10 +67,11 @@ export function ProjectComments({
   onClose,
 }: ProjectCommentsProps) {
   const { user } = useAuth();
-  const { socket } = useRealtime();
+  const { socket, addToast } = useRealtime();
   const [threads, setThreads] = useState<CommentThread[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "resolved">("active");
   const [loading, setLoading] = useState(true);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   // New thread inputs
   const [newCommentBody, setNewCommentBody] = useState("");
@@ -242,11 +244,11 @@ export function ProjectComments({
         setNewCommentBody("");
         setMentionedIds([]);
       } else {
-        alert(res.message || "Failed to post comment");
+        addToast({ title: "Error", message: res.message || "Failed to post comment", type: "error" });
       }
     } catch (err) {
       console.error(err);
-      alert("Rate limit exceeded or error occurred while comment post");
+      addToast({ title: "Error", message: "Rate limit exceeded or error occurred while comment post", type: "error" });
     }
   };
 
@@ -290,12 +292,16 @@ export function ProjectComments({
   };
 
   // Delete comment
-  const handleDelete = async (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) return;
+  const handleDelete = async () => {
+    if (!commentToDelete) return;
     try {
-      await apiDelete(`/api/projects/${projectId}/comments/${commentId}`);
+      await apiDelete(`/api/projects/${projectId}/comments/${commentToDelete}`);
+      addToast({ title: "Deleted", message: "Comment deleted successfully.", type: "success" });
     } catch (err) {
       console.error(err);
+      addToast({ title: "Error", message: "Failed to delete comment.", type: "error" });
+    } finally {
+      setCommentToDelete(null);
     }
   };
 
@@ -413,7 +419,7 @@ export function ProjectComments({
                       user?.id === projectOwnerId ||
                       ["owner", "admin"].includes(currentUserRole || "")) && (
                       <button
-                        onClick={() => handleDelete(thread.id)}
+                        onClick={() => setCommentToDelete(thread.id)}
                         title="Delete Thread"
                         className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
                       >
@@ -465,7 +471,7 @@ export function ProjectComments({
                               user?.id === projectOwnerId ||
                               ["owner", "admin"].includes(currentUserRole || "")) && (
                               <button
-                                onClick={() => handleDelete(reply.id)}
+                                onClick={() => setCommentToDelete(reply.id)}
                                 className="text-zinc-600 hover:text-red-400"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -582,6 +588,15 @@ export function ProjectComments({
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        isOpen={!!commentToDelete}
+        title="Delete Comment"
+        message="Are you sure you want to delete this comment? This cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setCommentToDelete(null)}
+      />
     </div>
   );
 }

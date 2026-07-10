@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useBuilderStore } from "@/stores/builder-store";
 import { Button } from "../ui/button";
 import { Upload, Trash2, Image as ImageIcon, FileText, Film, Copy, Check } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type MediaItem = {
   id: string;
@@ -32,6 +33,7 @@ export default function AssetLibrary() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [assetToDelete, setAssetToDelete] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -89,13 +91,15 @@ export default function AssetLibrary() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this asset permanently?")) return;
+  const handleDelete = async () => {
+    if (!assetToDelete) return;
     try {
-      const res = await fetch(`/api/projects/${projectId}/media/${id}`, { method: "DELETE" });
-      if (res.ok) setMedia((prev) => prev.filter((m) => m.id !== id));
+      const res = await fetch(`/api/projects/${projectId}/media/${assetToDelete}`, { method: "DELETE" });
+      if (res.ok) setMedia((prev) => prev.filter((m) => m.id !== assetToDelete));
     } catch (e) {
       console.error(e);
+    } finally {
+      setAssetToDelete(null);
     }
   };
 
@@ -172,7 +176,7 @@ export default function AssetLibrary() {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 text-zinc-400 hover:text-red-400"
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => setAssetToDelete(item.id)}
                 >
                   <Trash2 className="w-3 h-3" />
                 </Button>
@@ -181,6 +185,15 @@ export default function AssetLibrary() {
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!assetToDelete}
+        title="Delete Asset"
+        message="Delete this asset permanently? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setAssetToDelete(null)}
+      />
     </div>
   );
 }

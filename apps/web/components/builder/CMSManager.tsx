@@ -3,12 +3,14 @@ import { useBuilderStore } from "@/stores/builder-store";
 import { Button } from "../ui/button";
 import { Plus, Database, List, Trash2 } from "lucide-react";
 import { BuilderCollection } from "@craftsite/shared";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function CMSManager() {
   const { projectId } = useBuilderStore();
   const [collections, setCollections] = useState<BuilderCollection[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<BuilderCollection | null>(null);
+  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -55,17 +57,18 @@ export default function CMSManager() {
     }
   };
 
-  const deleteCollection = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (!confirm("Delete this collection and all its items?")) return;
+  const deleteCollection = async () => {
+    if (!collectionToDelete) return;
     try {
-      const res = await fetch(`/api/projects/${projectId}/cms/collections/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/projects/${projectId}/cms/collections/${collectionToDelete}`, { method: "DELETE" });
       if (res.ok) {
-        setCollections(collections.filter(c => c.id !== id));
-        if (selectedCollection?.id === id) setSelectedCollection(null);
+        setCollections(collections.filter(c => c.id !== collectionToDelete));
+        if (selectedCollection?.id === collectionToDelete) setSelectedCollection(null);
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setCollectionToDelete(null);
     }
   };
 
@@ -167,7 +170,7 @@ export default function CMSManager() {
                 <span className="text-[10px] text-zinc-600 truncate ml-1">{collection.slug}</span>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-5 w-5 text-zinc-400 hover:text-red-400" onClick={(e) => deleteCollection(e, collection.id)}>
+                <Button variant="ghost" size="icon" className="h-5 w-5 text-zinc-400 hover:text-red-400" onClick={(e) => { e.stopPropagation(); setCollectionToDelete(collection.id); }}>
                   <Trash2 className="w-3 h-3" />
                 </Button>
               </div>
@@ -175,6 +178,15 @@ export default function CMSManager() {
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!collectionToDelete}
+        title="Delete Collection"
+        message="Delete this collection and all its items? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={deleteCollection}
+        onCancel={() => setCollectionToDelete(null)}
+      />
     </div>
   );
 }

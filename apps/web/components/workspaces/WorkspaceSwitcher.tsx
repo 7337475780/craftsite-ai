@@ -19,15 +19,15 @@ export function WorkspaceSwitcher() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/5 hover:bg-slate-900/10 border border-slate-900/10 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/5 hover:bg-slate-900/10 border border-slate-900/10 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 transition-colors max-w-full"
       >
         <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-violet-500 to-cyan-500 flex items-center justify-center shrink-0">
           {activeWorkspaceId ? <Users className="w-3.5 h-3.5 text-white" /> : <User className="w-3.5 h-3.5 text-white" />}
         </div>
-        <span className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[120px]">
+        <span className="text-sm font-medium text-slate-900 dark:text-white truncate flex-1 min-w-0 text-left">
           {activeWorkspaceId ? activeWorkspace?.name || "Workspace" : "Personal"}
         </span>
-        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-zinc-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-4 h-4 shrink-0 text-slate-500 dark:text-zinc-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (

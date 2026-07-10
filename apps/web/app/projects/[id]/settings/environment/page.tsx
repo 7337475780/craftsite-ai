@@ -6,6 +6,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { apiGet, apiPost, apiDelete } from "@/lib/api-client";
 import { ArrowLeft, KeySquare, Plus, Save, Eye, EyeOff, Trash2, Search } from "lucide-react";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import Link from "next/link";
 
 // For the UI mockup, we will store state locally in the component.
@@ -25,6 +26,7 @@ export default function EnvironmentSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [showValues, setShowValues] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
+  const { addToast } = useRealtime();
 
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
@@ -61,20 +63,20 @@ export default function EnvironmentSettingsPage() {
       });
       setNewKey("");
       setNewValue("");
-      alert("Environment variable added");
+      addToast({ title: "Variable Added", message: "Environment variable added successfully.", type: "success" });
       fetchVars();
     } catch (e: any) {
-      alert(e.message || "Failed to add variable");
+      addToast({ title: "Error", message: e.message || "Failed to add variable", type: "error" });
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await apiDelete(`/api/projects/${projectId}/environment/${id}`);
-      alert("Variable deleted");
+      addToast({ title: "Variable Deleted", message: "Environment variable removed.", type: "success" });
       fetchVars();
     } catch (e: any) {
-      alert(e.message || "Failed to delete variable");
+      addToast({ title: "Error", message: e.message || "Failed to delete variable", type: "error" });
     }
   };
 

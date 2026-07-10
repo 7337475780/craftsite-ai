@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useBuilderStore } from "@/stores/builder-store";
 import { Button } from "../ui/button";
 import { Mail, Trash2, Eye, Archive, RotateCcw, Clock } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type Submission = {
   id: string;
@@ -37,6 +38,7 @@ export default function FormInbox() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [filter, setFilter] = useState<"all" | "new" | "read" | "archived">("all");
+  const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -73,16 +75,18 @@ export default function FormInbox() {
     }
   };
 
-  const deleteSubmission = async (id: string) => {
-    if (!confirm("Delete this submission permanently?")) return;
+  const deleteSubmission = async () => {
+    if (!submissionToDelete) return;
     try {
-      const res = await fetch(`/api/projects/${projectId}/forms/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/projects/${projectId}/forms/${submissionToDelete}`, { method: "DELETE" });
       if (res.ok) {
-        setSubmissions((prev) => prev.filter((s) => s.id !== id));
-        if (selected?.id === id) setSelected(null);
+        setSubmissions((prev) => prev.filter((s) => s.id !== submissionToDelete));
+        if (selected?.id === submissionToDelete) setSelected(null);
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setSubmissionToDelete(null);
     }
   };
 
@@ -137,8 +141,8 @@ export default function FormInbox() {
               <RotateCcw className="w-3 h-3" /> Restore
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="text-xs text-red-400 hover:text-red-300 gap-1.5" onClick={() => deleteSubmission(selected.id)}>
-            <Trash2 className="w-3 h-3" /> Delete
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-500 hover:text-red-400" onClick={() => setSubmissionToDelete(selected.id)}>
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
@@ -207,7 +211,7 @@ export default function FormInbox() {
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 flex-shrink-0"
-                onClick={(e) => { e.stopPropagation(); deleteSubmission(s.id); }}
+                onClick={(e) => { e.stopPropagation(); setSubmissionToDelete(s.id); }}
               >
                 <Trash2 className="w-3 h-3" />
               </Button>
@@ -215,6 +219,15 @@ export default function FormInbox() {
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!submissionToDelete}
+        title="Delete Submission"
+        message="Delete this submission permanently? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={deleteSubmission}
+        onCancel={() => setSubmissionToDelete(null)}
+      />
     </div>
   );
 }

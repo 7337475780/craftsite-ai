@@ -141,7 +141,7 @@ export function Navbar() {
               <div className="hidden items-center gap-2 md:flex">
                 <Link
                   href="/dashboard"
-                  className="rounded-2xl border border-slate-900/10 bg-white/60 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-violet-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:text-cyan-200"
+                  className="rounded-2xl border border-slate-900/10 bg-white/60 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-900/[0.045] hover:text-violet-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:text-cyan-200"
                 >
                   Dashboard
                 </Link>
