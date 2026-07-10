@@ -13,6 +13,8 @@ import PageManager from "./PageManager";
 import CMSManager from "./CMSManager";
 import PropertyInspector from "./PropertyInspector";
 import AiAssistantPanel from "./AiAssistantPanel";
+import AssetLibrary from "./AssetLibrary";
+import FormInbox from "./FormInbox";
 import { Undo, Redo, Save, Eye, Code, ChevronLeft, Download, Globe, Loader2, Sparkles, LayoutTemplate, Palette } from "lucide-react";
 import { exportProjectAsZip } from "@/lib/export-project";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -20,7 +22,7 @@ import { BuilderNode } from "@craftsite/shared";
 
 export default function VisualBuilder() {
   const { dirty, saving, lastSavedAt, undo, redo, previewMode, setPreviewMode, projectId, builderData, selectedNodeId } = useBuilderStore();
-  const [activeTab, setActiveTab] = useState<"pages" | "layers" | "add" | "cms">("pages");
+  const [activeTab, setActiveTab] = useState<"pages" | "layers" | "add" | "cms" | "assets" | "forms">("pages");
   const [rightTab, setRightTab] = useState<"ai" | "properties" | "theme">("ai");
   const [exporting, setExporting] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -190,12 +192,30 @@ export default function VisualBuilder() {
               >
                 CMS
               </Button>
+              <Button 
+                variant={activeTab === "assets" ? "secondary" : "ghost"} 
+                className="flex-shrink-0 justify-center text-xs px-2" 
+                size="sm"
+                onClick={() => setActiveTab("assets")}
+              >
+                Assets
+              </Button>
+              <Button 
+                variant={activeTab === "forms" ? "secondary" : "ghost"} 
+                className="flex-shrink-0 justify-center text-xs px-2" 
+                size="sm"
+                onClick={() => setActiveTab("forms")}
+              >
+                Forms
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 flex flex-col">
               {activeTab === "pages" && <PageManager />}
               {activeTab === "layers" && <SectionList />}
               {activeTab === "add" && <AddSectionPanel />}
               {activeTab === "cms" && <CMSManager />}
+              {activeTab === "assets" && <AssetLibrary />}
+              {activeTab === "forms" && <FormInbox />}
             </div>
           </aside>
         )}

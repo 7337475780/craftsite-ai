@@ -118,10 +118,13 @@ export type BuilderCollection = {
 
 export type BuilderCollectionItem = {
   id: string;
+  collectionId: string;
   title: string;
   slug: string;
   status: "draft" | "published";
   featuredImage?: string;
   richText?: string;
   customData?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
 };

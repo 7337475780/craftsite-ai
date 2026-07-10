@@ -277,8 +277,26 @@ export default function RootLayout({
   // Generate dynamic routing for CMS collections if defined
   if (project.collections && project.collections.length > 0) {
     project.collections.forEach((collection: any) => {
-      const collectionPath = `app/${collection.slug.replace(/^\//, "")}/[slug]/page.tsx`;
-      files[collectionPath] = `import React from 'react';\n\nexport default function DynamicCollectionPage({ params }: { params: { slug: string } }) {\n  return (\n    <main className="container mx-auto py-24">\n      <h1 className="text-4xl font-bold mb-8">Item: {params.slug}</h1>\n      <p>This is a dynamic route for the ${collection.name} collection.</p>\n    </main>\n  );\n}`;
+      const collectionSlug = collection.slug.replace(/^\//, "");
+      
+      // Collection index page — lists all published items
+      const listPagePath = `app/${collectionSlug}/page.tsx`;
+      const itemRows = (collection.items || [])
+        .filter((i: any) => i.status === "published")
+        .map((item: any) => `
+          <li key="${item.id}" className="border-b border-zinc-200/10 pb-4">
+            <a href="/${collectionSlug}/${item.slug}" className="block group">
+              ${item.featuredImage ? `<img src="${item.featuredImage}" alt="${item.title}" className="w-full aspect-video object-cover rounded-lg mb-3" />` : ""}
+              <h2 className="text-xl font-bold group-hover:underline">${item.title}</h2>
+            </a>
+          </li>`)
+        .join("\\n");
+
+      files[listPagePath] = `import React from 'react';\\n\\nexport default function ${collection.name.replace(/\\s+/g, "")}ListPage() {\\n  return (\\n    <main className="container mx-auto py-24 px-4">\\n      <h1 className="text-4xl font-extrabold mb-12">${collection.name}</h1>\\n      <ul className="flex flex-col gap-8">\\n${itemRows || '        <li className="text-zinc-400">No published items yet.</li>'}\\n      </ul>\\n    </main>\\n  );\\n}`;
+
+      // Dynamic [slug] page — individual item detail
+      const detailPagePath = `app/${collectionSlug}/[slug]/page.tsx`;
+      files[detailPagePath] = `import React from 'react';\\n\\nconst ITEMS: Record<string, any> = {\\n${(collection.items || []).filter((i: any) => i.status === "published").map((item: any) => `  "${item.slug}": ${JSON.stringify({ title: item.title, richText: item.richText || "", featuredImage: item.featuredImage || "" })}`).join(",\\n")}\\n};\\n\\nexport default function ${collection.name.replace(/\\s+/g, "")}DetailPage({ params }: { params: { slug: string } }) {\\n  const item = ITEMS[params.slug];\\n  if (!item) return <main className="container mx-auto py-24 text-center"><h1 className="text-3xl font-bold">Not Found</h1></main>;\\n  return (\\n    <main className="container mx-auto py-24 px-4 max-w-3xl">\\n      {item.featuredImage && <img src={item.featuredImage} alt={item.title} className="w-full aspect-video object-cover rounded-2xl mb-10" />}\\n      <h1 className="text-4xl font-extrabold mb-6">{item.title}</h1>\\n      <div className="prose prose-invert" dangerouslySetInnerHTML={{ __html: item.richText }} />\\n    </main>\\n  );\\n}`;
     });
   }
 

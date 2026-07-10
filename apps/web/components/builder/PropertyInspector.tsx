@@ -56,24 +56,35 @@ export default function PropertyInspector() {
           <h4 className="font-semibold text-xs text-zinc-300 mb-3 border-b border-zinc-800 pb-1">Attributes</h4>
           
           <div className="flex flex-col gap-3">
-            {/* Generic key-value props editor */}
-            {Object.entries(selectedNode.props).length === 0 ? (
+            {/* Standard HTML / React Props */}
+            {Object.entries(selectedNode.props).length === 0 && !selectedNode.props.className ? (
               <div className="text-xs text-zinc-500 italic">No specific properties for this component type yet.</div>
             ) : (
-              Object.entries(selectedNode.props).map(([key, value]) => (
-                <div key={key}>
-                  <label className="text-xs text-zinc-400 mb-1 block capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+              <>
+                <div>
+                  <label className="text-xs text-zinc-400 mb-1 block">Classes (Tailwind)</label>
                   <input 
                     type="text"
-                    className="w-full h-8 px-2 text-xs text-white bg-zinc-950 border border-zinc-800 rounded focus:outline-none focus:border-violet-500 transition-colors"
-                    value={value as string}
-                    onChange={(e) => handleChange(key, e.target.value)}
+                    className="w-full h-16 px-2 py-1 text-xs text-white bg-zinc-950 border border-zinc-800 rounded focus:outline-none focus:border-violet-500 transition-colors"
+                    value={(selectedNode.props.className as string) || ''}
+                    onChange={(e) => handleChange('className', e.target.value)}
                   />
                 </div>
-              ))
+                {Object.entries(selectedNode.props).filter(([k]) => k !== 'className').map(([key, value]) => (
+                  <div key={key}>
+                    <label className="text-xs text-zinc-400 mb-1 block capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+                    <input 
+                      type="text"
+                      className="w-full h-8 px-2 text-xs text-white bg-zinc-950 border border-zinc-800 rounded focus:outline-none focus:border-violet-500 transition-colors"
+                      value={value as string}
+                      onChange={(e) => handleChange(key, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </>
             )}
             
-            {/* Provide a way to add new generic props for testing Phase 28 */}
+            {/* Provide a way to add new generic props */}
             <div className="mt-4 pt-4 border-t border-zinc-800">
                <button 
                  className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"

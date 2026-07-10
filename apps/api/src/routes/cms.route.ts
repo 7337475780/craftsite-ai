@@ -82,4 +82,52 @@ router.delete("/collections/:collectionId/items/:itemId", async (req: any, res: 
   }
 });
 
+// PUT /api/projects/:projectId/cms/collections/:collectionId
+router.put("/collections/:collectionId", async (req: any, res: any) => {
+  const { collectionId } = req.params;
+  try {
+    const { name, slug, schema } = req.body;
+    const updatedCollection = await prisma.collection.update({
+      where: { id: collectionId },
+      data: { name, slug, schema },
+    });
+    res.json({ success: true, data: updatedCollection });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE /api/projects/:projectId/cms/collections/:collectionId
+router.delete("/collections/:collectionId", async (req: any, res: any) => {
+  const { collectionId } = req.params;
+  try {
+    await prisma.collection.delete({ where: { id: collectionId } });
+    res.json({ success: true, message: "Collection deleted" });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT /api/projects/:projectId/cms/collections/:collectionId/items/:itemId
+router.put("/collections/:collectionId/items/:itemId", async (req: any, res: any) => {
+  const { itemId } = req.params;
+  try {
+    const { title, slug, status, featuredImage, richText, customData } = req.body;
+    const updatedItem = await prisma.collectionItem.update({
+      where: { id: itemId },
+      data: {
+        title,
+        slug,
+        status,
+        featuredImage,
+        richText,
+        customData,
+      },
+    });
+    res.json({ success: true, data: updatedItem });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 export default router;

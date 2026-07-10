@@ -67,46 +67,52 @@ function CanvasNode({ node, depth = 0 }: { node: BuilderNode; depth?: number }) 
 function RenderNodeContent({ node, children }: { node: BuilderNode, children: React.ReactNode }) {
   const { updateNodeProps, previewMode } = useBuilderStore();
   
-  const handleInput = (key: string, e: React.FormEvent<HTMLElement>) => {
+  const handleInput = (e: React.FormEvent<HTMLElement>) => {
     if (!previewMode) {
-      updateNodeProps(node.id, { [key]: e.currentTarget.innerText });
+      updateNodeProps(node.id, { text: e.currentTarget.innerText });
     }
   };
 
   const p = node.props || {};
+  const className = (p.className as string) || '';
 
+  // Standard HTML Elements — render dynamically via React.createElement
+  if (node.type === "element" || node.type === "section") {
+    const tagName = node.name || "div";
+    
+    // Text elements can be edited inline
+    if (["h1", "h2", "h3", "h4", "h5", "h6", "p", "span"].includes(tagName)) {
+      return React.createElement(tagName, {
+        className: `${className} outline-none empty:before:content-['Empty_Text'] empty:before:text-zinc-400`,
+        contentEditable: !previewMode,
+        suppressContentEditableWarning: true,
+        onBlur: handleInput,
+      }, p.text || children || '');
+    }
+    
+    // Layout elements (div, section, main, header, footer, nav)
+    return React.createElement(
+      tagName,
+      { className: `${className} min-h-[50px] relative` },
+      children || React.createElement(
+        'div',
+        { className: "absolute inset-0 flex items-center justify-center pointer-events-none opacity-20" },
+        React.createElement('span', { className: "text-xs" }, tagName)
+      )
+    );
+  }
+
+  // Predefined Components (e.g., button, card, etc.)
   switch (node.name) {
-    case 'heading':
-      return (
-        <h1 
-          className="text-4xl font-extrabold tracking-tight outline-none empty:before:content-['Empty_Heading'] empty:before:text-zinc-400"
-          contentEditable={!previewMode}
-          suppressContentEditableWarning
-          onBlur={(e) => handleInput('text', e)}
-        >
-          {p.text || ''}
-        </h1>
-      );
-    case 'text':
-      return (
-        <p 
-          className="text-lg text-zinc-500 outline-none empty:before:content-['Empty_Text_Block'] empty:before:text-zinc-400"
-          contentEditable={!previewMode}
-          suppressContentEditableWarning
-          onBlur={(e) => handleInput('text', e)}
-        >
-          {p.text || ''}
-        </p>
-      );
     case 'button':
       return (
         <button 
-          className="px-6 py-2.5 rounded bg-violet-600 text-white font-medium hover:bg-violet-500 transition-colors outline-none empty:before:content-['Button'] empty:before:text-zinc-200"
+          className={`px-6 py-2.5 rounded bg-violet-600 text-white font-medium hover:bg-violet-500 transition-colors outline-none ${className}`}
           contentEditable={!previewMode}
           suppressContentEditableWarning
-          onBlur={(e) => handleInput('label', e)}
+          onBlur={handleInput}
         >
-          {p.label || ''}
+          {p.text || ''}
         </button>
       );
     case 'image':
