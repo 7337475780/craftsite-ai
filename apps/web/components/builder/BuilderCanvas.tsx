@@ -167,8 +167,9 @@ function LegacySectionPreview({ section, theme }: { section: BuilderSection; the
   
   let html = `<div class="p-8 border-dashed border-2 m-4 text-center text-gray-500">Section placeholder: ${section.type}</div>`;
   // (Simplified fallback HTML - actual HTML rendering will be migrated to Nodes)
+  const props = section.props || {};
   if (section.type === "hero") {
-    html = `<section class="py-24 px-4 flex flex-col items-center text-center"><h1 class="text-4xl font-extrabold mb-6">${section.props.heading || 'Hero'}</h1><p class="mb-8">${section.props.description || ''}</p></section>`;
+    html = `<section class="py-24 px-4 flex flex-col items-center text-center"><h1 class="text-4xl font-extrabold mb-6">${props.heading || 'Hero'}</h1><p class="mb-8">${props.description || ''}</p></section>`;
   }
 
   return (

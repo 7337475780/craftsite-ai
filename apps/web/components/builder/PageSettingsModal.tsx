@@ -11,18 +11,15 @@ interface PageSettingsModalProps {
 export default function PageSettingsModal({ page, onClose, onSave }: PageSettingsModalProps) {
   const [title, setTitle] = useState(page.title);
   const [slug, setSlug] = useState(page.slug);
-  const [seoTitle, setSeoTitle] = useState(page.seoMetadata?.title || "");
-  const [seoDescription, setSeoDescription] = useState(page.seoMetadata?.description || "");
+  const [seoTitle, setSeoTitle] = useState(page.seoTitle || "");
+  const [seoDescription, setSeoDescription] = useState(page.seoDescription || "");
 
   const handleSave = () => {
     onSave({
       title,
       slug,
-      seoMetadata: {
-        ...(page.seoMetadata || {}),
-        title: seoTitle,
-        description: seoDescription,
-      }
+      seoTitle,
+      seoDescription
     });
   };
 
@@ -52,10 +49,10 @@ export default function PageSettingsModal({ page, onClose, onSave }: PageSetting
               type="text"
               value={slug} 
               onChange={e => setSlug(e.target.value)} 
-              disabled={page.isHome}
+              disabled={page.isHomepage}
               className="w-full bg-zinc-950 border border-zinc-800 text-white h-10 px-3 rounded-md disabled:opacity-50 focus:outline-none focus:border-zinc-600" 
             />
-            {page.isHome && <p className="text-xs text-zinc-500 mt-1">The home page slug cannot be changed.</p>}
+            {page.isHomepage && <p className="text-xs text-zinc-500 mt-1">The home page slug cannot be changed.</p>}
           </div>
 
           <div className="pt-4 border-t border-zinc-800">

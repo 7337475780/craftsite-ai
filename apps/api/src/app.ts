@@ -90,6 +90,7 @@ app.use("/api/projects/:projectId/deployments", deploymentsRoutes);
 app.use("/api/projects/:projectId/domains", domainsRoutes);
 app.use("/api/projects/:projectId/analytics", projectAnalyticsRoutes);
 app.use("/api/projects/:projectId/environment", environmentRoutes);
+app.use("/api/projects/:projectId/pages", pagesRoutes);
 
 app.get("/", (_req, res) => {
   res.json({

@@ -21,11 +21,11 @@ export default function PageManager() {
     setLoading(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/pages`);
-      const json = await res.json();
-      if (json.success) {
-        setPages(json.data);
-        if (json.data.length > 0 && !activePageId) {
-          setActivePageId(json.data[0].id);
+      const pages = await res.json();
+      if (Array.isArray(pages)) {
+        setPages(pages);
+        if (pages.length > 0 && !activePageId) {
+          setActivePageId(pages[0].id);
         }
       }
     } catch (e) {
@@ -48,12 +48,12 @@ export default function PageManager() {
         body: JSON.stringify({
           title,
           slug,
-          isHome: pages.length === 0,
+          isHomepage: pages.length === 0,
         }),
       });
-      const json = await res.json();
-      if (json.success) {
-        setPages([...pages, json.data]);
+      const newPage = await res.json();
+      if (newPage && newPage.id) {
+        setPages([...pages, newPage]);
       }
     } catch (e) {
       console.error("Failed to create page", e);
@@ -80,9 +80,9 @@ export default function PageManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      const json = await res.json();
-      if (json.success) {
-        setPages(pages.map(p => p.id === id ? json.data : p));
+      const updatedPage = await res.json();
+      if (updatedPage && updatedPage.id) {
+        setPages(pages.map(p => p.id === id ? updatedPage : p));
         setEditingPage(null);
       }
     } catch (e) {

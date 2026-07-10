@@ -275,24 +275,46 @@ model ProjectActivity {
 }
 
 model Page {
-  id            String    @id @default(uuid())
-  projectId     String
-  layoutId      String?
-  title         String
-  slug          String
-  isHome        Boolean   @default(false)
-  status        String    @default("draft") // draft, published
-  seoMetadata   Json?
-  builderData   Json?
-  order         Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String     @id @default(uuid())
+  projectId       String
+  title           String
+  slug            String     // e.g., "/", "/about", "/services/web-design"
+  isHomepage      Boolean    @default(false)
+  order           Int        @default(0)
+  seoTitle        String?
+  seoDescription  String?
+  published       Boolean    @default(true)
+  layoutId        String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  layout        Layout?   @relation(fields: [layoutId], references: [id], onDelete: SetNull)
+  project         Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  layout          Layout?    @relation(fields: [layoutId], references: [id], onDelete: SetNull)
+  sections        Section[]
 
   @@unique([projectId, slug])
   @@index([projectId])
+}
+
+model Section {
+  id         String      @id @default(uuid())
+  pageId     String
+  type       String      // e.g., "hero", "features", "navbar"
+  order      Int         @default(0)
+  page       Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  components Component[]
+
+  @@index([pageId])
+}
+
+model Component {
+  id            String   @id @default(uuid())
+  sectionId     String
+  componentType String   // e.g., "button", "heading", "image"
+  props         Json     // Deeply nested specific properties (e.g., text, color, link)
+  section       Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
 }
 
 model Layout {

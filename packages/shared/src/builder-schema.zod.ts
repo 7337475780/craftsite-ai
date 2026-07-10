@@ -39,12 +39,19 @@ export const SectionStylesSchema = z.object({
   alignment: z.enum(["left", "center", "right"]).optional()
 });
 
+export const BuilderComponentSchema = z.object({
+  id: z.string(),
+  componentType: z.string(),
+  props: z.record(z.any())
+});
+
 export const BuilderSectionSchema = z.object({
   id: z.string(),
   type: BuilderSectionTypeSchema,
-  visible: z.boolean(),
+  visible: z.boolean().optional(),
   order: z.number(),
-  props: z.record(z.any()),
+  props: z.record(z.any()).optional(),
+  components: z.array(BuilderComponentSchema),
   styles: SectionStylesSchema.optional()
 });
 
@@ -82,9 +89,10 @@ export const BuilderPageSchema = z.object({
   id: z.string(),
   title: z.string(),
   slug: z.string(),
-  isHome: z.boolean(),
-  status: z.enum(["draft", "published"]),
-  seoMetadata: z.record(z.any()).optional(),
+  isHomepage: z.boolean(),
+  published: z.boolean(),
+  seoTitle: z.string().optional(),
+  seoDescription: z.string().optional(),
   layoutId: z.string().optional(),
   sections: z.array(BuilderSectionSchema),
   nodes: z.array(BuilderNodeSchema).optional(),

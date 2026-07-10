@@ -20,7 +20,7 @@ router.get("/", async (req: any, res: any) => {
       orderBy: { key: "asc" }
     });
     // Decrypt for UI representation
-    const decrypted = vars.map(v => ({
+    const decrypted = vars.map((v: any) => ({
       ...v,
       value: decryptValue(v.value)
     }));

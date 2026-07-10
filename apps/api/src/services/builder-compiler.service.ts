@@ -61,7 +61,7 @@ function getStylesClasses(styles?: any) {
 }
 
 function compileNavbar(section: BuilderSection, theme: any) {
-  const { logoText = "Brand", links = [] } = section.props;
+  const { logoText = "Brand", links = [] } = section.props || {};
   const navLinks = links.map((l: any) => `<a href="${l.href || '#'}" className="text-sm font-medium hover:text-[${theme.accentColor}] transition-colors">${l.label}</a>`).join("\n          ");
   
   return `      <nav className="border-b bg-[${theme.backgroundColor}]/80 backdrop-blur-md sticky top-0 z-50">
@@ -76,7 +76,7 @@ function compileNavbar(section: BuilderSection, theme: any) {
 }
 
 function compileHero(section: BuilderSection, theme: any) {
-  const { badge = "", heading = "Welcome", description = "", primaryCta = "Get Started", secondaryCta = "" } = section.props;
+  const { badge = "", heading = "Welcome", description = "", primaryCta = "Get Started", secondaryCta = "" } = section.props || {};
   const alignClass = getStylesClasses(section.styles) || "text-center";
   return `      <section className="py-24 container mx-auto px-4 flex flex-col items-center justify-center ${alignClass}">
         ${badge ? `<div className="mb-6 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">${badge}</div>` : ""}
@@ -90,7 +90,7 @@ function compileHero(section: BuilderSection, theme: any) {
 }
 
 function compileFeatures(section: BuilderSection, theme: any) {
-  const { title = "Features", description = "", items = [] } = section.props;
+  const { title = "Features", description = "", items = [] } = section.props || {};
   const itemsHtml = items.map((item: any) => `
             <Card className="bg-[${theme.backgroundColor}] border">
               <CardContent className="p-6">
@@ -117,7 +117,7 @@ ${itemsHtml}
 }
 
 function compilePricing(section: BuilderSection, theme: any) {
-  const { title = "Pricing", description = "", plans = [] } = section.props;
+  const { title = "Pricing", description = "", plans = [] } = section.props || {};
   const plansHtml = plans.map((plan: any) => `
             <Card className="${plan.popular ? `border-[${theme.primaryColor}] border-2 relative scale-105` : 'border'}">
               ${plan.popular ? `<div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[${theme.primaryColor}] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Most Popular</div>` : ''}
@@ -145,7 +145,7 @@ ${plansHtml}
 }
 
 function compileCTA(section: BuilderSection, theme: any) {
-  const { title = "Ready to start?", description = "", buttonText = "Get Started" } = section.props;
+  const { title = "Ready to start?", description = "", buttonText = "Get Started" } = section.props || {};
   return `      <section className="py-24 bg-[${theme.primaryColor}] text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6">${title}</h2>
@@ -156,7 +156,7 @@ function compileCTA(section: BuilderSection, theme: any) {
 }
 
 function compileFooter(section: BuilderSection, theme: any) {
-  const { brand = "Brand", description = "", columns = [], copyright = "© 2026 Brand. All rights reserved." } = section.props;
+  const { brand = "Brand", description = "", columns = [], copyright = "© 2026 Brand. All rights reserved." } = section.props || {};
   
   const columnsHtml = columns.map((col: any) => `
             <div>

@@ -36,12 +36,19 @@ export type SectionStyles = {
   alignment?: "left" | "center" | "right";
 };
 
+export type BuilderComponent = {
+  id: string;
+  componentType: string;
+  props: Record<string, any>;
+};
+
 export type BuilderSection = {
   id: string;
   type: BuilderSectionType;
-  visible: boolean;
+  visible?: boolean;
   order: number;
-  props: Record<string, any>;
+  props?: Record<string, any>;
+  components: BuilderComponent[];
   styles?: SectionStyles;
 };
 
@@ -70,9 +77,10 @@ export type BuilderPage = {
   id: string;
   title: string;
   slug: string;
-  isHome: boolean;
-  status: "draft" | "published";
-  seoMetadata?: Record<string, any>;
+  isHomepage: boolean;
+  published: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
   layoutId?: string;
   sections: BuilderSection[];
   nodes?: BuilderNode[];

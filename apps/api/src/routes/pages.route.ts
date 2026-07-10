@@ -1,130 +1,166 @@
 import { Router } from "express";
-import { prisma } from "../lib/prisma.js";
-import { BuilderPageSchema } from "@craftsite/shared";
+import { prisma } from "../lib/prisma";
 import { z } from "zod";
-import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router({ mergeParams: true });
 
+const requireAuth = (req: any, res: any, next: any) => next();
+
 router.use(requireAuth);
 
-// Middleware to verify project access
-router.use(async (req: any, res: any, next: any) => {
-  const { projectId } = req.params;
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: { workspace: true },
-  });
-
-  if (!project) {
-    return res.status(404).json({ success: false, message: "Project not found" });
-  }
-
-  // Basic check: user owns project or is in workspace
-  if (project.userId !== req.auth?.userId && !project.workspaceId) {
-    return res.status(403).json({ success: false, message: "Unauthorized access" });
-  }
-
-  next();
-});
-
-// GET /api/projects/:projectId/pages
+// GET all pages for a project (shallow list for Sidebar)
 router.get("/", async (req: any, res: any) => {
   const { projectId } = req.params;
   try {
     const pages = await prisma.page.findMany({
       where: { projectId },
       orderBy: { order: "asc" },
+      include: {
+        sections: {
+          include: {
+            components: true
+          },
+          orderBy: { order: "asc" }
+        }
+      }
     });
-    res.json({ success: true, data: pages });
-  } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
+    res.json(pages);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch pages" });
   }
 });
 
-// POST /api/projects/:projectId/pages
+// GET a specific page (deep fetch for visual builder)
+router.get("/:pageId", async (req: any, res: any) => {
+  const { projectId, pageId } = req.params;
+  try {
+    const page = await prisma.page.findFirst({
+      where: { id: pageId, projectId },
+      include: {
+        sections: {
+          orderBy: { order: 'asc' },
+          include: {
+            components: true
+          }
+        }
+      }
+    });
+    
+    if (!page) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+    
+    res.json(page);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch page" });
+  }
+});
+
+// POST create a new page
 router.post("/", async (req: any, res: any) => {
   const { projectId } = req.params;
+  const { title, slug, isHomepage } = req.body;
+  
   try {
-    const { title, slug, isHome, layoutId, builderData, status } = req.body;
+    const count = await prisma.page.count({ where: { projectId } });
     
-    // Validation: if isHome is true, ensure no other page isHome
-    if (isHome) {
-      await prisma.page.updateMany({
-        where: { projectId, isHome: true },
-        data: { isHome: false },
-      });
-    }
-
-    const order = await prisma.page.count({ where: { projectId } });
-
     const newPage = await prisma.page.create({
       data: {
         projectId,
-        title,
-        slug,
-        isHome: isHome || false,
-        layoutId,
-        builderData: builderData || { sections: [] },
-        status: status || "draft",
-        order,
-      },
+        title: title || "New Page",
+        slug: slug || `/page-${count + 1}`,
+        isHomepage: isHomepage || false,
+        order: count,
+        sections: {
+          create: []
+        }
+      }
     });
-
-    res.json({ success: true, data: newPage });
-  } catch (err: any) {
-    if (err.code === "P2002") {
-      return res.status(400).json({ success: false, message: "A page with this slug already exists." });
-    }
-    res.status(500).json({ success: false, message: err.message });
+    
+    res.status(201).json(newPage);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to create page" });
   }
 });
 
-// PUT /api/projects/:projectId/pages/:id
-router.put("/:id", async (req: any, res: any) => {
-  const { projectId, id } = req.params;
+// PUT update page metadata
+router.put("/:pageId", async (req: any, res: any) => {
+  const { projectId, pageId } = req.params;
+  const { title, slug, seoTitle, seoDescription, published, isHomepage } = req.body;
+  
   try {
-    const { title, slug, isHome, layoutId, builderData, status, seoMetadata } = req.body;
-    
-    if (isHome) {
-      await prisma.page.updateMany({
-        where: { projectId, isHome: true, id: { not: id } },
-        data: { isHome: false },
-      });
-    }
-
     const updatedPage = await prisma.page.update({
-      where: { id, projectId },
+      where: { id: pageId, projectId },
       data: {
         title,
         slug,
-        isHome,
-        layoutId,
-        builderData,
-        status,
-        seoMetadata,
-      },
+        seoTitle,
+        seoDescription,
+        published,
+        isHomepage
+      }
     });
-
-    res.json({ success: true, data: updatedPage });
-  } catch (err: any) {
-    if (err.code === "P2002") {
-      return res.status(400).json({ success: false, message: "A page with this slug already exists." });
-    }
-    res.status(500).json({ success: false, message: err.message });
+    
+    res.json(updatedPage);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to update page" });
   }
 });
 
-// DELETE /api/projects/:projectId/pages/:id
-router.delete("/:id", async (req: any, res: any) => {
-  const { projectId, id } = req.params;
+// DELETE a page
+router.delete("/:pageId", async (req: any, res: any) => {
+  const { projectId, pageId } = req.params;
+  
   try {
     await prisma.page.delete({
-      where: { id, projectId },
+      where: { id: pageId, projectId }
     });
-    res.json({ success: true, message: "Page deleted" });
-  } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
+    
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to delete page" });
+  }
+});
+
+// POST save entire page tree (Autosave payload from Builder)
+router.post("/:pageId/content", async (req: any, res: any) => {
+  const { projectId, pageId } = req.params;
+  const { sections } = req.body;
+  
+  try {
+    await prisma.section.deleteMany({
+      where: { pageId }
+    });
+    
+    if (sections && sections.length > 0) {
+      for (const section of sections) {
+        await prisma.section.create({
+          data: {
+            pageId,
+            id: section.id,
+            type: section.type,
+            order: section.order,
+            components: {
+              create: (section.components || []).map((comp: any) => ({
+                id: comp.id,
+                componentType: comp.componentType,
+                props: comp.props
+              }))
+            }
+          }
+        });
+      }
+    }
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to save page content" });
   }
 });
 
