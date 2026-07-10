@@ -9,15 +9,25 @@ const PORT = process.env.PORT || 5000;
 const server = createServer(app);
 initRealtimeServer(server);
 
-// Pre-warm the Prisma connection pool so the first request doesn't
-// pay the cold-start cost of establishing a DB connection.
-prisma.$connect()
-  .then(() => {
-    server.listen(PORT, () => {
-      console.log(`CraftSite API running on http://localhost:${PORT}`);
-    });
-  })
-  .catch((err: unknown) => {
-    console.error("Failed to connect to database:", err);
-    process.exit(1);
+server.listen(PORT, () => {
+  console.log(`CraftSite API running on http://localhost:${PORT}`);
+});
+
+// Graceful Shutdown
+const shutdown = async (signal: string) => {
+  console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+  server.close(async () => {
+    console.log("HTTP server closed.");
+    try {
+      await prisma.$disconnect();
+      console.log("Prisma disconnected successfully.");
+      process.exit(0);
+    } catch (err) {
+      console.error("Error during Prisma disconnection:", err);
+      process.exit(1);
+    }
   });
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

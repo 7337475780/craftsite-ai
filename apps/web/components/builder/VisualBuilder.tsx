@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useBuilderStore } from "@/stores/builder-store";
 import { Button } from "../ui/button";
 import BuilderCanvas from "./BuilderCanvas";
@@ -22,6 +23,8 @@ export default function VisualBuilder() {
   const [activeTab, setActiveTab] = useState<"pages" | "layers" | "add" | "cms">("pages");
   const [rightTab, setRightTab] = useState<"ai" | "properties" | "theme">("ai");
   const [exporting, setExporting] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const router = useRouter();
 
   const handleSave = async () => {
     const { builderData, projectId, setSaving, markSaved } = useBuilderStore.getState();
@@ -60,6 +63,31 @@ export default function VisualBuilder() {
       console.error("Export failed", e);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!projectId) return;
+    setPublishing(true);
+    
+    // Auto-save before publish
+    if (dirty) {
+      await handleSave();
+    }
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/deployments/deploy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ environment: 'production' })
+      });
+      if (res.ok) {
+        // Redirect to Deployment Dashboard
+        router.push(`/projects/${projectId}/deployments`);
+      }
+    } catch (e) {
+      console.error("Publish failed", e);
+      setPublishing(false);
     }
   };
 
@@ -117,8 +145,9 @@ export default function VisualBuilder() {
             {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />} 
             {exporting ? "Exporting..." : "Export"}
           </Button>
-          <Button variant="default" size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">
-            <Globe className="w-4 h-4 mr-2" /> Publish
+          <Button variant="default" size="sm" className="bg-violet-600 hover:bg-violet-500 text-white" onClick={handlePublish} disabled={publishing}>
+            {publishing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Globe className="w-4 h-4 mr-2" />} 
+            {publishing ? "Publishing..." : "Publish"}
           </Button>
         </div>
       </header>

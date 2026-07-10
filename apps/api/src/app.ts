@@ -27,6 +27,9 @@ import aiBuilderRoutes from "./routes/ai-builder.route";
 import pagesRoutes from "./routes/pages.route";
 import navigationRoutes from "./routes/navigation.route";
 import cmsRoutes from "./routes/cms.route";
+import deploymentsRoutes from "./routes/deployments.route";
+import domainsRoutes from "./routes/domains.route";
+import projectAnalyticsRoutes from "./routes/project-analytics.route";
 
 const app = express();
 
@@ -82,6 +85,9 @@ app.use("/api/projects/:projectId/builder", aiBuilderRoutes);
 app.use("/api/projects/:projectId/pages", pagesRoutes);
 app.use("/api/projects/:projectId/navigation", navigationRoutes);
 app.use("/api/projects/:projectId/cms", cmsRoutes);
+app.use("/api/projects/:projectId/deployments", deploymentsRoutes);
+app.use("/api/projects/:projectId/domains", domainsRoutes);
+app.use("/api/projects/:projectId/analytics", projectAnalyticsRoutes);
 
 app.get("/", (_req, res) => {
   res.json({

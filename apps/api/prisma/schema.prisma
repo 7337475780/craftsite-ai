@@ -67,6 +67,10 @@ model Project {
   tags          Tag[]
   authors       Author[]
   media         Media[]
+  deployments   Deployment[]
+  domains       Domain[]
+  envVars       EnvironmentVariable[]
+  formSubmissions FormSubmission[]
 
   @@index([userId])
   @@index([workspaceId])
@@ -429,4 +433,72 @@ model Media {
   project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+}
+
+// ==========================================
+// Phase 30: Cloud Platform & Deployment
+// ==========================================
+
+model Deployment {
+  id            String    @id @default(uuid())
+  projectId     String
+  version       String
+  environment   String    @default("production") // production, preview
+  status        String    @default("building") // building, ready, failed
+  buildLogs     String?   @db.Text
+  url           String?
+  deployedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Domain {
+  id            String    @id @default(uuid())
+  projectId     String
+  hostname      String    @unique
+  isCustom      Boolean   @default(true)
+  status        String    @default("pending") // pending, active, failed
+  sslStatus     String    @default("initializing") // initializing, active, failed
+  verification  Json?     // DNS TXT/CNAME challenges
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model EnvironmentVariable {
+  id            String    @id @default(uuid())
+  projectId     String
+  key           String
+  value         String    // In production, this should be encrypted
+  environment   String    @default("production") // production, preview, development
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, environment, key])
+}
+
+model FormSubmission {
+  id            String    @id @default(uuid())
+  projectId     String
+  formId        String    // maps to a node/section ID
+  data          Json      // the submitted payload
+  visitorIp     String?
+  userAgent     String?
+  status        String    @default("new") // new, read, archived
+  createdAt     DateTime  @default(now())
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([formId])
 }
