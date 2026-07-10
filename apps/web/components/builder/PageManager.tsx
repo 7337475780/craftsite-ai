@@ -112,7 +112,7 @@ export default function PageManager() {
               className={`flex items-center justify-between group p-2 rounded-md cursor-pointer text-sm transition-colors ${activePageId === page.id ? 'bg-violet-500/20 text-violet-200' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'}`}
             >
               <div className="flex items-center gap-2 truncate">
-                {page.isHome ? <Home className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+                {page.isHomepage ? <Home className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
                 <span className="truncate">{page.title}</span>
                 <span className="text-[10px] text-zinc-600 truncate ml-1">{page.slug}</span>
               </div>
