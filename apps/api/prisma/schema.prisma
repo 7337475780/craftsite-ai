@@ -48,6 +48,10 @@ model Project {
   isPublished   Boolean          @default(false)
   shareSlug     String?          @unique
   publishedAt   DateTime?
+  builderData   Json?
+  builderVersion Int             @default(1)
+  builderEnabled Boolean         @default(false)
+  lastBuilderSavedAt DateTime?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -69,6 +73,9 @@ model ProjectVersion {
   title         String?
   generatedCode String   @db.Text
   editPrompt    String?
+  builderData   Json?
+  source        String?
+  metadata      Json?
   createdAt     DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

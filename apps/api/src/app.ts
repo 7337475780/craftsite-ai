@@ -22,6 +22,9 @@ import { rateLimit } from "express-rate-limit";
 // We don't import the strict `env` here for now since some tests mock process.env, 
 // but we apply rate limiter.
 
+import builderRoutes from "./routes/builder.route";
+import aiBuilderRoutes from "./routes/ai-builder.route";
+
 const app = express();
 
 const allowedOrigins = process.env.CLIENT_URLS
@@ -70,6 +73,9 @@ app.use(limiter);
 app.use("/api/billing/webhook", express.raw({ type: "application/json" }), webhookRouter);
 
 app.use(express.json({ limit: "2mb" }));
+
+app.use("/api/projects/:projectId/builder", builderRoutes);
+app.use("/api/projects/:projectId/builder", aiBuilderRoutes);
 
 app.get("/", (_req, res) => {
   res.json({
