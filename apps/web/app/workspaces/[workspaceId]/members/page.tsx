@@ -5,7 +5,45 @@ import { useParams } from "next/navigation";
 import { apiGet, apiPost, apiPatch, apiDelete } from "../../../../lib/api-client";
 import { WorkspaceMember, WorkspaceInvitation, WorkspaceRole } from "../../../../types/workspace";
 import { useWorkspace } from "../../../../components/providers/WorkspaceProvider";
-import { UserPlus, UserMinus, Shield, User, MoreVertical, Copy, Check } from "lucide-react";
+import { useRealtime } from "../../../../components/providers/RealtimeProvider";
+import { UserPlus, UserMinus, Shield, User, MoreVertical, Copy, Check, ChevronDown, AlertTriangle } from "lucide-react";
+
+function CustomSelect({ value, onChange, options, className }: { value: string; onChange: (v: string) => void; options: {value: string, label: string}[]; className?: string }) {
+  const [open, setOpen] = useState(false);
+  
+  return (
+    <div className="relative">
+      <button 
+        type="button" 
+        onClick={() => setOpen(!open)}
+        className={`flex items-center justify-between w-full text-left bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-500 ${className || ''}`}
+      >
+        <span>{options.find(o => o.value === value)?.label || value}</span>
+        <ChevronDown className="w-4 h-4 text-zinc-400" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-zinc-900 border border-white/10 rounded-xl shadow-xl overflow-hidden">
+            {options.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                className="w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white transition-colors"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function WorkspaceMembers() {
   const { workspaceId } = useParams() as { workspaceId: string };
@@ -16,6 +54,8 @@ export default function WorkspaceMembers() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<WorkspaceRole>("viewer");
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<{id: string, name: string} | null>(null);
+  const { addToast } = useRealtime();
 
   const canManage = activeWorkspaceRole === "owner" || activeWorkspaceRole === "admin";
 
@@ -53,8 +93,9 @@ export default function WorkspaceMembers() {
       setInviteEmail("");
       setIsInviteOpen(false);
       fetchInvitations();
+      addToast({ title: "Invitation Sent", message: `Invited ${inviteEmail} to join the workspace.`, type: "success" });
     } catch (e: any) {
-      alert(e.message);
+      addToast({ title: "Failed to invite", message: e.message || "An error occurred.", type: "error" });
     }
   };
 
@@ -62,18 +103,22 @@ export default function WorkspaceMembers() {
     try {
       await apiPatch(`/api/workspaces/${workspaceId}/members/${memberId}`, { role: newRole });
       fetchMembers();
+      addToast({ title: "Role Updated", message: "Member role has been successfully updated.", type: "success" });
     } catch (e: any) {
-      alert(e.message);
+      addToast({ title: "Failed to update role", message: e.message || "An error occurred.", type: "error" });
     }
   };
 
-  const handleRemove = async (memberId: string) => {
-    if (!confirm("Are you sure you want to remove this member?")) return;
+  const handleRemove = async () => {
+    if (!memberToRemove) return;
     try {
-      await apiDelete(`/api/workspaces/${workspaceId}/members/${memberId}`);
+      await apiDelete(`/api/workspaces/${workspaceId}/members/${memberToRemove.id}`);
       fetchMembers();
+      setMemberToRemove(null);
+      addToast({ title: "Member Removed", message: "The member was removed from the workspace.", type: "success" });
     } catch (e: any) {
-      alert(e.message);
+      addToast({ title: "Failed to remove", message: e.message || "An error occurred.", type: "error" });
+      setMemberToRemove(null);
     }
   };
 
@@ -81,8 +126,9 @@ export default function WorkspaceMembers() {
     try {
       await apiDelete(`/api/workspaces/${workspaceId}/invitations/${invitationId}`);
       fetchInvitations();
+      addToast({ title: "Invitation Cancelled", message: "The pending invitation was cancelled.", type: "success" });
     } catch (e: any) {
-      alert(e.message);
+      addToast({ title: "Failed to cancel", message: e.message || "An error occurred.", type: "error" });
     }
   };
 
@@ -148,18 +194,21 @@ export default function WorkspaceMembers() {
                   {canManage && member.role !== "owner" && (
                     <div className="flex items-center justify-end gap-2">
                       {activeWorkspaceRole === "owner" || (activeWorkspaceRole === "admin" && member.role !== "admin") ? (
-                        <select
-                          value={member.role}
-                          onChange={(e) => handleUpdateRole(member.id, e.target.value as WorkspaceRole)}
-                          className="bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none"
-                        >
-                          {activeWorkspaceRole === "owner" && <option value="admin">Admin</option>}
-                          <option value="editor">Editor</option>
-                          <option value="viewer">Viewer</option>
-                        </select>
+                        <div className="w-32">
+                          <CustomSelect
+                            value={member.role}
+                            onChange={(val) => handleUpdateRole(member.id, val as WorkspaceRole)}
+                            options={[
+                              ...(activeWorkspaceRole === "owner" ? [{ value: "admin", label: "Admin" }] : []),
+                              { value: "editor", label: "Editor" },
+                              { value: "viewer", label: "Viewer" }
+                            ]}
+                            className="!py-1 !px-2 !rounded-lg !bg-transparent text-xs hover:bg-white/5 border-transparent focus:border-cyan-500"
+                          />
+                        </div>
                       ) : null}
                       <button
-                        onClick={() => handleRemove(member.id)}
+                        onClick={() => setMemberToRemove({ id: member.id, name: member.user?.name || member.user?.email || "Unknown User" })}
                         className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                         title="Remove member"
                       >
@@ -246,15 +295,15 @@ export default function WorkspaceMembers() {
               </div>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-zinc-400 mb-1">Role</label>
-                <select
+                <CustomSelect
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as WorkspaceRole)}
-                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
-                >
-                  <option value="editor">Editor (Can edit projects)</option>
-                  <option value="viewer">Viewer (Read-only)</option>
-                  {activeWorkspaceRole === "owner" && <option value="admin">Admin (Can manage editors/viewers)</option>}
-                </select>
+                  onChange={(val) => setInviteRole(val as WorkspaceRole)}
+                  options={[
+                    ...(activeWorkspaceRole === "owner" ? [{ value: "admin", label: "Admin (Can manage members & projects)" }] : []),
+                    { value: "editor", label: "Editor (Can edit projects)" },
+                    { value: "viewer", label: "Viewer (Read-only access)" }
+                  ]}
+                />
               </div>
               <div className="flex gap-3 justify-end">
                 <button
@@ -272,6 +321,36 @@ export default function WorkspaceMembers() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {memberToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 text-red-500">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-bold mb-2 text-white">Remove Member</h2>
+            <p className="text-sm text-zinc-400 mb-6">
+              Are you sure you want to remove <span className="font-bold text-white">{memberToRemove.name}</span> from this workspace? They will lose access to all projects.
+            </p>
+            <div className="flex justify-end gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setMemberToRemove(null)}
+                className="flex-1 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="flex-1 px-4 py-2.5 text-sm font-bold bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors shadow-lg shadow-red-500/20"
+              >
+                Remove
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -624,7 +624,7 @@ function GeneratePageContent() {
                     ? "Refine your prompt..."
                     : "Build a sleek SaaS landing page with a hero, features, pricing..."
                 }
-                className={`w-full resize-none bg-transparent text-slate-900 outline-none placeholder:text-slate-400 transition-all duration-300 dark:text-white dark:placeholder:text-white/30 ${isCompact ? "min-h-[90px] text-sm" : "min-h-[130px] text-lg"
+                className={`w-full resize-none bg-transparent text-slate-900 outline-none placeholder:text-slate-400 transition-all duration-300 dark:text-white dark:placeholder:text-white/30 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isCompact ? "min-h-[90px] text-sm" : "min-h-[130px] text-lg"
                   }`}
                 disabled={isGenerating}
                 onKeyDown={(e) => {

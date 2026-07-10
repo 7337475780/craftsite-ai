@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 type CraftSiteLogoProps = {
   className?: string;
   variant?: "full" | "compact";
@@ -7,6 +9,7 @@ export function CraftSiteLogo({
   className = "",
   variant = "full",
 }: CraftSiteLogoProps) {
+  const id = useId();
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative flex h-11 w-11 items-center justify-center">
@@ -18,7 +21,7 @@ export function CraftSiteLogo({
         >
           <defs>
             <linearGradient
-              id="mainGradient"
+              id={`mainGradient-${id}`}
               x1="120"
               y1="150"
               x2="410"
@@ -31,7 +34,7 @@ export function CraftSiteLogo({
             </linearGradient>
 
             <linearGradient
-              id="backGradient"
+              id={`backGradient-${id}`}
               x1="180"
               y1="90"
               x2="430"
@@ -43,7 +46,7 @@ export function CraftSiteLogo({
             </linearGradient>
 
             <linearGradient
-              id="midGradient"
+              id={`midGradient-${id}`}
               x1="145"
               y1="120"
               x2="405"
@@ -54,7 +57,7 @@ export function CraftSiteLogo({
               <stop offset="1" stopColor="#174CFF" />
             </linearGradient>
 
-            <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+            <filter id={`glow-${id}`} x="-30%" y="-30%" width="160%" height="160%">
               <feGaussianBlur stdDeviation="8" result="blur" />
               <feColorMatrix
                 in="blur"
@@ -70,7 +73,7 @@ export function CraftSiteLogo({
               </feMerge>
             </filter>
 
-            <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%">
+            <filter id={`shadow-${id}`} x="-20%" y="-20%" width="150%" height="150%">
               <feDropShadow
                 dx="0"
                 dy="18"
@@ -83,22 +86,22 @@ export function CraftSiteLogo({
 
           <path
             d="M190 92H398C424.5 92 446 113.5 446 140V328C446 354.5 424.5 376 398 376H190C163.5 376 142 354.5 142 328V140C142 113.5 163.5 92 190 92Z"
-            fill="url(#backGradient)"
+            fill={`url(#backGradient-${id})`}
             opacity="0.9"
-            filter="url(#shadow)"
+            filter={`url(#shadow-${id})`}
           />
 
           <path
             d="M143 134H359C385.5 134 407 155.5 407 182V370C407 396.5 385.5 418 359 418H143C116.5 418 95 396.5 95 370V182C95 155.5 116.5 134 143 134Z"
-            fill="url(#midGradient)"
+            fill={`url(#midGradient-${id})`}
             opacity="0.92"
-            filter="url(#shadow)"
+            filter={`url(#shadow-${id})`}
           />
 
           <path
             d="M92 177H319C348.3 177 372 200.7 372 230V386C372 415.3 348.3 439 319 439H92C62.7 439 39 415.3 39 386V230C39 200.7 62.7 177 92 177Z"
-            fill="url(#mainGradient)"
-            filter="url(#glow)"
+            fill={`url(#mainGradient-${id})`}
+            filter={`url(#glow-${id})`}
           />
 
           <path

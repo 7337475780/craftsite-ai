@@ -86,7 +86,7 @@ export function Navbar() {
         <div
           className={`mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full border px-4 transition-all duration-300 sm:px-5 lg:px-6 ${scrolled
             ? "border-slate-900/10 bg-white/80 shadow-[0_18px_60px_rgba(15,23,42,0.1)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#050816]/80 dark:shadow-[0_18px_70px_rgba(0,0,0,0.45)]"
-            : "border-slate-900/5 bg-white/45 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-white/[0.035]"
+            : "border-transparent bg-transparent"
             }`}
         >
           {/* Logo */}
