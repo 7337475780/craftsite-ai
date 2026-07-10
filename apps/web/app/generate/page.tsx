@@ -687,6 +687,7 @@ function GeneratePageContent() {
                     <MonitorSmartphone size={11} />
                     {websiteType === "responsive" ? "Responsive" : "SaaS"}
                   </button>
+                </div>
 
                 {/* Generate button */}
                 <button
