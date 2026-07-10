@@ -1,12 +1,12 @@
+"use client";
+
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import type { Metadata } from "next";
 import { Send, MapPin, Mail, Phone } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Contact Us",
-  description: "Get in touch with the team.",
-};
+// metadata cannot be exported from a client component, so we remove it or move it to layout.
+// For a simple fix, we just remove the exported metadata object since it's a client component now.
 
 export default function ContactPage() {
   return (

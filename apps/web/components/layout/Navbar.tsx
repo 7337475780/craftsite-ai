@@ -218,18 +218,12 @@ export function Navbar() {
                         key={item.label}
                         type="button"
                         onClick={() => scrollToSection(item.targetId)}
-                        className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-base font-black transition ${isActive
+                        className={`flex items-center justify-center rounded-2xl border px-4 py-3 text-center text-base font-black transition ${isActive
                           ? "border-violet-500/25 bg-violet-500/10 text-violet-700 dark:border-cyan-300/25 dark:bg-cyan-400/10 dark:text-cyan-200"
                           : "border-slate-900/10 bg-white/60 text-slate-700 hover:bg-white hover:text-violet-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:text-cyan-200"
                           }`}
                       >
                         {item.label}
-                        <span
-                          className={`h-2 w-2 rounded-full ${isActive
-                            ? "bg-violet-600 shadow-[0_0_14px_rgba(124,58,237,0.7)] dark:bg-cyan-300 dark:shadow-[0_0_14px_rgba(34,211,238,0.8)]"
-                            : "bg-slate-300 dark:bg-white/20"
-                            }`}
-                        />
                       </button>
                     );
                   })}
