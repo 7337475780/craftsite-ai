@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 import { z } from "zod";
 import { BuilderProjectSchema } from "@craftsite/shared";
 import { compileBuilderToReact, compileProjectToAppRouter } from "../services/builder-compiler.service";
 
-const prisma = new PrismaClient();
 const router = Router({ mergeParams: true });
 
 // Dummy auth middleware for the sake of the route. 

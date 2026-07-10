@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 // In a real app with Stripe, these would map to Stripe Product/Price IDs
 export const PLAN_LIMITS = {

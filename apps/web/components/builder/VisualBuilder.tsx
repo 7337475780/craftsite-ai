@@ -11,7 +11,8 @@ import ViewportSwitcher from "./ViewportSwitcher";
 import PageManager from "./PageManager";
 import CMSManager from "./CMSManager";
 import PropertyInspector from "./PropertyInspector";
-import { Undo, Redo, Save, Eye, Code, ChevronLeft, Download, Globe, Loader2 } from "lucide-react";
+import AiAssistantPanel from "./AiAssistantPanel";
+import { Undo, Redo, Save, Eye, Code, ChevronLeft, Download, Globe, Loader2, Sparkles, LayoutTemplate, Palette } from "lucide-react";
 import { exportProjectAsZip } from "@/lib/export-project";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { BuilderNode } from "@craftsite/shared";
@@ -19,6 +20,7 @@ import { BuilderNode } from "@craftsite/shared";
 export default function VisualBuilder() {
   const { dirty, saving, lastSavedAt, undo, redo, previewMode, setPreviewMode, projectId, builderData, selectedNodeId } = useBuilderStore();
   const [activeTab, setActiveTab] = useState<"pages" | "layers" | "add" | "cms">("pages");
+  const [rightTab, setRightTab] = useState<"ai" | "properties" | "theme">("ai");
   const [exporting, setExporting] = useState(false);
 
   const handleSave = async () => {
@@ -177,7 +179,38 @@ export default function VisualBuilder() {
         {/* Right Sidebar */}
         {!previewMode && (
           <aside className="w-80 border-l border-zinc-800 bg-zinc-900/30 flex flex-col overflow-y-auto shrink-0">
-            {selectedNodeId ? <PropertyInspector /> : <ThemePanel />}
+            <div className="flex border-b border-zinc-800 p-2 gap-1 overflow-x-auto shrink-0">
+              <Button 
+                variant={rightTab === "ai" ? "secondary" : "ghost"} 
+                className="flex-shrink-0 justify-center text-xs px-2" 
+                size="sm"
+                onClick={() => setRightTab("ai")}
+              >
+                <Sparkles className="w-3 h-3 mr-1" /> AI
+              </Button>
+              <Button 
+                variant={rightTab === "properties" ? "secondary" : "ghost"} 
+                className="flex-shrink-0 justify-center text-xs px-2" 
+                size="sm"
+                onClick={() => setRightTab("properties")}
+              >
+                <LayoutTemplate className="w-3 h-3 mr-1" /> Props
+              </Button>
+              <Button 
+                variant={rightTab === "theme" ? "secondary" : "ghost"} 
+                className="flex-shrink-0 justify-center text-xs px-2" 
+                size="sm"
+                onClick={() => setRightTab("theme")}
+              >
+                <Palette className="w-3 h-3 mr-1" /> Theme
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto flex flex-col">
+              {rightTab === "ai" && <AiAssistantPanel />}
+              {rightTab === "properties" && (selectedNodeId ? <PropertyInspector /> : <div className="p-4 text-center text-zinc-500 text-sm">Select a component to edit properties.</div>)}
+              {rightTab === "theme" && <ThemePanel />}
+            </div>
           </aside>
         )}
       </main>

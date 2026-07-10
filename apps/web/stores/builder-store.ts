@@ -15,6 +15,11 @@ interface BuilderState {
   history: BuilderProject[];
   historyIndex: number;
   previewMode: boolean;
+  
+  // Phase 29: AI Memory & Context
+  aiMemory: Record<string, any>;
+  chatHistory: { role: 'user' | 'assistant'; text: string; diff?: any }[];
+  pendingAiDiff: any | null;
 
   setProjectId: (id: string) => void;
   setBuilderData: (data: BuilderProject) => void;
@@ -24,6 +29,11 @@ interface BuilderState {
   setHoveredNode: (id: string | null) => void;
   setViewport: (viewport: 'desktop' | 'tablet' | 'mobile' | 'full') => void;
   setPreviewMode: (mode: boolean) => void;
+  
+  // Phase 29 Actions
+  addChatMessage: (msg: { role: 'user' | 'assistant'; text: string; diff?: any }) => void;
+  applyAiDiff: (diff: any) => void;
+  setPendingAiDiff: (diff: any | null) => void;
   
   updateTheme: (theme: Partial<BuilderTheme>) => void;
   updateSectionProps: (id: string, props: any) => void;
@@ -97,6 +107,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   history: [],
   historyIndex: -1,
   previewMode: false,
+  aiMemory: {},
+  chatHistory: [{ role: 'assistant', text: "Hi! I'm your AI Website Engineer. What would you like to build or change?" }],
+  pendingAiDiff: null,
 
   setProjectId: (id) => set({ projectId: id }),
   
@@ -113,6 +126,28 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setHoveredNode: (id) => set({ hoveredNodeId: id }),
   setViewport: (viewport) => set({ viewport }),
   setPreviewMode: (mode) => set({ previewMode: mode }),
+
+  addChatMessage: (msg) => set((state) => ({ 
+    chatHistory: [...state.chatHistory, msg] 
+  })),
+
+  setPendingAiDiff: (diff) => set({ pendingAiDiff: diff }),
+
+  applyAiDiff: (diff) => set((state) => {
+    if (!state.builderData) return state;
+    // Simple naive optimistic update simulation (replace node completely)
+    // In a real structural diff app, this would deeply merge diffs via JSONPatch or custom tree diffing.
+    if (diff.type === 'replace_node' && diff.node && diff.nodeId) {
+      const updateRecursive = (nodes: BuilderNode[]): BuilderNode[] => {
+        return nodes.map(n => 
+          n.id === diff.nodeId ? diff.node : { ...n, children: updateRecursive(n.children) }
+        );
+      };
+      const newData = updateNodes(state, updateRecursive);
+      return pushHistory(state, newData as BuilderProject);
+    }
+    return state;
+  }),
 
   updateTheme: (themeUpdate) => set((state) => {
     if (!state.builderData) return state;
