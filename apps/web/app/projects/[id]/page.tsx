@@ -166,7 +166,6 @@ export default function ProjectDetailPage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [publishPanelOpen, setPublishPanelOpen] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [publishPanelOpen, setPublishPanelOpen] = useState(true);
 
   // ── Realtime & Collaboration State ────────────────────────────────────────
   const { socket } = useRealtime();
