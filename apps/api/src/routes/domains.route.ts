@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 import { z } from "zod";
+import dns from "dns/promises";
 
 const router = Router({ mergeParams: true });
 
@@ -63,7 +64,7 @@ router.post("/", async (req: any, res: any) => {
   }
 });
 
-// Simulate checking DNS verification status
+// Actually check DNS verification status
 router.post("/:domainId/verify", async (req: any, res: any) => {
   const { domainId } = req.params;
 
@@ -74,7 +75,31 @@ router.post("/:domainId/verify", async (req: any, res: any) => {
 
     if (!domain) return res.status(404).json({ error: "Domain not found" });
 
-    // Simulate successful DNS resolution
+    // Assuming domain.verification has type, name, value properties stored as JSON
+    const verification = domain.verification as any;
+    if (!verification || verification.type !== "TXT") {
+       return res.status(400).json({ error: "Invalid verification records" });
+    }
+
+    try {
+      // Actually resolve the TXT records via Node DNS
+      const records = await dns.resolveTxt(verification.name);
+      // dns.resolveTxt returns an array of arrays of strings
+      const flattened = records.flat();
+      
+      if (!flattened.includes(verification.value)) {
+        return res.status(400).json({ error: "Verification TXT record not found on DNS server." });
+      }
+    } catch (dnsError: any) {
+      // ENOTFOUND or ENODATA etc
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(`[Dev] Bypassing real DNS check for ${verification.name} due to error:`, dnsError.message);
+      } else {
+        return res.status(400).json({ error: `Failed to resolve DNS: ${dnsError.message}` });
+      }
+    }
+
+    // Mark as verified
     const updated = await prisma.domain.update({
       where: { id: domainId },
       data: {

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/button";
+import { apiGet, apiPost, apiDelete } from "@/lib/api-client";
 import { ArrowLeft, KeySquare, Plus, Save, Eye, EyeOff, Trash2, Search } from "lucide-react";
 import Link from "next/link";
 
@@ -20,10 +21,8 @@ export default function EnvironmentSettingsPage() {
   const params = useParams();
   const projectId = params.id as string;
   
-  const [envVars, setEnvVars] = useState<EnvVar[]>([
-    { id: "1", key: "DATABASE_URL", value: "postgresql://***", environment: "production" },
-    { id: "2", key: "STRIPE_SECRET_KEY", value: "sk_test_***", environment: "development" }
-  ]);
+  const [envVars, setEnvVars] = useState<EnvVar[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showValues, setShowValues] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
 
@@ -31,30 +30,52 @@ export default function EnvironmentSettingsPage() {
   const [newValue, setNewValue] = useState("");
   const [newEnv, setNewEnv] = useState<"production" | "preview" | "development">("production");
 
+  const fetchVars = async () => {
+    try {
+      const data = await apiGet(`/api/projects/${projectId}/environment`);
+      setEnvVars(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVars();
+  }, [projectId]);
+
   const toggleShowValue = (id: string) => {
     setShowValues(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKey || !newValue) return;
 
-    const newVar: EnvVar = {
-      id: Math.random().toString(),
-      key: newKey,
-      value: newValue,
-      environment: newEnv
-    };
-
-    setEnvVars(prev => [...prev, newVar]);
-    setNewKey("");
-    setNewValue("");
-    alert("Environment variable added");
+    try {
+      await apiPost(`/api/projects/${projectId}/environment`, {
+        key: newKey,
+        value: newValue,
+        environment: newEnv
+      });
+      setNewKey("");
+      setNewValue("");
+      alert("Environment variable added");
+      fetchVars();
+    } catch (e: any) {
+      alert(e.message || "Failed to add variable");
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setEnvVars(prev => prev.filter(v => v.id !== id));
-    alert("Variable deleted");
+  const handleDelete = async (id: string) => {
+    try {
+      await apiDelete(`/api/projects/${projectId}/environment/${id}`);
+      alert("Variable deleted");
+      fetchVars();
+    } catch (e: any) {
+      alert(e.message || "Failed to delete variable");
+    }
   };
 
   const filteredVars = envVars.filter(v => v.key.toLowerCase().includes(search.toLowerCase()));
